@@ -33,6 +33,7 @@ def run(signal, label, silence=4.0):
     return fired_at
 
 def main():
+    d.configure_text_output()
     print("WebRTC VAD доступний:", d.SpeechGate(mode="auto").vad is not None)
     print()
 

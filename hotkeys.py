@@ -7,6 +7,8 @@ import time
 
 
 def main():
+    from platform_support import configure_text_output
+    configure_text_output()
     parser = argparse.ArgumentParser(description='Keep running to enable Alt+Shift+U/E/L dictation shortcuts.')
     parser.add_argument('--no-overlay', action='store_true')
     parser.add_argument('--inference-device', choices=['auto', 'cpu', 'cuda', 'metal'], default='auto')

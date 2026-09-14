@@ -8,6 +8,14 @@ import sys
 import time
 
 
+def configure_text_output():
+    # Windows redirected streams can default to a legacy ANSI code page.
+    if sys.platform == 'win32':
+        for stream in (sys.stdout, sys.stderr):
+            if hasattr(stream, 'reconfigure'):
+                stream.reconfigure(encoding='utf-8')
+
+
 def data_dir():
     if sys.platform == 'win32':
         return Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData/Local')) / 'VoiceToClipboard'

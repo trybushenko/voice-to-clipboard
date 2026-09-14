@@ -31,7 +31,7 @@ import time
 from collections import deque
 
 import numpy as np
-from platform_support import SessionLock, cache_dir, data_dir, notify, to_clipboard, do_paste
+from platform_support import SessionLock, cache_dir, data_dir, notify, to_clipboard, do_paste, configure_text_output
 from local_ipc import Server, connect
 
 SAMPLE_RATE = 16000
@@ -369,7 +369,7 @@ def meter(gate, elapsed, model_ready):
 
 def read_history():
     try:
-        entries = json.loads(HISTORY.read_text())
+        entries = json.loads(HISTORY.read_text(encoding="utf-8"))
         if not isinstance(entries, list) or any(
             not isinstance(e, dict) or not isinstance(e.get("text"), str)
             for e in entries
@@ -387,7 +387,7 @@ def save_history(text, complete=True):
     HISTORY.parent.mkdir(parents=True, exist_ok=True)
     fd, name = tempfile.mkstemp(prefix=".dictate-history-", dir=HISTORY.parent)
     try:
-        with os.fdopen(fd, "w") as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(entries[-50:], f, ensure_ascii=False, indent=2)
             f.flush()
             os.fsync(f.fileno())
@@ -471,6 +471,7 @@ def parse_args(argv=None):
 
 
 def main():
+    configure_text_output()
     a = parse_args()
     if a.model_status or a.unload_model:
         from model_service import control
