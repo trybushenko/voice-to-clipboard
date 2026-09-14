@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voice-to-clipboard"
+version = "0.1.0"
+description = "Local voice dictation to your clipboard on Linux, Windows and Apple Silicon"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26,<3", "sounddevice>=0.5,<1"]
+
+[project.optional-dependencies]
+whisper = ["faster-whisper>=1.2,<2"]
+mac = ["mlx-whisper>=0.4,<1; sys_platform == 'darwin' and platform_machine == 'arm64'"]
+hotkeys = ["pynput>=1.7,<2"]
+vad = ["webrtcvad-wheels>=2.0.14,<3"]
+
+[project.scripts]
+voice-to-clipboard = "dictate:main"
+dictate = "dictate:main"
+voice-hotkeys = "hotkeys:main"
+
+[tool.setuptools]
+py-modules = ["dictate", "speech_backends", "model_service", "platform_support", "local_ipc", "overlay", "hotkeys"]
