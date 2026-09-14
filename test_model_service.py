@@ -5,7 +5,7 @@ import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import numpy as np
 import model_service as m
 
@@ -29,7 +29,9 @@ class ServiceTests(unittest.TestCase):
                 if (runtime / 'worker.sock').exists():
                     break
                 time.sleep(.01)
-            with patch.object(m.subprocess, 'Popen', side_effect=AssertionError('Unexpected launch')):
+            # Patch only this module's dependency, not subprocess globally:
+            # NumPy/Python may legitimately query Windows platform information.
+            with patch.object(m, 'subprocess', SimpleNamespace(Popen=Mock(side_effect=AssertionError('Unexpected launch')))):
                 first = m.RemoteModel('test', 'float16', runtime)
                 audio = np.array([.1, -.4], dtype=np.float32)
                 segments, _ = first.transcribe(audio, language='uk')
