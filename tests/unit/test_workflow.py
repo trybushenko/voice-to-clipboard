@@ -16,8 +16,15 @@ import subprocess
 
 class WorkflowTests(unittest.TestCase):
     def test_session_delivers_tail_after_package_split(self):
+        for tty in (False, True):
+            with self.subTest(tty=tty):
+                self.check_session_tail(tty)
+
+    def check_session_tail(self, tty):
         from unittest.mock import Mock
-        gate = Mock(last_db=-25, armed=True, speech_total=1.0)
+        gate = types.SimpleNamespace(last_db=-25.0, armed=True, speech_total=1.0,
+                                     in_speech=True, floor_db=-60.0, threshold_db=-40.0,
+                                     vad_hit=False, vad=None)
         recorder = Mock()
         recorder.elapsed.return_value = 2.0
         recorder.finish.return_value = np.zeros(16000, dtype=np.float32)
@@ -38,11 +45,16 @@ class WorkflowTests(unittest.TestCase):
                 stack.enter_context(patch.object(d, name, replacement))
             stack.enter_context(patch('voice_to_clipboard.ui.overlay.Overlay'))
             stack.enter_context(patch.object(d.atexit, 'register'))
+            stream = Mock()
+            stream.isatty.return_value = tty
+            stack.enter_context(patch.object(sys, 'stderr', stream))
             stack.enter_context(patch('builtins.print'))
             d.main()
             d.save_history.assert_called_once_with('Hello', complete=True)
             d.to_clipboard.assert_called_once_with('Hello')
             model.close.assert_called_once()
+            if tty:
+                self.assertTrue(any("поріг" in str(call) for call in stream.write.call_args_list))
 
     def test_cli_preserves_hotkey_options_and_live_toggle(self):
         uk = d.parse_args(['--silence', '0', '--lang', 'uk', '--overlay'])
