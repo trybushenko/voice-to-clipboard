@@ -17,9 +17,10 @@ hotkeys = ["pynput>=1.7,<2"]
 vad = ["webrtcvad-wheels>=2.0.14,<3"]
 
 [project.scripts]
-voice-to-clipboard = "dictate:main"
-dictate = "dictate:main"
-voice-hotkeys = "hotkeys:main"
+voice-to-clipboard = "voice_to_clipboard.cli:main"
+dictate = "voice_to_clipboard.cli:main"
+voice-hotkeys = "voice_to_clipboard.ui.hotkeys:main"
 
-[tool.setuptools]
-py-modules = ["dictate", "speech_backends", "model_service", "platform_support", "local_ipc", "overlay", "hotkeys"]
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["voice_to_clipboard*"]

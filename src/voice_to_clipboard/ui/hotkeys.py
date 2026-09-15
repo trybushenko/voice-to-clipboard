@@ -7,7 +7,7 @@ import time
 
 
 def main():
-    from platform_support import configure_text_output
+    from voice_to_clipboard.platform.desktop import configure_text_output
     configure_text_output()
     parser = argparse.ArgumentParser(description='Keep running to enable Alt+Shift+U/E/L dictation shortcuts.')
     parser.add_argument('--no-overlay', action='store_true')
@@ -15,7 +15,7 @@ def main():
     parser.add_argument('--model', default=None)
     args = parser.parse_args()
     from pynput import keyboard
-    from platform_support import SessionLock, cache_dir
+    from voice_to_clipboard.platform.desktop import SessionLock, cache_dir
     try:
         lock = SessionLock(cache_dir() / 'dictate-hotkeys.lock')
     except BlockingIOError:
@@ -32,7 +32,7 @@ def main():
                 return
             last_launch = now
             children[:] = [p for p in children if p.poll() is None]
-            cmd = [sys.executable, '-m', 'dictate', '--lang', lang, '--silence', '0', '--inference-device', args.inference_device]
+            cmd = [sys.executable, '-m', 'voice_to_clipboard', '--lang', lang, '--silence', '0', '--inference-device', args.inference_device]
             if args.model:
                 cmd += ['--model', args.model]
             if lang == 'en':

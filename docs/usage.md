@@ -1,0 +1,59 @@
+# Usage and storage
+
+`voice-hotkeys` stays open to listen for Alt+Shift+U/E/L. Run it manually when
+needed; installation does not add a login service. Stop it with Ctrl+C. A recording
+already in progress remains independent: stop it with `dictate` before exiting.
+
+You can also use the CLI (`dictate` and `voice-to-clipboard` are aliases):
+
+```sh
+dictate --lang en --overlay       # start; run dictate again to stop
+dictate --lang uk --paste         # paste into the currently focused window
+dictate --copy-last               # restore latest complete transcript
+dictate --append                  # append another dictation to it
+dictate --history                 # show history JSON
+dictate --list-devices            # list microphone IDs
+dictate --device 2                # select microphone; unrelated to GPU selection
+dictate --silence 4               # optional stop after four seconds of silence
+dictate --model small --inference-device cpu  # lighter CPU configuration
+dictate --one-shot                # release model at the end of this recording
+dictate --model-status            # query idle worker
+dictate --unload-model            # unload idle worker now
+```
+
+The default is `large-v3-turbo`, Ukrainian, manual stop, with a 10-minute recording
+limit and 20-second initial silence timeout. English shortcuts select English
+explicitly. On Apple Silicon use `--backend mlx` (the automatic default), or
+install the whisper extra and use `--backend faster-whisper --inference-device cpu`.
+Custom MLX models accept an MLX Hugging Face repository in `--model`.
+`DICTATE_MODEL`, `DICTATE_LANG`, `DICTATE_COMPUTE`, `DICTATE_PROMPT` and
+`DICTATE_SILENCE`, `DICTATE_BACKEND` and `DICTATE_INFERENCE_DEVICE` can override defaults.
+
+The overlay closes with the recording process, including on errors. It shows no
+transcript. Disable with `voice-hotkeys --no-overlay` or omit `--overlay` on CLI.
+Automatic paste targets the focused window when transcription finishes; normal
+clipboard mode is preferable when switching chats. macOS paste uses Command+V;
+Windows/Linux use Ctrl+V. Windows notifications are provided by the overlay and
+console, not system toast notifications.
+
+## Privacy and storage
+
+Audio is held in memory, never saved by the application. Whisper weights download
+from Hugging Face; speech and transcripts are not sent to a remote API.
+Workers communicate through Unix sockets on Linux/macOS, or loopback TCP with a
+random local authentication token on Windows. There is no externally bound server.
+
+The latest 50 results are stored as `history.json` in:
+
+- Linux: `$XDG_DATA_HOME/dictate` or `~/.local/share/dictate`.
+- macOS: `~/Library/Application Support/VoiceToClipboard`.
+- Windows: `%LOCALAPPDATA%\VoiceToClipboard`.
+
+Override with `DICTATE_HISTORY`. Delete that file to clear history. Incomplete
+transcripts are saved as incomplete and never overwrite the clipboard. On Unix
+history files have mode 0600; on Windows access follows the user profile ACL.
+History, recordings, environment files, model files and local backups are excluded
+from Git. Existing legacy history remains readable.
+
+
+[Back to overview](../README.md)

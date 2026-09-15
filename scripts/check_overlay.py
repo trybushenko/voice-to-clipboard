@@ -1,7 +1,10 @@
 """Visible eight-second overlay smoke test; no microphone or clipboard access."""
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import subprocess
 import time
-from overlay import Overlay
+from voice_to_clipboard.ui.overlay import Overlay
 
 def active():
     return subprocess.check_output(['xdotool','getactivewindow'],text=True).strip()

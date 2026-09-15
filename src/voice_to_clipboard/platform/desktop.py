@@ -1,12 +1,11 @@
-"""Desktop integration and paths without importing platform-specific packages."""
-import ctypes
 import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 import time
-
+from .paths import data_dir, cache_dir
+from .windows import _windows_clipboard
 
 def configure_text_output():
     # Windows redirected streams can default to a legacy ANSI code page.
@@ -14,22 +13,6 @@ def configure_text_output():
         for stream in (sys.stdout, sys.stderr):
             if hasattr(stream, 'reconfigure'):
                 stream.reconfigure(encoding='utf-8')
-
-
-def data_dir():
-    if sys.platform == 'win32':
-        return Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData/Local')) / 'VoiceToClipboard'
-    if sys.platform == 'darwin':
-        return Path.home() / 'Library/Application Support/VoiceToClipboard'
-    return Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'dictate'
-
-
-def cache_dir():
-    if sys.platform == 'win32':
-        return data_dir() / 'cache'
-    if sys.platform == 'darwin':
-        return Path.home() / 'Library/Caches/VoiceToClipboard'
-    return Path(os.environ.get('XDG_CACHE_HOME', Path.home() / '.cache'))
 
 
 class SessionLock:
@@ -75,46 +58,6 @@ def notify(text, urgency='low'):
         pass
 
 
-def _windows_clipboard(text):
-    from ctypes import wintypes
-    user, kernel = ctypes.WinDLL('user32', use_last_error=True), ctypes.WinDLL('kernel32', use_last_error=True)
-    kernel.GlobalAlloc.argtypes = [wintypes.UINT, ctypes.c_size_t]
-    kernel.GlobalAlloc.restype = wintypes.HGLOBAL
-    kernel.GlobalLock.argtypes = [wintypes.HGLOBAL]
-    kernel.GlobalLock.restype = ctypes.c_void_p
-    kernel.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
-    kernel.GlobalFree.argtypes = [wintypes.HGLOBAL]
-    user.SetClipboardData.argtypes = [wintypes.UINT, wintypes.HANDLE]
-    user.SetClipboardData.restype = wintypes.HANDLE
-    payload = (text + '\0').encode('utf-16-le')
-    handle = kernel.GlobalAlloc(0x0002, len(payload))
-    if not handle:
-        return False
-    transferred = False
-    try:
-        pointer = kernel.GlobalLock(handle)
-        if not pointer:
-            return False
-        ctypes.memmove(pointer, payload, len(payload))
-        kernel.GlobalUnlock(handle)
-        for _ in range(10):
-            if user.OpenClipboard(None):
-                break
-            time.sleep(.02)
-        else:
-            return False
-        try:
-            if not user.EmptyClipboard():
-                return False
-            transferred = bool(user.SetClipboardData(13, handle))  # CF_UNICODETEXT
-            return transferred
-        finally:
-            user.CloseClipboard()
-    finally:
-        if not transferred:
-            kernel.GlobalFree(handle)
-
-
 def to_clipboard(text):
     if sys.platform == 'win32':
         return _windows_clipboard(text)
@@ -143,3 +86,4 @@ def do_paste():
         subprocess.run(['xdotool', 'key', '--clearmodifiers', 'ctrl+v'], timeout=5, check=True)
     else:
         raise RuntimeError('Automatic paste unavailable; use your normal paste shortcut')
+

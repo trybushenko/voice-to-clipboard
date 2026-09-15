@@ -1,6 +1,7 @@
 """Перевірка SpeechGate на синтетичному сигналі без мікрофона."""
 import numpy as np
-import dictate as d
+from voice_to_clipboard.core import speech_gate as d
+from voice_to_clipboard.platform.desktop import configure_text_output
 
 SR, B = d.SAMPLE_RATE, d.BLOCK
 rng = np.random.default_rng(0)
@@ -33,7 +34,7 @@ def run(signal, label, silence=4.0):
     return fired_at
 
 def main():
-    d.configure_text_output()
+    configure_text_output()
     print("WebRTC VAD доступний:", d.SpeechGate(mode="auto").vad is not None)
     print()
 

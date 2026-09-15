@@ -17,7 +17,7 @@ def main():
     os.environ['HF_HUB_OFFLINE'] = '1'
     with tempfile.TemporaryDirectory(prefix='dictate-bench-') as runtime:
         os.environ['DICTATE_RUNTIME'] = runtime
-        from model_service import RemoteModel, control
+        from voice_to_clipboard.worker.client import RemoteModel, control
         import numpy as np
         try:
             for label in ('cold', 'warm'):

@@ -20,13 +20,13 @@ def main():
     for path in paths:
         if path != en and get(schema + path, 'binding') in ('<Shift><Alt>e', '<Alt><Shift>e'):
             raise SystemExit('Alt+Shift+E already assigned; no changes made')
-    backup = Path(__file__).with_name('backups') / 'shortcuts.before-overlay.json'
+    backup = Path(__file__).resolve().parents[1] / 'backups' / 'shortcuts.before-overlay.json'
     backup.parent.mkdir(exist_ok=True)
     if not backup.exists():
         backup.write_text(json.dumps({p: {k: get(schema+p,k) for k in ('name','command','binding')} for p in paths}, indent=2))
     flag = '' if '--no-overlay' in sys.argv else ' --overlay'
     executable = shutil.which('dictate')
-    exe = (shlex.quote(executable) if executable else shlex.join([sys.executable, str(Path(__file__).with_name('dictate.py'))])) + ' --silence 0'
+    exe = (shlex.quote(executable) if executable else shlex.join([sys.executable, str(Path(__file__).resolve().parents[1] / 'dictate.py')])) + ' --silence 0'
     for name, lang, extra in [('custom1','uk',''), ('custom2','uk',' --paste')]:
         target = schema + root + name + '/'
         if 'Dictate' not in get(target,'name'):

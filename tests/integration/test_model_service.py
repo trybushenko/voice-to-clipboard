@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch, Mock
 import numpy as np
-import model_service as m
+from voice_to_clipboard.worker import client as m, service, protocol
 
 class ServiceTests(unittest.TestCase):
     def test_reuse_audio_options_errors_and_idle_exit(self):
@@ -23,7 +23,7 @@ class ServiceTests(unittest.TestCase):
             return Model()
         with tempfile.TemporaryDirectory() as temp:
             runtime = Path(temp)
-            thread = threading.Thread(target=m.serve, args=(runtime, .5, factory), daemon=True)
+            thread = threading.Thread(target=service.serve, args=(runtime, .5, factory), daemon=True)
             thread.start()
             for _ in range(100):
                 if (runtime / 'worker.sock').exists():
@@ -54,9 +54,9 @@ class ServiceTests(unittest.TestCase):
     def test_framing_rejects_oversize(self):
         a, b = socket.socketpair()
         with a, b:
-            a.sendall(m.struct.pack('!I', m.MAX_PACKET + 1))
+            a.sendall(protocol.struct.pack('!I', protocol.MAX_PACKET + 1))
             with self.assertRaises(ValueError):
-                m.receive(b)
+                protocol.receive(b)
 
 if __name__ == '__main__':
     unittest.main()

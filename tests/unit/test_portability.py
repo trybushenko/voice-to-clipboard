@@ -8,9 +8,9 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch, Mock
 import numpy as np
-import local_ipc
-import platform_support as desktop
-import speech_backends as backends
+from voice_to_clipboard.worker import transport as local_ipc
+from voice_to_clipboard.platform import desktop
+from voice_to_clipboard import backends
 
 
 class PortabilityTests(unittest.TestCase):
