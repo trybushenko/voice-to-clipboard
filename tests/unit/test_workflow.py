@@ -20,7 +20,13 @@ class WorkflowTests(unittest.TestCase):
             with self.subTest(tty=tty):
                 self.check_session_tail(tty)
 
-    def check_session_tail(self, tty):
+    def test_session_paste_success(self):
+        self.check_session_tail(False, paste=True)
+
+    def test_session_paste_failure_keeps_transcript(self):
+        self.check_session_tail(False, paste=True, paste_error=True)
+
+    def check_session_tail(self, tty, paste=False, paste_error=False):
         from unittest.mock import Mock
         gate = types.SimpleNamespace(last_db=-25.0, armed=True, speech_total=1.0,
                                      in_speech=True, floor_db=-60.0, threshold_db=-40.0,
@@ -34,7 +40,7 @@ class WorkflowTests(unittest.TestCase):
             holder['model'] = model
             ready.set()
         with tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
-            stack.enter_context(patch.object(d, 'parse_args', return_value=d.parse_args(['--max', '1', '--lang', 'en'])))
+            stack.enter_context(patch.object(d, 'parse_args', return_value=d.parse_args(['--max', '1', '--lang', 'en'] + (['--paste'] if paste else []))))
             stack.enter_context(patch.object(d, 'SOCK', str(Path(directory) / 'session.sock')))
             for name, replacement in {'try_stop_running': Mock(return_value=False),
                                       'stop_listener': Mock(), 'SessionLock': Mock(),
@@ -44,6 +50,9 @@ class WorkflowTests(unittest.TestCase):
                                       'save_history': Mock(), 'to_clipboard': Mock(return_value=True)}.items():
                 stack.enter_context(patch.object(d, name, replacement))
             stack.enter_context(patch('voice_to_clipboard.ui.overlay.Overlay'))
+            guard = Mock()
+            stack.enter_context(patch('voice_to_clipboard.platform.focus.make_guard', return_value=guard))
+            inject = stack.enter_context(patch.object(d, 'do_paste', side_effect=RuntimeError('Target changed') if paste_error else None))
             stack.enter_context(patch.object(d.atexit, 'register'))
             stream = Mock()
             stream.isatty.return_value = tty
@@ -53,6 +62,11 @@ class WorkflowTests(unittest.TestCase):
             d.save_history.assert_called_once_with('Hello', complete=True)
             d.to_clipboard.assert_called_once_with('Hello')
             model.close.assert_called_once()
+            if paste:
+                inject.assert_called_once_with("Hello", guard)
+                guard.close.assert_called_once()
+            else:
+                inject.assert_not_called()
             if tty:
                 self.assertTrue(any("поріг" in str(call) for call in stream.write.call_args_list))
 

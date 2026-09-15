@@ -9,65 +9,87 @@ from ..core.session import try_stop_running
 
 
 def main():
-    from voice_to_clipboard.platform.desktop import configure_text_output
+    import os
+    import queue
+    from ..platform.desktop import configure_text_output, SessionLock, cache_dir
+    from ..core.settings import read_modifiers, save_modifiers
+    from ..core.hotkey_session import SessionLauncher
+    from ..platform.windows_hotkeys import parse_modifiers
     configure_text_output()
-    parser = argparse.ArgumentParser(description='Keep running to enable Alt+Shift+U/E/L dictation shortcuts.')
+    parser = argparse.ArgumentParser(description='Global U/E/L dictation shortcuts. Ctrl+C quits after draining recording.')
     parser.add_argument('--no-overlay', action='store_true')
     parser.add_argument('--inference-device', choices=['auto', 'cpu', 'cuda', 'metal'], default='auto')
     parser.add_argument('--model', default=None)
+    parser.add_argument('--hotkey-modifiers', help='Modifiers for U/E/L, e.g. ctrl+alt; saved after successful registration')
     args = parser.parse_args()
-    from pynput import keyboard
-    from voice_to_clipboard.platform.desktop import SessionLock, cache_dir
+    explicit = args.hotkey_modifiers is not None
+    try:
+        args.hotkey_modifiers = args.hotkey_modifiers or read_modifiers()
+        parse_modifiers(args.hotkey_modifiers)
+        args.hotkey_modifiers = args.hotkey_modifiers.lower()
+    except (ValueError, RuntimeError, OSError) as exc:
+        parser.error(str(exc))
+    if sys.platform.startswith('linux') and os.environ.get('WAYLAND_DISPLAY'):
+        from ..platform.linux import wayland_hint
+        parser.error('Wayland: ' + wayland_hint())
+    if sys.platform == 'win32':
+        from ..platform.windows_hotkeys import layout_conflict
+        if layout_conflict(args.hotkey_modifiers):
+            print('Alt/Shift conflicts with the Windows layout switch setting. '
+                  'Use --hotkey-modifiers ctrl+alt, or change the system shortcut yourself.', flush=True)
     try:
         lock = SessionLock(cache_dir() / 'dictate-hotkeys.lock')
     except BlockingIOError:
         sys.exit('Hotkeys are already running')
-    children = []
-    last_launch = 0.0
+    launcher = SessionLauncher(args)
+    actions = queue.Queue(maxsize=8)
     quitting = threading.Event()
-    guard = threading.Lock()
-
-    def launch(lang, paste=False):
-        nonlocal last_launch
-        with guard:
-            if quitting.is_set():
-                return
-            now = time.monotonic()
-            if now - last_launch < .4:
-                return
-            last_launch = now
-            children[:] = [p for p in children if p.poll() is None]
-            cmd = [sys.executable, '-m', 'voice_to_clipboard', '--lang', lang, '--silence', '0', '--inference-device', args.inference_device]
-            if args.model:
-                cmd += ['--model', args.model]
-            if lang == 'en':
-                cmd += ['--beam', '5']
-            if paste:
-                cmd.append('--paste')
-            if not args.no_overlay:
-                cmd.append('--overlay')
-            children.append(spawn_background(cmd))
-
-    print('Ready: Alt+Shift+U Ukrainian | Alt+Shift+E English | Alt+Shift+L Ukrainian + paste. Ctrl+C to quit.')
-    listener = keyboard.GlobalHotKeys({'<alt>+<shift>+u': lambda: launch('uk'),
-                                       '<alt>+<shift>+e': lambda: launch('en'),
-                                       '<alt>+<shift>+l': lambda: launch('uk', True)})
+    def enqueue(lang, paste=False):
+        if not quitting.is_set():
+            try:
+                actions.put_nowait((lang, paste))
+            except queue.Full:
+                pass
+    callbacks = {'u': lambda: enqueue('uk'), 'e': lambda: enqueue('en'),
+                 'l': lambda: enqueue('uk', True)}
+    listener = None
     try:
+        if sys.platform == 'win32':
+            from ..platform.windows_hotkeys import NativeHotkeys
+            listener = NativeHotkeys(callbacks, args.hotkey_modifiers)
+        elif sys.platform == 'darwin':
+            from ..platform.macos import listener as create_listener
+            listener = create_listener(callbacks, args.hotkey_modifiers)
+        else:
+            from ..platform.linux import NativeHotkeys
+            listener = NativeHotkeys(callbacks, args.hotkey_modifiers)
         listener.start()
+        if explicit:
+            save_modifiers(args.hotkey_modifiers)
+        print(f'Ready: {args.hotkey_modifiers}+U Ukrainian | +E English | +L Ukrainian + paste. Ctrl+C to quit.', flush=True)
         try:
             while listener.is_alive():
-                time.sleep(.1)
+                try:
+                    lang, paste = actions.get(timeout=.1)
+                    launcher.launch(lang, paste)
+                except queue.Empty:
+                    launcher.tick()
+                except OSError as exc:
+                    print(f'Cannot start/stop dictation: {exc}', flush=True)
         except KeyboardInterrupt:
             print('Stopping hotkeys…', flush=True)
-        finally:
-            quitting.set()
-            listener.stop()
-            listener.join(timeout=2)
-        with guard:
-            active = [p for p in children if p.poll() is None]
-        drain_children(active)
     finally:
-        lock.close()
+        quitting.set()
+        if listener is not None:
+            listener.stop()
+            if listener.ident is not None:
+                listener.join(timeout=2)
+        try:
+            drain_children(launcher.children)
+        finally:
+            lock.close()
+    if getattr(listener, 'error', None):
+        sys.exit(str(listener.error))
     print('Hotkeys stopped.', flush=True)
 
 

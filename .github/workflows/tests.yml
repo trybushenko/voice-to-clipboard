@@ -20,10 +20,10 @@ jobs:
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "macOS" ] && [ "$(uname -m)" = "arm64" ]; then
-            python -m pip install '.[mac]'
+            python -m pip install '.[mac,hotkeys]'
             python -c "import mlx_whisper"
           else
-            python -m pip install '.[whisper]'
+            python -m pip install '.[whisper,hotkeys]'
             python -c "import faster_whisper"
           fi
       - run: python -m unittest discover -s tests -v

@@ -49,6 +49,7 @@ From the repository root:
 ```sh
 /usr/bin/python3 scripts/check_overlay.py
 python scripts/benchmark_worker.py
+python scripts/check_paste.py
 ```
 
 The Linux X11 overlay check shows a six-second demo, checks focus and cleanup,
@@ -71,3 +72,7 @@ python -m pip wheel --no-deps . -w dist
 Install the wheel in a fresh virtualenv, change to another directory, and run all
 three commands with `--help` plus the tests using an absolute discovery path.
 This detects imports accidentally resolved from the checkout or old flat modules.
+
+`check_paste.py` opens an isolated test field and verifies exact Unicode insertion
+using the platform clipboard/input APIs; it puts synthetic text in the clipboard.
+Use `--auto` for an unattended GUI check on an interactive desktop.

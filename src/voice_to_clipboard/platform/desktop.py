@@ -72,18 +72,19 @@ def to_clipboard(text):
         return False
 
 
-def do_paste():
-    time.sleep(.15)
+def do_paste(expected=None, guard=None):
+    if sys.platform == 'win32':
+        from .windows_input import send_paste
+        send_paste(expected, guard)
+        return
+    if guard is None:
+        raise RuntimeError('Paste destination is unavailable; paste manually')
+    guard.check()
     if sys.platform == 'darwin':
-        subprocess.run(['osascript', '-e', 'tell application "System Events" to keystroke "v" using command down'], timeout=5, check=True)
-    elif sys.platform == 'win32':
-        from pynput.keyboard import Controller, Key
-        keyboard = Controller()
-        with keyboard.pressed(Key.ctrl):
-            keyboard.press('v')
-            keyboard.release('v')
-    elif shutil.which('xdotool') and not os.environ.get('WAYLAND_DISPLAY'):
-        subprocess.run(['xdotool', 'key', '--clearmodifiers', 'ctrl+v'], timeout=5, check=True)
+        from .macos import send_paste
+        send_paste(expected, guard)
+    elif not os.environ.get('WAYLAND_DISPLAY'):
+        from .linux import send_paste
+        send_paste(expected, guard)
     else:
-        raise RuntimeError('Automatic paste unavailable; use your normal paste shortcut')
-
+        raise RuntimeError('Automatic paste unavailable on Wayland; use your normal paste shortcut')

@@ -60,7 +60,7 @@ voice-hotkeys
 ```
 
 For NVIDIA, install the CUDA libraries above. On Wayland, install `wl-clipboard`,
-configure desktop shortcuts manually, and paste normally: pynput global hotkeys
+configure desktop shortcuts manually, and paste normally: the native hotkey host
 and automatic paste are not generally available under Wayland.
 GTK overlay uses `/usr/bin/python3`; the core application uses your virtualenv.
 

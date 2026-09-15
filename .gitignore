@@ -23,3 +23,5 @@ backups/
 Thumbs.db
 .codex/
 .agents/
+
+settings.json

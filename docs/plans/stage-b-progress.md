@@ -51,3 +51,11 @@
 і [Microsoft Process Creation Flags](https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags).
 `CREATE_NEW_PROCESS_GROUP` відключає Ctrl+C для нової групи; його не слід
 механічно змішувати з `CREATE_NEW_CONSOLE`, який цей прапорець ігнорує.
+
+## Приймання користувачем
+
+Користувач підтвердив успішне проходження Windows-сценаріїв; єдиний збій —
+тестова підміна SpeechGate в інтерактивному терміналі. Виправлено в `905c1a6`:
+числові поля та явні TTY/non-TTY перевірки. B змерджено в main за погодженням
+користувача. Попередній список відкритих пунктів збережений як історія; окремий
+Pause/resume UI ще потребує реалізації.
