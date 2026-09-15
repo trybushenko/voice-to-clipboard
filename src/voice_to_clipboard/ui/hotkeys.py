@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--model', default=None)
     parser.add_argument('--hotkey-modifiers', help='Modifiers for U/E/L, e.g. ctrl+alt; saved after successful registration')
     commands = parser.add_mutually_exclusive_group()
+    commands.add_argument('--background', action='store_true', help='Start a console-independent host and return')
     for operation in ('pause', 'resume', 'status', 'stop-recording', 'quit'):
         commands.add_argument('--' + operation, dest='operation', action='store_const', const=operation,
                               help='Control the running hotkey host: ' + operation)
@@ -34,6 +35,13 @@ def main():
             print(json.dumps(request(endpoint, args.operation), ensure_ascii=False))
         except (OSError, EOFError, ValueError, RuntimeError) as exc:
             sys.exit(f'Hotkey host unavailable or request failed: {exc}. Start voice-hotkeys first.')
+        return
+    if args.background:
+        from ..platform.background import start
+        try:
+            print(json.dumps(start([arg for arg in sys.argv[1:] if arg != '--background'], endpoint)))
+        except (OSError, RuntimeError) as exc:
+            sys.exit(str(exc))
         return
     explicit = args.hotkey_modifiers is not None
     try:
@@ -74,7 +82,10 @@ def main():
         return NativeHotkeys(callbacks, args.hotkey_modifiers)
     controller = ListenerController(create_listener, enqueue)
     control = None
-    def handle(operation):
+    def handle(payload):
+        operation = payload["op"]
+        if operation == "check-paste":
+            return launcher.check_paste(payload.get("token"))
         if operation == 'pause':
             controller.pause()
             print('Hotkeys paused; active dictation continues. Use --resume or --stop-recording.', flush=True)
@@ -90,6 +101,7 @@ def main():
         elif operation == 'quit':
             quitting.set()
         return {'state': 'stopping' if quitting.is_set() else 'paused' if controller.paused else 'listening',
+                'pid': os.getpid(),
                 'dictation_processes': sum(p.poll() is None for p in launcher.children)}
     try:
         controller.resume()
@@ -124,6 +136,7 @@ def main():
             try:
                 drain_children(launcher.children)
             finally:
+                launcher.close()
                 lock.close()
     if getattr(controller.listener, 'error', None):
         sys.exit(str(controller.listener.error))

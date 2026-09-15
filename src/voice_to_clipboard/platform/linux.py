@@ -7,32 +7,51 @@ import time
 
 def focus_probe():
     if os.environ.get('WAYLAND_DISPLAY'):
-        raise RuntimeError('Wayland does not expose a safe paste destination')
+        raise RuntimeError('Wayland: paste manually using the desktop clipboard')
+    import json
+    import queue
+    from pathlib import Path
     from Xlib.display import Display
-    from pynput import keyboard, mouse
     display = Display()
-    changes = [0]
-    def click(x, y, button, pressed):
-        if pressed:
-            changes[0] += 1
-    def key(key):
-        # Navigation/typing may move the caret or select another field.
-        if key in (keyboard.Key.tab, keyboard.Key.enter, keyboard.Key.esc,
-                   keyboard.Key.up, keyboard.Key.down, keyboard.Key.left, keyboard.Key.right,
-                   keyboard.Key.home, keyboard.Key.end, keyboard.Key.page_up, keyboard.Key.page_down):
-            changes[0] += 1
-    pointer = mouse.Listener(on_click=click, on_scroll=lambda *args: click(0, 0, None, True))
-    keys = keyboard.Listener(on_press=key)
-    pointer.start(); keys.start()
+    try:
+        process = subprocess.Popen(['/usr/bin/python3', str(Path(__file__).with_name('atspi_probe.py'))],
+                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                               text=True, start_new_session=True)
+    except Exception:
+        display.close()
+        raise
+    replies = queue.Queue()
+    def read():
+        for line in process.stdout:
+            replies.put(line)
+        replies.put(None)
+    reader = threading.Thread(target=read, daemon=True)
+    reader.start()
+    first = [True]
     def snapshot():
+        if not first[0]:
+            process.stdin.write('check\n'); process.stdin.flush()
+        first[0] = False
+        try:
+            line = replies.get(timeout=2.5)
+        except queue.Empty:
+            raise RuntimeError('Accessibility field check timed out; paste manually')
+        if not line:
+            raise RuntimeError('Install python3-gi and gir1.2-atspi-2.0 for safe field detection')
+        response = json.loads(line)
+        if response.get('ok') is not True:
+            raise RuntimeError(response.get('error', 'Focused field changed; paste manually'))
         focus = display.get_input_focus().focus
-        identifier = getattr(focus, 'id', 0)
-        if not identifier or not pointer.is_alive() or not keys.is_alive():
-            return None
-        return [identifier, changes[0]]
+        return getattr(focus, 'id', None)
     def close():
-        pointer.stop(); keys.stop()
-        pointer.join(timeout=.3); keys.join(timeout=.3)
+        if process.poll() is None:
+            process.terminate()
+        try:
+            process.wait(timeout=.5)
+        except subprocess.TimeoutExpired:
+            process.kill(); process.wait(timeout=1)
+        reader.join(timeout=.2)
+        process.stdin.close(); process.stdout.close()
         display.close()
     snapshot.close = close
     return snapshot

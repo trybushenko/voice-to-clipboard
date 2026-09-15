@@ -19,7 +19,7 @@ class Overlay:
                 from voice_to_clipboard.platform.processes import spawn_background
                 self.process = spawn_background(
                     [python, str(Path(__file__).resolve()), lang],
-                    stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, no_console=True)
                 self.thread = threading.Thread(target=self._write, daemon=True)
                 self.thread.start()
             except OSError:

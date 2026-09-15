@@ -4,23 +4,42 @@ import time
 
 
 def focus_probe():
-    from ApplicationServices import (AXIsProcessTrusted, AXUIElementCreateSystemWide,
-                                      AXUIElementCopyAttributeValue)
-    from CoreFoundation import CFEqual
-    if not AXIsProcessTrusted():
+    import ApplicationServices as ax
+    import CoreFoundation as cf
+    if not ax.AXIsProcessTrusted():
         raise RuntimeError('Allow Accessibility for Python/terminal in System Settings')
-    system = AXUIElementCreateSystemWide()
-    initial = [None]
-    generation = [0]
+    system = ax.AXUIElementCreateSystemWide()
+    status, initial = ax.AXUIElementCopyAttributeValue(system, 'AXFocusedUIElement', None)
+    if status or initial is None:
+        raise RuntimeError('Focused field is unavailable')
+    status, pid = ax.AXUIElementGetPid(initial, None)
+    if status:
+        raise RuntimeError('Focused application is unavailable')
+    application = ax.AXUIElementCreateApplication(pid)
+    changed = [False]
+    def event(observer, element, notification, context):
+        if not cf.CFEqual(initial, element):
+            changed[0] = True
+    status, observer = ax.AXObserverCreate(pid, event, None)
+    if status:
+        raise RuntimeError('Focus notifications unavailable; paste manually')
+    notification = 'AXFocusedUIElementChanged'
+    status = ax.AXObserverAddNotification(observer, application, notification, None)
+    if status:
+        raise RuntimeError('Application does not support focus notifications; paste manually')
+    source = ax.AXObserverGetRunLoopSource(observer)
+    loop = cf.CFRunLoopGetCurrent()
+    cf.CFRunLoopAddSource(loop, source, cf.kCFRunLoopDefaultMode)
     def snapshot():
-        status, element = AXUIElementCopyAttributeValue(system, 'AXFocusedUIElement', None)
-        if status or element is None:
-            return None
-        if initial[0] is None:
-            initial[0] = element
-        elif not CFEqual(initial[0], element):
-            generation[0] += 1
-        return generation[0]
+        cf.CFRunLoopRunInMode(cf.kCFRunLoopDefaultMode, .001, False)
+        status, element = ax.AXUIElementCopyAttributeValue(system, 'AXFocusedUIElement', None)
+        if status or element is None or not cf.CFEqual(initial, element):
+            changed[0] = True
+        return None if changed[0] else pid
+    def close():
+        ax.AXObserverRemoveNotification(observer, application, notification)
+        cf.CFRunLoopRemoveSource(loop, source, cf.kCFRunLoopDefaultMode)
+    snapshot.close = close
     return snapshot
 
 

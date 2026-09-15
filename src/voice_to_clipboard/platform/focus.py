@@ -8,6 +8,8 @@ import time
 
 class FocusGuard:
     def __init__(self, probe, expected=None, interval=.05):
+        if sys.platform == "win32":
+            import comtypes  # Initialize module on caller, not the event-handler MTA thread.
         self.probe = probe
         self.interval = interval
         self.stopping = threading.Event()
@@ -68,22 +70,57 @@ def windows_probe():
     import ctypes
     import comtypes
     from comtypes.client import CreateObject, GetModule
-    comtypes.CoInitialize()
-    module = GetModule('UIAutomationCore.dll')
-    automation = CreateObject(module.CUIAutomation, interface=module.IUIAutomation)
-    user = ctypes.WinDLL('user32', use_last_error=True)
-    user.GetForegroundWindow.restype = ctypes.c_void_p
-    def snapshot():
-        window = user.GetForegroundWindow()
-        element = automation.GetFocusedElement()
-        if not window or not element or element.CurrentIsPassword:
-            return None
-        runtime = element.GetRuntimeId()
-        if runtime is None:
-            return None
-        return [int(window), list(runtime)]
-    snapshot.close = comtypes.CoUninitialize
-    return snapshot
+    comtypes.CoInitializeEx(0)  # UI Automation event subscriptions require a non-UI MTA.
+    automation = None
+    handler = None
+    try:
+        module = GetModule('UIAutomationCore.dll')
+        automation = CreateObject(module.CUIAutomation, interface=module.IUIAutomation)
+        user = ctypes.WinDLL('user32', use_last_error=True)
+        user.GetForegroundWindow.restype = ctypes.c_void_p
+        initial = [None]
+        invalid = threading.Event()
+        def identity(element):
+            if not element or element.CurrentIsPassword:
+                return None
+            runtime = element.GetRuntimeId()
+            return list(runtime) if runtime is not None else None
+        class Handler(comtypes.COMObject):
+            _com_interfaces_ = [module.IUIAutomationFocusChangedEventHandler]
+            def HandleFocusChangedEvent(self, sender):
+                try:
+                    if initial[0] is not None and identity(sender) != initial[0]:
+                        invalid.set()
+                except Exception:
+                    invalid.set()
+                return 0
+        handler = Handler()
+        # Establish baseline before subscribing; a final snapshot also checks for a
+        # change during subscription. The handler invalidates even if focus returns.
+        initial[0] = identity(automation.GetFocusedElement())
+        automation.AddFocusChangedEventHandler(None, handler)
+        def snapshot():
+            if invalid.is_set():
+                return None
+            window = user.GetForegroundWindow()
+            current = identity(automation.GetFocusedElement())
+            if not window or not current or current != initial[0]:
+                return None
+            return [int(window), current]
+        def close():
+            nonlocal automation, handler
+            try:
+                automation.RemoveFocusChangedEventHandler(handler)
+            finally:
+                handler = None
+                automation = None
+                comtypes.CoUninitialize()
+        snapshot.close = close
+        return snapshot
+    except Exception:
+        automation = None
+        comtypes.CoUninitialize()
+        raise
 
 
 def capture_windows_target():
@@ -94,7 +131,9 @@ def capture_windows_target():
         guard.close()
 
 
-def make_guard():
+def make_guard(local=False):
+    if not local and os.environ.get("DICTATE_PASTE_TOKEN"):
+        return RemoteGuard(os.environ["DICTATE_PASTE_TOKEN"], os.environ["DICTATE_CONTROL_PATH"])
     if sys.platform == 'win32':
         raw = os.environ.get('DICTATE_PASTE_TARGET')
         expected = json.loads(raw) if raw else None
@@ -114,5 +153,21 @@ def make_guard():
 class UnavailableGuard:
     def check(self):
         raise RuntimeError('Safe field verification is unavailable; text is in clipboard. Paste manually')
+    def close(self):
+        pass
+
+
+class RemoteGuard:
+    """Ask the original host monitor; never recapture a new destination in a child."""
+    def __init__(self, token, path):
+        self.token, self.path = token, path
+    def check(self):
+        from ..core.host_control import request
+        try:
+            result = request(self.path, 'check-paste', token=self.token)
+            if result.get('ok') is not True:
+                raise RuntimeError('Paste destination was not confirmed')
+        except (OSError, EOFError, ValueError, RuntimeError) as exc:
+            raise RuntimeError('Original paste target changed or host unavailable. Text is in clipboard; paste manually') from exc
     def close(self):
         pass

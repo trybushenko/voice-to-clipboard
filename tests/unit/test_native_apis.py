@@ -12,11 +12,20 @@ class NativeAPITests(unittest.TestCase):
         self.assertTrue(callable(api().SendInput))
         self.assertTrue(callable(user_api().RegisterHotKey))
         self.assertIsInstance(layout_conflict('alt+shift'), bool)
-        probe = windows_probe()
-        try:
-            self.assertTrue(callable(probe))
-        finally:
-            probe.close()
+        import comtypes
+        import threading
+        errors = []
+        def exercise():
+            try:
+                probe = windows_probe()
+                probe.close()
+            except Exception as exc:
+                errors.append(exc)
+        thread = threading.Thread(target=exercise)
+        thread.start()
+        thread.join(10)
+        self.assertFalse(thread.is_alive())
+        self.assertEqual(errors, [])
 
     @unittest.skipUnless(sys.platform == 'darwin', 'macOS native API')
     def test_macos_accessibility_and_quartz_bindings(self):

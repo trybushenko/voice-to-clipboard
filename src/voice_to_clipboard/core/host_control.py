@@ -6,12 +6,12 @@ import time
 from ..worker.transport import Server, connect
 from ..worker.protocol import receive, send
 
-OPERATIONS = {'pause', 'resume', 'status', 'stop-recording', 'quit'}
+OPERATIONS = {'pause', 'resume', 'status', 'stop-recording', 'quit', 'check-paste'}
 
 
-def request(path, operation):
+def request(path, operation, **details):
     with connect(path, timeout=10) as sock:
-        send(sock, {'op': operation})
+        send(sock, {'op': operation, **details})
         result = receive(sock)
     if 'error' in result:
         raise RuntimeError(result['error'])
@@ -40,12 +40,12 @@ class ControlServer:
                 try:
                     payload = receive(conn)
                     operation = payload.get('op') if isinstance(payload, dict) else None
-                    if operation not in OPERATIONS:
+                    if not isinstance(operation, str) or operation not in OPERATIONS:
                         send(conn, {'error': 'Unknown hotkey operation'})
                         continue
                     reply = queue.Queue(maxsize=1)
                     cancelled = threading.Event()
-                    self.requests.put_nowait((operation, reply, cancelled))
+                    self.requests.put_nowait((payload, reply, cancelled))
                     deadline = time.monotonic() + 8
                     while True:
                         try:

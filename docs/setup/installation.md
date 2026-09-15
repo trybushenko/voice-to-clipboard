@@ -79,3 +79,17 @@ remain supported by `scripts/configure-dictation.py`.
 
 
 [Back to overview](../../README.md)
+
+### Console-independent hotkeys (B/C testing branch)
+
+After installation, run `voice-hotkeys --background` once. The command returns;
+closing that terminal does not close the background host. Use `--status`, `--pause`,
+`--resume`, `--stop-recording`, `--quit` to control it. This is not login autostart.
+The host's diagnostic log is `logs/hotkeys.log` under the application data directory;
+recording-child output is discarded in background mode. Use foreground for diagnostics.
+
+X11 guarded paste additionally needs system Python GI/AT-SPI bindings (Debian/Ubuntu:
+`python3-gi gir1.2-atspi-2.0`) and an accessibility-enabled target application.
+Unavailable field identity safely leaves text in the clipboard. Wayland uses the
+existing desktop-shortcut/manual-paste workflow. The Tk paste-check script is intended
+for Windows/macOS; Linux Tk may not expose AT-SPI field identity.

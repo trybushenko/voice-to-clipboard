@@ -3,9 +3,9 @@
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
 
-**Статус: A завершено; B — основні виправлення прийняті користувачем і змерджені,
-залишились no-console/desktop питання; C — реалізація часткова, фізичне приймання
-Windows/macOS відкрите. D/E/F не завершені.**
+**Статус: A завершено; реалізацію B/C завершено в тестовій гілці з явним
+clipboard-only fallback для непідтримуваних полів/Wayland. Нові Windows/macOS
+ручні перевірки залишаються gate приймання; C ще не змерджено. D/E/F окремо.**
 
 Позначення: `[x]` — конкретна реалізація або перевірка, для якої є доказ;
 `[ ]` — відсутня реалізація чи непроведена перевірка. Код і ручне приймання
@@ -14,8 +14,8 @@ Windows/macOS відкрите. D/E/F не завершені.**
 | Етап | Що вже є | Що залишилось | Доказ |
 | --- | --- | --- | --- |
 | A | src package, тести/скрипти/docs, wheel, сумісний launcher | Немає відкритих робіт A; tray/setup/packaging — D/E | `69d97a8`, [звіт A](stage-a-verification.md) |
-| B | Ізоляція worker, retry/atomic IPC, Ctrl+C/drain/cancel; тепер також CLI pause/resume/status/stop/quit | Нові control-команди перевірити на Windows/macOS; no-console і закриття консолі — окремий gate | `9f63f2d`, `905c1a6`, Windows-фідбек користувача, [звіт B](stage-b-progress.md) |
-| C | Нативні hotkeys, SendInput, modifiers/settings, захист вставки, result overlay | Ручна матриця Windows/macOS; повна ідентичність поля на X11/ранній capture macOS; Wayland portal binding не реалізований | `1d545b0`, 6 CI jobs, [звіт C](stage-c-verification.md) |
+| B | Ізоляція worker, retry/atomic IPC, Ctrl+C/drain/cancel; тепер також CLI pause/resume/status/stop/quit | Background/control реалізовані; фізичні Windows/macOS перевірки — gate | `9f63f2d`, `905c1a6`, Windows-фідбек користувача, [звіт B](stage-b-progress.md) |
+| C | Нативні hotkeys, SendInput, modifiers/settings, захист вставки, result overlay | Ручна матриця Windows/macOS; Wayland — явно manual fallback | `1d545b0`, 6 CI jobs, [звіт C](stage-c-verification.md) |
 
 [Повна ревізія A/B/C і доробки](abc-audit.md). Документ покриває всі 8 пунктів
 початкового Windows-фідбеку; не всі вони належать до A/B/C.
@@ -55,7 +55,7 @@ Windows/macOS відкрите. D/E/F не завершені.**
 | 3: зайві літери | `platform/windows_hotkeys.py`, `macos.py`, `linux.py` | RegisterHotKey / selective tap / passive grabs; реальний X11 smoke пройшов, Windows/macOS manual gate відкритий | C |
 | 4, 5: встановлення | `docs/setup/`, extras/backend | Інструкції впорядковані; автоматизації залежностей і installers немає | E |
 | 6: Ctrl+C host | `ui/hotkeys.py`, `core/host_control.py` | Керований loop, drain/cancel, окремі pause/resume; GUI-керування ще D | B, D |
-| 7: worker/10054 | `platform/processes.py`, `worker/client.py`, `worker/transport.py` | NEW_PROCESS_GROUP, retry, atomic endpoint, recovery; користувач підтвердив B на Windows | B |
+| 7: worker/10054 | `platform/processes.py`, `worker/client.py`, `worker/transport.py` | NEW_PROCESS_GROUP/CREATE_NO_WINDOW, retry, atomic endpoint, recovery; користувач підтвердив B на Windows | B |
 | 8: структура | `src/`, `tests/`, `scripts/`, `docs/` | Виконано A; runtime history/settings залишаються поза Git | A |
 
 ## 3. Послідовність реалізації
@@ -135,8 +135,10 @@ dictate.py  # сумісна коренева обгортка
   `--stop-recording`, `--quit` через приватний IPC. Pause звільняє реєстрації,
   не обриває запис; resume створює новий listener, старі queued actions відкидаються.
 - [ ] GUI/menu pause/resume/quit — **D**, не реалізовано у CLI-поставці B.
-- [ ] No-console worker/host policy (`CREATE_NO_WINDOW` або GUI launcher) —
-  **B/D interface**, ще не реалізовано й не замінюється NEW_PROCESS_GROUP.
+- [x] No-console policy: worker/overlay використовують CREATE_NO_WINDOW;
+  `voice-hotkeys --background` запускає незалежний host та dictation children.
+  Повторний запуск повертає чинний PID; host-журнал без transcript/audio.
+  GUI launcher/autostart лишається D, фізичний Windows console-close gate нижче.
 
 **Перевірки й залишок приймання**
 
@@ -157,9 +159,7 @@ dictate.py  # сумісна коренева обгортка
 
 ### C. Хоткеї без зайвих літер та справжня автовставка — P0
 
-**Статус: код значною мірою реалізований у `codex/windows-hotkeys-paste`, але C
-ще не прийнятий і не змерджений.** Попереднє формулювання «повністю готово» було
-занадто сильним: platform acceptance та наведені нижче обмеження залишаються.
+**Статус: реалізація завершена в тестовій гілці; фізичне приймання C відкрите.**
 
 **Реалізація**
 
@@ -179,14 +179,15 @@ dictate.py  # сумісна коренева обгортка
 - [x] macOS selective Quartz tap, Accessibility/Input Monitoring preflight,
   AX field tracking і Command+V; X11 passive grabs і XTEST без clearmodifiers.
 - [x] Wayland capability probe й чесна дія: desktop bindings + manual paste.
-- [ ] Wayland GlobalShortcuts portal **binding** і автоматична вставка не реалізовані.
-  Їх наявність не випливає з capability probe; підтримка лише задокументованого fallback.
-- [ ] Повна field identity на X11: зараз native focus + навігація/кліки;
-  програмну зміну поля в одному HWND/X window не гарантовано виявлено.
-- [ ] macOS target capture саме в hotkey host до запуску recording child:
-  зараз AX capture починається в recording process. Startup interval лишається відкритим.
-- [ ] Абсолютна гарантія виявлення миттєвого focus-change не надається polling-монітором.
-  Оцінити native focus events для суворішої гарантії; не приховувати поточне обмеження.
+- [x] Межа підтримки Wayland визначена: desktop bindings + ручна вставка.
+  Portal binding/автовставка не входять до завершеної поставки C; окреме розширення.
+- [x] X11: AT-SPI field identity + native focus; sticky focus events виявляють
+  програмну зміну поля. Потрібні system Python GI/Atspi; недоступний provider → manual.
+- [x] Host утримує початковий focus guard на всіх ОС від старту до завершення child;
+  child перевіряє саме його через session token IPC, не обирає новий target.
+- [x] Події UIA (Windows), AXObserver (macOS), AT-SPI (X11) доповнюють polling.
+  Повної атомарності між фокусом, подіями provider й обробкою Ctrl+V ОС не надає.
+  Невизначеність/помилка монітора → clipboard-only, без перенесення фокусу.
 
 **Перевірки й залишок приймання**
 
@@ -199,7 +200,7 @@ dictate.py  # сумісна коренева обгортка
 - [ ] Windows: змінене/закрите поле або вікно, повернення до початкового поля,
   утримані modifiers — переконатися у fallback без випадкової вставки.
 - [ ] macOS фізична перевірка event tap, field tracking, permissions та вставки.
-- [ ] Linux: перевірка різних DE/XKB layouts та описаного X11 field-limit;
+- [ ] Linux: перевірка різних DE/XKB layouts та описаного AT-SPI provider fallback;
   Wayland — системних desktop bindings/manual paste, не X11 API.
 
 [Звіт C](stage-c-verification.md) · [Windows-гайд](../setup/windows-stage-c-test.md).

@@ -1,5 +1,12 @@
 # Stage C implementation and verification
 
+> Оновлення 2026-09-15: завершальна реалізація B/C додала background/no-console,
+> безперервний host focus guard і native focus events. Поточний стан —
+> [ревізія A/B/C](abc-audit.md); [повний Windows-гайд](../setup/windows-stage-c-test.md).
+> Нижче збережена історія попередніх перевірок; її відкриті implementation-пункти
+> замінено актуальним checklist головного плану. Ручне Windows/macOS приймання нових змін відкрите.
+
+
 Implementation branch: `codex/windows-hotkeys-paste`. Most code is implemented, but the focus/portal limits below remain open work.
 Physical Windows/macOS acceptance is not claimed completed from Linux.
 See the corrected [A/B/C audit](abc-audit.md); C is not fully accepted.

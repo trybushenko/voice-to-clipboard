@@ -85,7 +85,7 @@ class DeliveryTests(unittest.TestCase):
     def test_mixed_shortcut_stops_without_changing_original_action(self):
         args = SimpleNamespace(model=None, inference_device='auto', no_overlay=True)
         process = Mock(); process.poll.return_value = None
-        with patch.object(hotkey_session, 'try_stop_running', return_value=False) as stop, patch.object(hotkey_session, 'spawn_background', return_value=process) as spawn, patch.object(hotkey_session.sys, 'platform', 'linux'):
+        with patch.object(hotkey_session, 'try_stop_running', return_value=False) as stop, patch.object(hotkey_session, 'spawn_background', return_value=process) as spawn, patch.object(hotkey_session.sys, 'platform', 'linux'), patch('voice_to_clipboard.platform.focus.make_guard'):
             launcher = hotkey_session.SessionLauncher(args)
             launcher.launch('uk', True)
             launcher.launch('en', False)
