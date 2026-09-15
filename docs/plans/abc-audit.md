@@ -31,8 +31,12 @@
   pause/resume/quit працюють, endpoint видаляється.
 - GTK/AT-SPI: початкове поле підтверджене; програмний перехід у друге й назад
   залишає guard заблокованим. Без мікрофона/приватного тексту.
-- CI та фізичний Windows протокол — окремі докази; результати поточної поставки
-  додаються після запуску. Не прирівнювати зелені тести до мікрофона/caret acceptance.
+- CI реалізації `8a0f34a`: [усі 6 jobs успішні](https://github.com/trybushenko/voice-to-clipboard/actions/runs/34968697926),
+  Windows/macOS/Linux × Python 3.11/3.12; Windows перевірив UIA subscription і
+  no-console child. Це не замінює фізичне мікрофон/caret acceptance.
+- Додатковий GUI smoke виявив успадковані stdout/stderr clipboard-owner процесом;
+  виправлено явним DEVNULL, щоб батьківські captured pipes могли закритися.
+  Повторний GTK smoke: точний Unicode вставився один раз, фокус збережено, процес завершився.
 
 ## Межі та наступна робота
 

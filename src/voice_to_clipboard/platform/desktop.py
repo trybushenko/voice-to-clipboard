@@ -67,7 +67,8 @@ def to_clipboard(text):
         return False
     try:
         # Do not capture inherited pipes from a clipboard owner process.
-        return subprocess.run(command, input=text.encode('utf-8'), timeout=5, check=False).returncode == 0
+        return subprocess.run(command, input=text.encode('utf-8'), stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL, timeout=5, check=False).returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         return False
 

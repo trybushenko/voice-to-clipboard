@@ -47,6 +47,8 @@ class PortabilityTests(unittest.TestCase):
             self.assertTrue(desktop.to_clipboard('Привіт 👋'))
             self.assertEqual(run.call_args.args[0], ['pbcopy'])
             self.assertEqual(run.call_args.kwargs['input'], 'Привіт 👋'.encode())
+            self.assertEqual(run.call_args.kwargs['stdout'], desktop.subprocess.DEVNULL)
+            self.assertEqual(run.call_args.kwargs['stderr'], desktop.subprocess.DEVNULL)
 
     def test_windows_clipboard_dispatch(self):
         with patch.object(desktop.sys, 'platform', 'win32'), patch.object(desktop, '_windows_clipboard', return_value=True) as copy:
