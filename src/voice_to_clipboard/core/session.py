@@ -2,6 +2,8 @@ import os
 import socket
 import threading
 from ..platform.paths import cache_dir
+from ..platform.files import remove_endpoint
+from pathlib import Path
 from ..worker.transport import Server, connect
 
 SOCK = str(cache_dir() / "dictate.sock")
@@ -17,14 +19,12 @@ def try_stop_running():
         return True
     except (ConnectionRefusedError, FileNotFoundError):
         if os.path.exists(SOCK):
-            os.unlink(SOCK)                      # осиротілий сокет після падіння
+            remove_endpoint(Path(SOCK))                      # осиротілий сокет після падіння
         return False
 
 
 def stop_listener(stop_event):
     os.makedirs(os.path.dirname(SOCK), exist_ok=True)
-    if os.path.exists(SOCK):
-        os.unlink(SOCK)
     srv = Server(SOCK)
 
     def serve():
@@ -32,7 +32,13 @@ def stop_listener(stop_event):
             conn, _ = srv.accept()
             with conn:
                 conn.settimeout(2)
-                if conn.recv(4) == b"stop":
+                message = b""
+                while len(message) < 4:
+                    part = conn.recv(4 - len(message))
+                    if not part:
+                        break
+                    message += part
+                if message == b"stop":
                     stop_event.set()
         except OSError:
             pass

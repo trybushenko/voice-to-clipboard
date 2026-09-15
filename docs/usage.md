@@ -1,8 +1,14 @@
 # Usage and storage
 
 `voice-hotkeys` stays open to listen for Alt+Shift+U/E/L. Run it manually when
-needed; installation does not add a login service. Stop it with Ctrl+C. A recording
-already in progress remains independent: stop it with `dictate` before exiting.
+needed; installation does not add a login service. Stop it with Ctrl+C. The host stops accepting shortcuts, requests the active
+recording to finish, and waits for transcription/clipboard delivery. A second
+Ctrl+C during this wait explicitly cancels its owned dictation processes. The
+persistent model remains independent. If draining exceeds 15 minutes, the host
+exits with a message and leaves the dictation process running.
+
+In the dictation CLI, Ctrl+C requests recording stop and waits for the final
+transcription. Further Ctrl+C presses during this drain do not discard the tail.
 
 You can also use the CLI (`dictate` and `voice-to-clipboard` are aliases):
 

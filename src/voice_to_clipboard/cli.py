@@ -3,6 +3,8 @@ import argparse
 import atexit
 import json
 import os
+from pathlib import Path
+from .platform.files import remove_endpoint
 import sys
 import threading
 import time
@@ -10,6 +12,7 @@ import numpy as np
 from .platform.desktop import SessionLock, notify, to_clipboard, do_paste, configure_text_output
 from .core.speech_gate import SAMPLE_RATE, STUCK_WARN_S, SpeechGate
 from .core.recording import Recorder
+from .core.lifecycle import stop_on_interrupt
 from .core.session import SOCK, try_stop_running, stop_listener
 from .core.history import read_history, save_history, latest_text
 from .core.transcription import Transcriber, load_model
@@ -129,6 +132,12 @@ def main():
         calibrate(a.calibrate, gate_kwargs, device)
         return
 
+    stop_event = threading.Event()
+    with stop_on_interrupt(stop_event):
+        record(a, device, tty, gate_kwargs, stop_event)
+
+
+def record(a, device, tty, gate_kwargs, stop_event):
     if try_stop_running():          # той самий хоткей вдруге = стоп
         sys.exit(0)
 
@@ -145,7 +154,6 @@ def main():
     except (OSError, ValueError) as exc:
         sys.exit(f"Історія: {exc}")
 
-    stop_event = threading.Event()
     srv = stop_listener(stop_event)
 
     gate = SpeechGate(**gate_kwargs)
@@ -156,7 +164,7 @@ def main():
         notify(f"Мікрофон: {exc}", "critical")
         srv.close()
         if os.path.exists(SOCK):
-            os.unlink(SOCK)
+            remove_endpoint(Path(SOCK))
         sys.exit(1)
 
     from .ui.overlay import Overlay
@@ -223,7 +231,7 @@ def main():
     finally:
         srv.close()
         if os.path.exists(SOCK):
-            os.unlink(SOCK)
+            remove_endpoint(Path(SOCK))
 
     full = rec.finish()
     overlay.update(state="transcribing")
@@ -247,7 +255,8 @@ def main():
         if tty:
             emit("[wait] модель ще вантажиться…", tty)
     notify("⏳ Завершую розпізнавання")
-    scribe.join()
+    while scribe.is_alive():
+        scribe.join(timeout=.1)
     if not a.one_shot and "model" in holder:
         holder["model"].close()
 

@@ -6,6 +6,7 @@ import secrets
 import socket
 import sys
 import tempfile
+from ..platform.files import retry_file, remove_endpoint
 
 
 def connect(path, timeout=900):
@@ -17,7 +18,13 @@ def connect(path, timeout=900):
             info = json.loads(Path(path).read_text())
             sock.connect(('127.0.0.1', info['port']))
             sock.sendall(info['token'].encode('ascii'))
-            if sock.recv(2) != b'OK':
+            acknowledgement = b''
+            while len(acknowledgement) < 2:
+                part = sock.recv(2 - len(acknowledgement))
+                if not part:
+                    break
+                acknowledgement += part
+            if acknowledgement != b'OK':
                 raise ConnectionRefusedError('Local service authentication failed')
         else:
             sock.connect(str(path))
@@ -38,15 +45,15 @@ class Server:
                 self.socket.bind(('127.0.0.1', 0))
                 self.socket.listen(4)
                 self.token = secrets.token_hex(32).encode('ascii')
-                fd, tmp = tempfile.mkstemp(dir=self.path.parent)
+                fd, tmp = retry_file(lambda: tempfile.mkstemp(dir=self.path.parent), self.path)
                 try:
                     with os.fdopen(fd, 'w') as f:
                         json.dump({'port': self.socket.getsockname()[1], 'token': self.token.decode()}, f)
-                    os.replace(tmp, self.path)
+                    retry_file(lambda: os.replace(tmp, self.path), self.path)
                 finally:
-                    Path(tmp).unlink(missing_ok=True)
+                    remove_endpoint(Path(tmp))
             else:
-                self.path.unlink(missing_ok=True)
+                remove_endpoint(self.path)
                 self.socket.bind(str(path))
                 os.chmod(path, 0o600)
                 self.socket.listen(4)
@@ -80,7 +87,7 @@ class Server:
 
     def close(self):
         self.socket.close()
-        self.path.unlink(missing_ok=True)
+        remove_endpoint(self.path)
 
     def __enter__(self):
         return self

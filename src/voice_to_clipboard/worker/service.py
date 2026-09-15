@@ -4,6 +4,7 @@ import os
 import socket
 import numpy as np
 from ..platform.desktop import SessionLock
+from ..platform.files import remove_endpoint
 from ..backends import factory
 from .config import RUNTIME
 from .transport import Server
@@ -18,7 +19,6 @@ def serve(runtime=RUNTIME, idle=300, make_model=factory):
         return
     with lock:
         path = runtime / 'worker.sock'
-        path.unlink(missing_ok=True)
         model, config = None, None
         with Server(path) as server:
             server.settimeout(idle)
@@ -67,7 +67,7 @@ def serve(runtime=RUNTIME, idle=300, make_model=factory):
                             except OSError:
                                 pass
             finally:
-                path.unlink(missing_ok=True)
+                remove_endpoint(path)
 
 
 if __name__ == "__main__":

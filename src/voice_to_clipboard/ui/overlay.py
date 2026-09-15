@@ -16,7 +16,8 @@ class Overlay:
         if enabled:
             python = '/usr/bin/python3' if sys.platform.startswith('linux') else sys.executable
             try:
-                self.process = subprocess.Popen(
+                from voice_to_clipboard.platform.processes import spawn_background
+                self.process = spawn_background(
                     [python, str(Path(__file__).resolve()), lang],
                     stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 self.thread = threading.Thread(target=self._write, daemon=True)

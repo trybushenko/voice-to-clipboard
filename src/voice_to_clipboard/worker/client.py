@@ -5,6 +5,7 @@ import sys
 import time
 from types import SimpleNamespace
 import numpy as np
+from ..platform.processes import spawn_background
 from .config import RUNTIME
 from .transport import connect
 from .protocol import receive, send
@@ -22,21 +23,25 @@ class RemoteModel:
         self.runtime.mkdir(parents=True, exist_ok=True, mode=0o700)
         launched = False
         deadline = time.monotonic() + 15
+        delay = .025
+        path = self.runtime / 'worker.sock'
         while True:
             try:
-                self.sock = connect(self.runtime / 'worker.sock')
+                self.sock = connect(path, timeout=max(.01, min(2, deadline - time.monotonic())))
+                self.sock.settimeout(900)
                 break
-            except (FileNotFoundError, ConnectionRefusedError):
-                if not launched:
-                    subprocess.Popen([sys.executable, '-m', 'voice_to_clipboard.worker.service'],
+            except (FileNotFoundError, ConnectionRefusedError, PermissionError, TimeoutError) as exc:
+                if not launched and not isinstance(exc, PermissionError):
+                    spawn_background([sys.executable, '-m', 'voice_to_clipboard.worker.service'],
                                      env={**os.environ, 'DICTATE_RUNTIME': str(self.runtime)},
                                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                     stderr=subprocess.DEVNULL, start_new_session=True,
-                                     close_fds=True)
+                                     stderr=subprocess.DEVNULL)
                     launched = True
                 if time.monotonic() >= deadline:
-                    raise TimeoutError('Не вдалося запустити фонову модель')
-                time.sleep(.1)
+                    raise TimeoutError(f'Не вдалося підключитися до моделі: {path}. '
+                                       'Перевірте доступ до файлу та повторіть диктування.') from exc
+                time.sleep(min(delay, max(0, deadline - time.monotonic())))
+                delay = min(delay * 2, .25)
         try:
             self.request({'op': 'load', 'name': self.name, 'compute': self.compute, 'backend': self.backend, 'device': self.device})
         except Exception:

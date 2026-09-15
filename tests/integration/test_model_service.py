@@ -31,7 +31,7 @@ class ServiceTests(unittest.TestCase):
                 time.sleep(.01)
             # Patch only this module's dependency, not subprocess globally:
             # NumPy/Python may legitimately query Windows platform information.
-            with patch.object(m, 'subprocess', SimpleNamespace(Popen=Mock(side_effect=AssertionError('Unexpected launch')))):
+            with patch.object(m, 'spawn_background', side_effect=AssertionError('Unexpected launch')):
                 first = m.RemoteModel('test', 'float16', runtime)
                 audio = np.array([.1, -.4], dtype=np.float32)
                 segments, _ = first.transcribe(audio, language='uk')
