@@ -1,7 +1,8 @@
 # Stage C implementation and verification
 
-Implementation branch: `codex/windows-hotkeys-paste`. Code is ready for platform
-acceptance; physical Windows/macOS tests are not claimed completed from Linux.
+Implementation branch: `codex/windows-hotkeys-paste`. Most code is implemented, but the focus/portal limits below remain open work.
+Physical Windows/macOS acceptance is not claimed completed from Linux.
+See the corrected [A/B/C audit](abc-audit.md); C is not fully accepted.
 
 ## Implemented
 
@@ -31,7 +32,8 @@ acceptance; physical Windows/macOS tests are not claimed completed from Linux.
 
 ## Checks
 
-- 48 automated tests, with native-only cases skipped on other operating systems.
+- Baseline C: 48 automated tests; A/B/C audit revision: 53 tests, including
+  control IPC/pause/resume and registry cases. Native-only cases skip on other OSes.
 - Windows CI checks real UI Automation and SendInput binding construction in addition
   to mocked blocked-input, modifier, clipboard, focus and hotkey-conflict tests.
 - macOS CI checks native Accessibility/Quartz symbol availability.

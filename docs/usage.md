@@ -10,6 +10,22 @@ exits with a message and leaves the dictation process running.
 In the dictation CLI, Ctrl+C requests recording stop and waits for the final
 transcription. Further Ctrl+C presses during this drain do not discard the tail.
 
+The running host also accepts separate control commands:
+
+```sh
+voice-hotkeys --status
+voice-hotkeys --pause
+voice-hotkeys --resume
+voice-hotkeys --stop-recording
+voice-hotkeys --quit
+```
+
+Pause unregisters shortcuts and leaves an active recording running. Resume registers
+fresh shortcuts; events queued before pausing are discarded. Stop-recording only
+ends recording; Quit stops the host and drains its recording. The private control
+endpoint uses the same authenticated local transport as other app IPC. These are
+CLI controls; tray/menu controls are still planned.
+
 You can also use the CLI (`dictate` and `voice-to-clipboard` are aliases):
 
 ```sh

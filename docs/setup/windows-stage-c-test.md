@@ -19,7 +19,7 @@ git switch --track origin/codex/windows-hotkeys-paste
 
 If the branch exists, use `git switch codex/windows-hotkeys-paste` then
 `git pull --ff-only`. Substitute `venv` if that is your environment's folder.
-Current suite: 48 tests; tests for other operating systems are skipped normally.
+Current suite after the A/B/C audit: 53 tests; tests for other operating systems are skipped normally.
 Windows installs `comtypes` automatically for UI Automation field verification.
 
 ## Quick test without a model
@@ -128,3 +128,25 @@ A result label distinguishes **Copied to clipboard**, **Paste shortcut sent** an
 manual-paste fallback. Only visible text in the intended field confirms actual paste.
 The overlay remains briefly to display the result, then disappears. This stage does
 not add a tray app, login startup or automatic message sending.
+
+## Added by the A/B/C audit: pause, resume and separate stop
+
+In a second terminal, with the host already running:
+
+```powershell
+.\.venv\Scripts\voice-hotkeys.exe --status
+.\.venv\Scripts\voice-hotkeys.exe --pause
+.\.venv\Scripts\voice-hotkeys.exe --status
+.\.venv\Scripts\voice-hotkeys.exe --resume
+.\.venv\Scripts\voice-hotkeys.exe --stop-recording
+.\.venv\Scripts\voice-hotkeys.exe --quit
+```
+
+Expect listening → paused → paused → listening → listening → stopping, followed
+by host exit. While paused, our shortcuts are unregistered and normal typing must
+not be swallowed. Pause during recording must leave recording running; explicitly
+stop it with --stop-recording, or resume and use a dictation hotkey. Quit drains
+recording; second Ctrl+C in the host still explicitly cancels owned children.
+Switching to the terminal changes paste focus, so clipboard-only delivery is
+expected for an L session controlled this way. Repeat pause/resume 10 times; no
+duplicate listeners or stale queued recordings. After quit, a fresh host must start.

@@ -10,10 +10,12 @@ from ..core.session import try_stop_running
 
 def main():
     import os
+    import json
     import queue
     from ..platform.desktop import configure_text_output, SessionLock, cache_dir
     from ..core.settings import read_modifiers, save_modifiers
     from ..core.hotkey_session import SessionLauncher
+    from ..core.host_control import ControlServer, ListenerController, request
     from ..platform.windows_hotkeys import parse_modifiers
     configure_text_output()
     parser = argparse.ArgumentParser(description='Global U/E/L dictation shortcuts. Ctrl+C quits after draining recording.')
@@ -21,7 +23,18 @@ def main():
     parser.add_argument('--inference-device', choices=['auto', 'cpu', 'cuda', 'metal'], default='auto')
     parser.add_argument('--model', default=None)
     parser.add_argument('--hotkey-modifiers', help='Modifiers for U/E/L, e.g. ctrl+alt; saved after successful registration')
+    commands = parser.add_mutually_exclusive_group()
+    for operation in ('pause', 'resume', 'status', 'stop-recording', 'quit'):
+        commands.add_argument('--' + operation, dest='operation', action='store_const', const=operation,
+                              help='Control the running hotkey host: ' + operation)
     args = parser.parse_args()
+    endpoint = cache_dir() / 'dictate-hotkey-control.sock'
+    if args.operation:
+        try:
+            print(json.dumps(request(endpoint, args.operation), ensure_ascii=False))
+        except (OSError, EOFError, ValueError, RuntimeError) as exc:
+            sys.exit(f'Hotkey host unavailable or request failed: {exc}. Start voice-hotkeys first.')
+        return
     explicit = args.hotkey_modifiers is not None
     try:
         args.hotkey_modifiers = args.hotkey_modifiers or read_modifiers()
@@ -44,34 +57,57 @@ def main():
     launcher = SessionLauncher(args)
     actions = queue.Queue(maxsize=8)
     quitting = threading.Event()
-    def enqueue(lang, paste=False):
+    def enqueue(action):
         if not quitting.is_set():
             try:
-                actions.put_nowait((lang, paste))
+                actions.put_nowait(action)
             except queue.Full:
                 pass
-    callbacks = {'u': lambda: enqueue('uk'), 'e': lambda: enqueue('en'),
-                 'l': lambda: enqueue('uk', True)}
-    listener = None
-    try:
+    def create_listener(callbacks):
         if sys.platform == 'win32':
             from ..platform.windows_hotkeys import NativeHotkeys
-            listener = NativeHotkeys(callbacks, args.hotkey_modifiers)
-        elif sys.platform == 'darwin':
-            from ..platform.macos import listener as create_listener
-            listener = create_listener(callbacks, args.hotkey_modifiers)
-        else:
-            from ..platform.linux import NativeHotkeys
-            listener = NativeHotkeys(callbacks, args.hotkey_modifiers)
-        listener.start()
+            return NativeHotkeys(callbacks, args.hotkey_modifiers)
+        if sys.platform == 'darwin':
+            from ..platform.macos import listener as create
+            return create(callbacks, args.hotkey_modifiers)
+        from ..platform.linux import NativeHotkeys
+        return NativeHotkeys(callbacks, args.hotkey_modifiers)
+    controller = ListenerController(create_listener, enqueue)
+    control = None
+    def handle(operation):
+        if operation == 'pause':
+            controller.pause()
+            print('Hotkeys paused; active dictation continues. Use --resume or --stop-recording.', flush=True)
+        elif operation == 'resume':
+            controller.resume()
+            print('Hotkeys resumed.', flush=True)
+        elif operation == 'stop-recording':
+            if launcher.children:
+                launcher.pending_stop = True
+                launcher.tick()
+            else:
+                try_stop_running()
+        elif operation == 'quit':
+            quitting.set()
+        return {'state': 'stopping' if quitting.is_set() else 'paused' if controller.paused else 'listening',
+                'dictation_processes': sum(p.poll() is None for p in launcher.children)}
+    try:
+        controller.resume()
+        control = ControlServer(endpoint)
         if explicit:
             save_modifiers(args.hotkey_modifiers)
         print(f'Ready: {args.hotkey_modifiers}+U Ukrainian | +E English | +L Ukrainian + paste. Ctrl+C to quit.', flush=True)
         try:
-            while listener.is_alive():
+            while not quitting.is_set():
+                control.dispatch(handle)
+                if quitting.is_set():
+                    break
+                if not controller.paused and not controller.listener.is_alive():
+                    break
                 try:
-                    lang, paste = actions.get(timeout=.1)
-                    launcher.launch(lang, paste)
+                    generation, lang, paste = actions.get(timeout=.1)
+                    if controller.accepts(generation):
+                        launcher.launch(lang, paste)
                 except queue.Empty:
                     launcher.tick()
                 except OSError as exc:
@@ -80,16 +116,17 @@ def main():
             print('Stopping hotkeys…', flush=True)
     finally:
         quitting.set()
-        if listener is not None:
-            listener.stop()
-            if listener.ident is not None:
-                listener.join(timeout=2)
         try:
-            drain_children(launcher.children)
+            if control is not None:
+                control.close()
+            controller.pause()
         finally:
-            lock.close()
-    if getattr(listener, 'error', None):
-        sys.exit(str(listener.error))
+            try:
+                drain_children(launcher.children)
+            finally:
+                lock.close()
+    if getattr(controller.listener, 'error', None):
+        sys.exit(str(controller.listener.error))
     print('Hotkeys stopped.', flush=True)
 
 

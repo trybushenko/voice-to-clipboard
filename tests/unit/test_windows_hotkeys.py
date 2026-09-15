@@ -1,6 +1,7 @@
 import unittest
-from unittest.mock import Mock
-from voice_to_clipboard.platform.windows_hotkeys import NativeHotkeys, parse_modifiers, MOD_NOREPEAT, WM_HOTKEY
+from unittest.mock import Mock, patch
+from types import SimpleNamespace
+from voice_to_clipboard.platform.windows_hotkeys import NativeHotkeys, parse_modifiers, MOD_NOREPEAT, WM_HOTKEY, layout_conflict
 
 
 class WindowsHotkeyTests(unittest.TestCase):
@@ -42,3 +43,16 @@ class WindowsHotkeyTests(unittest.TestCase):
         for value in ('', 'alt+alt', 'control+alt', 'u'):
             with self.assertRaises(ValueError):
                 parse_modifiers(value)
+
+    def test_layout_conflict_reads_modern_registry_values(self):
+        key = Mock()
+        key.__enter__ = Mock(return_value=key)
+        key.__exit__ = Mock(return_value=False)
+        def query(key, name):
+            if name == 'Language Hotkey':
+                return ('1', 1)
+            raise FileNotFoundError(name)
+        registry = SimpleNamespace(HKEY_CURRENT_USER=1, OpenKey=Mock(return_value=key), QueryValueEx=query)
+        with patch.dict('sys.modules', {'winreg': registry}):
+            self.assertTrue(layout_conflict('alt+shift'))
+            self.assertFalse(layout_conflict('ctrl+alt'))

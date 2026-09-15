@@ -89,8 +89,13 @@ def layout_conflict(modifiers):
     import winreg
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Keyboard Layout\Toggle') as key:
-            value = winreg.QueryValueEx(key, 'Hotkey')[0]
+            values = []
+            for name in ('Hotkey', 'Language Hotkey', 'Layout Hotkey'):
+                try:
+                    values.append(winreg.QueryValueEx(key, name)[0])
+                except OSError:
+                    pass
     except OSError:
         return False
     chosen = set(modifiers.split('+'))
-    return (value == '1' and {'alt', 'shift'} <= chosen) or (value == '2' and {'ctrl', 'shift'} <= chosen)
+    return ('1' in values and {'alt', 'shift'} <= chosen) or ('2' in values and {'ctrl', 'shift'} <= chosen)

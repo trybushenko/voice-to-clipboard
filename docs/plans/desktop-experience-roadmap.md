@@ -1,9 +1,24 @@
 # План: надійне диктування без термінала на Windows, macOS і Linux
 
-Дата: 2026-09-14. База аналізу: `072172a`.
-Статус: **заплановано; виправлення з цього документа ще не реалізовані**.
-Документ покриває всі 8 пунктів Windows-фідбеку та спільний сценарій для трьох ОС.
-Позначати етапи виконаними лише після наведених перевірок, записуючи коміт і докази.
+Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
+після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
+
+**Статус: A завершено; B — основні виправлення прийняті користувачем і змерджені,
+залишились no-console/desktop питання; C — реалізація часткова, фізичне приймання
+Windows/macOS відкрите. D/E/F не завершені.**
+
+Позначення: `[x]` — конкретна реалізація або перевірка, для якої є доказ;
+`[ ]` — відсутня реалізація чи непроведена перевірка. Код і ручне приймання
+позначаються окремо. Зелений CI не дорівнює перевірці мікрофона/caret/фокусу.
+
+| Етап | Що вже є | Що залишилось | Доказ |
+| --- | --- | --- | --- |
+| A | src package, тести/скрипти/docs, wheel, сумісний launcher | Немає відкритих робіт A; tray/setup/packaging — D/E | `69d97a8`, [звіт A](stage-a-verification.md) |
+| B | Ізоляція worker, retry/atomic IPC, Ctrl+C/drain/cancel; тепер також CLI pause/resume/status/stop/quit | Нові control-команди перевірити на Windows/macOS; no-console і закриття консолі — окремий gate | `9f63f2d`, `905c1a6`, Windows-фідбек користувача, [звіт B](stage-b-progress.md) |
+| C | Нативні hotkeys, SendInput, modifiers/settings, захист вставки, result overlay | Ручна матриця Windows/macOS; повна ідентичність поля на X11/ранній capture macOS; Wayland portal binding не реалізований | `1d545b0`, 6 CI jobs, [звіт C](stage-c-verification.md) |
+
+[Повна ревізія A/B/C і доробки](abc-audit.md). Документ покриває всі 8 пунктів
+початкового Windows-фідбеку; не всі вони належать до A/B/C.
 
 ## 1. Яким має бути результат
 
@@ -29,20 +44,19 @@
 Зберегти наявні комбінації. Згадку Ctrl у пункті 6 не трактувати як запит змінити
 їх усі: додати можливість переналаштування та перевірку конфліктів.
 
-## 2. Що підтверджено кодом, а що потрібно відтворити
+## 2. Поточний стан за початковим фідбеком
 
-| Фідбек | Поточне місце | Висновок / перевірка | Етап |
+Шляхи нижче відносні до `src/voice_to_clipboard/`, якщо не зазначено інше.
+
+| Фідбек | Поточне місце | Результат ревізії | Етап |
 | --- | --- | --- | --- |
-| 1, 6: потрібен запуск без PowerShell | `hotkeys.py:main`, console entry points у `pyproject.toml` | Є ручний слухач; інсталятора, tray і автозапуску немає | D, E |
-| 2: L копіює, але не вставляє | `platform_support.py:do_paste`, фінал `dictate.py:main` | `pynput.Controller`, фіксовані 150 мс; немає перевірки цільового вікна та фізичних модифікаторів. Причину конкретного збою відтворити | C |
-| 3: друкуються літери хоткеїв | `hotkeys.py:GlobalHotKeys` | Немає нативної реєстрації/поглинання комбінації; перевірити також конфлікт Alt+Shift зі зміною розкладки | C |
-| 4, 5: складне встановлення | README, extras у `pyproject.toml`, `speech_backends.py:FasterModel` | Git/Python/runtime налаштовуються вручну; наявність GPU не доводить працездатність CUDA | E |
-| 6: Ctrl+C не завершує слухач | `hotkeys.py:listener.join()` | Блокувальне очікування й неповне керування дочірніми процесами; потрібне Windows-відтворення | B, D |
-| 7: worker гине, WinError 10054 | `model_service.py:RemoteModel.connect`, `local_ipc.py` | `start_new_session=True` без Windows process-group flags; PermissionError не повторюється. Загибель від Ctrl+C — обґрунтована гіпотеза з фідбеку, підтвердити PID/exit code | B |
-| 8: плоска структура | корінь репозиторію, `py-modules` | Код, тести, dev-скрипти й інсталяційний helper перемішані | A |
-
-Зелена попередня CI-матриця не доводить, що вставка, поглинання клавіш чи Ctrl+C
-працюють на реальному Windows desktop. Нові acceptance-тести обов'язкові.
+| 1, 6: без PowerShell | `ui/hotkeys.py`, `pyproject.toml` | Є CLI-host; GUI launcher, tray, installer/autostart ще відсутні | D, E |
+| 2: L не вставляє | `platform/windows_input.py`, `platform/focus.py`, `cli.py` | SendInput та перевірки реалізовані; фізична Windows-матриця C ще не підтверджена | C |
+| 3: зайві літери | `platform/windows_hotkeys.py`, `macos.py`, `linux.py` | RegisterHotKey / selective tap / passive grabs; реальний X11 smoke пройшов, Windows/macOS manual gate відкритий | C |
+| 4, 5: встановлення | `docs/setup/`, extras/backend | Інструкції впорядковані; автоматизації залежностей і installers немає | E |
+| 6: Ctrl+C host | `ui/hotkeys.py`, `core/host_control.py` | Керований loop, drain/cancel, окремі pause/resume; GUI-керування ще D | B, D |
+| 7: worker/10054 | `platform/processes.py`, `worker/client.py`, `worker/transport.py` | NEW_PROCESS_GROUP, retry, atomic endpoint, recovery; користувач підтвердив B на Windows | B |
+| 8: структура | `src/`, `tests/`, `scripts/`, `docs/` | Виконано A; runtime history/settings залишаються поза Git | A |
 
 ## 3. Послідовність реалізації
 
@@ -62,57 +76,29 @@
 
 ### A. Структура репозиторію — P1, фундамент наступних змін
 
-Цільова структура (нові модулі створювати разом із їх реалізацією, без порожніх заглушок):
+Фактична структура після A і наступних реалізацій B/C:
 
 ```text
 src/voice_to_clipboard/
-  __init__.py
-  __main__.py
-  cli.py
-  app.py                  # життєвий цикл desktop-застосунку
-  config.py
-  core/
-    recording.py
-    speech_gate.py
-    transcription.py
-    history.py
-    session.py
-  backends/
-    faster_whisper.py
-    mlx.py
-  worker/
-    service.py
-    client.py
-    protocol.py
-  platform/
-    windows.py
-    macos.py
-    linux.py
-    paths.py
-  ui/
-    tray.py
-    overlay.py
-  setup/
-    doctor.py
-    autostart.py
-tests/
-  unit/
-  integration/
-  desktop/
-scripts/                   # benchmark, GUI smoke, developer helpers
-packaging/
-  windows/
-  macos/
-  linux/
-docs/
-  plans/
-  setup/
-  troubleshooting.md
+  __init__.py, __main__.py, cli.py
+  core/       # recording, speech_gate, transcription, history, session,
+              # lifecycle, hotkey_session, settings, host_control
+  backends/   # faster_whisper, mlx
+  worker/     # service, client, protocol, transport, config
+  platform/   # paths, desktop, processes, files, focus, windows/input/hotkeys,
+              # macos, linux
+  ui/         # hotkeys, overlay, terminal
+tests/       # unit, integration
+scripts/     # benchmark_worker, check_overlay, check_paste, configure-dictation
+docs/        # plans, setup, usage, development
 .github/workflows/
-README.md
-pyproject.toml
-LICENSE
+README.md, pyproject.toml, LICENSE
+dictate.py  # сумісна коренева обгортка
 ```
+
+`dictate.py` — коротка сумісна коренева обгортка. Майбутні `app.py`, tray,
+`setup/doctor`, `setup/autostart`, `packaging/` і desktop acceptance suite не
+створені як порожні заглушки; це робота D/E/F, а не незавершена міграція A.
 
 - [x] Перейти з `py-modules` на пакет у `src/`, оновити імпорти та запуск worker.
 - [x] Зберегти entry points `dictate`, `voice-to-clipboard`, `voice-hotkeys`.
@@ -129,79 +115,97 @@ LICENSE
 
 ### B. Життєвий цикл worker, Ctrl+C та IPC — P0
 
-- [x] Винести створення дочірніх процесів у спільний platform helper.
-- [ ] На Windows використовувати `creationflags=CREATE_NEW_PROCESS_GROUP` для
-  persistent worker; на Unix залишити `start_new_session=True`.
-  Для GUI/no-console сценарію окремо перевірити `CREATE_NO_WINDOW` або GUI entry point.
-  Не поєднувати механічно взаємовиключні/неефективні flags.
-- [ ] Перевірити закриття консолі окремо від Ctrl+C: це різні події Windows.
-  Звичайний desktop-сценарій узагалі не повинен залежати від консолі.
-- [x] `RemoteModel.connect()`: bounded retry/backoff для тимчасових Windows
-  `PermissionError` під час читання/заміни endpoint, а також запуску після stale endpoint.
-  Не видаляти endpoint живого worker лише через sharing violation. Після deadline —
-  зрозуміла помилка з шляхом і дією, без нескінченного повтору.
-- [x] Атомарне створення/заміна endpoint; окремі bounded retries для Windows file sharing
-  при записі та cleanup. Зберегти lock і перевірку локального токена.
-- [x] Перевірити читання фреймів при фрагментації TCP, EOF, reset та повторне підключення.
-  Повтор фрагмента не повинен дублювати текст у результаті.
-- [x] Ctrl+C у CLI диктування означає «завершити запис»: закрити мікрофон,
-  передати фінальний tail, дочекатися результату та скопіювати його.
-- [x] Ctrl+C у CLI слухача означає «завершити слухач»: замінити безмежний `join()`
-  керованим циклом/сигналом зупинки, обмежити очікування та вивести підтвердження.
-- [ ] Явно розділити Stop recording, Pause hotkeys і Quit application. Для Quit під час
-  запису — завершити/дренувати сесію з видимим станом; дозволити явне скасування,
-  якщо обробка зависла. Не вбивати довільні Python-процеси.
+Основна поставка B змерджена в `main` до `905c1a6`. Користувач повідомив, що
+описані Windows-сценарії працюють; єдиний наданий збій був у TTY test fixture
+і виправлений. Це якісне підтвердження, а не збережена таблиця версій/PID/CUDA.
 
-Приймання на Windows: PID worker переживає Ctrl+C батьківського диктування;
-фінальний tail присутній; наступний запис використовує той самий worker без 10054.
-Перевірити холодну модель, теплу модель, зупинку під час завантаження, 20 послідовних
-циклів, контрольований crash worker. Окремо тест із реальною CUDA, бо fake-model
-тест доводить лише роботу процесів/IPC. `--one-shot` лишається запасним режимом,
-а не заміною цього виправлення.
+**Реалізація**
 
-Статус 2026-09-15: реалізацію B розпочато; [деталі та відкриті перевірки](stage-b-progress.md). Етап ще не прийнятий на Windows.
+- [x] Спільний process helper: Windows `CREATE_NEW_PROCESS_GROUP`, Unix
+  `start_new_session=True`; worker не успадковує Ctrl+C групи диктування.
+- [x] Bounded retry/backoff endpoint connect, у тому числі PermissionError;
+  sharing violation не видаляє endpoint живого worker і не запускає зайвий процес.
+- [x] Атомарний TCP endpoint, bounded file retry/cleanup, lock і локальний token.
+- [x] Фрагментовані frames/handshake/stop, EOF/reset/reconnect; retry без дублювання
+  підтверджених результатів транскрипції.
+- [x] Ctrl+C dictation: stop event → tail → очікування транскрипції → clipboard.
+- [x] Ctrl+C host: зупинка приймання hotkeys, bounded listener join, drain дітей;
+  повторний Ctrl+C під час drain явно скасовує тільки власні дочірні диктовки.
+- [x] Ревізія: окремі `voice-hotkeys --pause`, `--resume`, `--status`,
+  `--stop-recording`, `--quit` через приватний IPC. Pause звільняє реєстрації,
+  не обриває запис; resume створює новий listener, старі queued actions відкидаються.
+- [ ] GUI/menu pause/resume/quit — **D**, не реалізовано у CLI-поставці B.
+- [ ] No-console worker/host policy (`CREATE_NO_WINDOW` або GUI launcher) —
+  **B/D interface**, ще не реалізовано й не замінюється NEW_PROCESS_GROUP.
+
+**Перевірки й залишок приймання**
+
+- [x] Fake-model subprocess: 20 циклів, незмінний PID, tail, crash/recovery.
+- [x] Реальна CUDA на Linux: синтетичний tail після SIGINT, повторне використання.
+- [x] Windows-користувач підтвердив описані сценарії B; TTY/non-TTY regression
+  виправлено й перевірено в CI.
+- [x] Ревізія: Pause/Resume/Status/Stop/Quit перевірені на справжньому X11 host
+  з ізольованими settings/cache; control endpoint видаляється після quit.
+- [ ] Нові Pause/Resume/control-команди перевірити на реальних Windows/macOS.
+- [ ] Окремий деталізований протокол закриття консолі хрестиком, з cold/warm
+  worker PID, активним записом і повторним запуском. Повідомлення «все працює»
+  не містить цих індивідуальних результатів; не оголошувати CTRL_CLOSE_EVENT вирішеним.
+- [ ] Зберегти Windows hardware/версії та окремі результати CUDA/cold/load-stop,
+  якщо потрібен повний release-протокол F. `--one-shot` не є заміною worker fix.
+
+[Докази та історія B](stage-b-progress.md).
 
 ### C. Хоткеї без зайвих літер та справжня автовставка — P0
 
-Реалізація готова в `codex/windows-hotkeys-paste`; [звіт](stage-c-verification.md)
-та [Windows acceptance guide](../setup/windows-stage-c-test.md). Пункти нижче
-позначають реалізацію; фізичне приймання Windows/macOS ще потрібно провести.
+**Статус: код значною мірою реалізований у `codex/windows-hotkeys-paste`, але C
+ще не прийнятий і не змерджений.** Попереднє формулювання «повністю готово» було
+занадто сильним: platform acceptance та наведені нижче обмеження залишаються.
 
-- [x] Windows: реалізувати `RegisterHotKey` / `WM_HOTKEY` + `MOD_NOREPEAT`, із
-  коректним message loop, реєстрацією/звільненням і відображенням конфліктів.
-  Перевірити VK/scancode-поведінку на EN/UK розкладках і лівих/правих модифікаторах.
-- [x] Не вирішувати проблему глобальним `suppress=True`, що блокує весь набір тексту.
-  Поглинати лише наші комбінації; звичайні L/U/E та інші shortcuts мають працювати.
-- [x] Виявляти Alt+Shift layout-switch conflict, дозволити зміну комбінацій у налаштуваннях.
-  Не змінювати системну розкладку чи її shortcuts без явної дії користувача.
-- [x] Дія визначається при старті сесії: L залишається «copy + paste», навіть якщо
-  завершили запис іншою комбінацією; друге натискання — стоп, не новий запис.
-- [x] Windows paste: нативний `SendInput` з правильними 64-bit ctypes структурами,
-  кодами клавіш і перевіркою результату замість припущення про успіх `Controller`.
-- [x] Дочекатися фактичного відпускання Alt/Shift/Ctrl з обмеженим timeout;
-  не покладатися лише на `sleep(.15)`. Не ламати фізично затиснуті клавіші користувача.
-- [x] Перевірити готовність clipboard, записати цільове вікно на старті, не дати
-  overlay/tray забрати фокус. Якщо користувач змінив вікно/поле, не вставляти мовчки
-  в випадкове місце: зберегти clipboard і запропонувати повторну вставку.
-  Не намагатися довільно відновлювати caret у сторонніх застосунках.
-- [x] Відрізняти «скопійовано», «комбінацію вставки надіслано» і підтверджену GUI-тестом
-  вставку: SendInput сам по собі не доводить появу тексту в документі.
-- [x] При помилці показувати коротку дію в tray/overlay; clipboard не втрачати.
-- [x] macOS: нативна реєстрація hotkey або вибірковий event tap після перевірки API;
-  Command+V і перевірка Accessibility/Input Monitoring. Linux X11: desktop bindings
-  або захоплення комбінацій. Wayland: перевірити GlobalShortcuts portal/backend;
-  вставку реалізовувати лише доступним дозволеним механізмом, а не обіцяти підтримку
-  через X11-інструменти. Якщо DE не підтримує сценарій — показати це у setup.
+**Реалізація**
 
-Приймання: Notepad, Chrome/Edge і VS Code, EN/UK розкладки, 20 запусків кожної дії;
-жодної сторонньої літери, дублювання, автоматичного Enter чи зміни фокусу.
-L вставляє на поточний caret у незміненому полі; U/E лише копіюють.
-Окремо: довго затиснута комбінація, швидкі натискання, зміна активного вікна,
-закриття цільового вікна, звичайні та elevated застосунки.
+- [x] Windows RegisterHotKey/WM_HOTKEY + MOD_NOREPEAT, bounded loop, cleanup,
+  явні registration conflicts; відсутнє глобальне `suppress=True`.
+- [x] Modifiers налаштовуються і зберігаються після успішної реєстрації.
+  Ревізія: detection враховує `Hotkey`, `Language Hotkey`, `Layout Hotkey`;
+  налаштування розкладки Windows застосунок не змінює.
+- [x] Стартовий U/E/L фіксує мову й copy/paste; інший хоткей зупиняє ту саму
+  сесію, включно з pending startup, без другого recording process.
+- [x] SendInput з коректним pointer-size ABI, перевіркою кількості events,
+  bounded очікуванням відпускання modifiers і перевіркою вмісту clipboard.
+- [x] Windows UI Automation field/window capture у host; sticky invalidation
+  після виявленої зміни, свіжа перевірка перед input, без focus/caret restore.
+- [x] Різні статуси copied / paste shortcut sent / fallback; короткий result overlay,
+  текст зберігається для ручної вставки. SendInput success не називається GUI success.
+- [x] macOS selective Quartz tap, Accessibility/Input Monitoring preflight,
+  AX field tracking і Command+V; X11 passive grabs і XTEST без clearmodifiers.
+- [x] Wayland capability probe й чесна дія: desktop bindings + manual paste.
+- [ ] Wayland GlobalShortcuts portal **binding** і автоматична вставка не реалізовані.
+  Їх наявність не випливає з capability probe; підтримка лише задокументованого fallback.
+- [ ] Повна field identity на X11: зараз native focus + навігація/кліки;
+  програмну зміну поля в одному HWND/X window не гарантовано виявлено.
+- [ ] macOS target capture саме в hotkey host до запуску recording child:
+  зараз AX capture починається в recording process. Startup interval лишається відкритим.
+- [ ] Абсолютна гарантія виявлення миттєвого focus-change не надається polling-монітором.
+  Оцінити native focus events для суворішої гарантії; не приховувати поточне обмеження.
 
-Межа Windows: UIPI може блокувати введення в застосунок із вищими правами.
-Не робити запуск адміністратором типовою вимогою; коректно пояснювати обмеження й
-залишати текст у буфері. Secure desktop/екран входу не входять у підтримуваний сценарій.
+**Перевірки й залишок приймання**
+
+- [x] CI базового C `1d545b0`: Linux/Windows/macOS × Python 3.11/3.12,
+  включно з native API construction на відповідній ОС.
+- [x] Linux GUI: Unicode вставився один раз, фокус збережений; native hotkey
+  викликав один callback без сторонньої літери, звичайна U пройшла в поле.
+- [ ] Windows: Notepad, Chrome/Edge, VS Code; EN/UK, ліві/праві modifiers/AltGr,
+  20 циклів U/E/L, mixed stop, repeat/rapid press, clipboard changes, UIPI.
+- [ ] Windows: змінене/закрите поле або вікно, повернення до початкового поля,
+  утримані modifiers — переконатися у fallback без випадкової вставки.
+- [ ] macOS фізична перевірка event tap, field tracking, permissions та вставки.
+- [ ] Linux: перевірка різних DE/XKB layouts та описаного X11 field-limit;
+  Wayland — системних desktop bindings/manual paste, не X11 API.
+
+[Звіт C](stage-c-verification.md) · [Windows-гайд](../setup/windows-stage-c-test.md).
+Secure desktop/екран входу не підтримуються. UIPI не обходиться; не вимагати
+адміністратора за замовчуванням. Після manual acceptance оновити конкретні рядки,
+а не весь етап одним чекбоксом.
 
 ### D. Desktop-застосунок, tray та автозапуск — P1
 
@@ -297,7 +301,8 @@ L вставляє на поточний caret у незміненому пол�
   Linux-тести та mocks не можуть довести відсутність друку літер у Windows.
 - Підтримувані версії Windows/macOS і перелік Linux DE зафіксувати в support matrix.
   «Будь-де на комп'ютері» означає звичайну користувацьку графічну сесію, не secure desktop.
-- Точний bundler, механізм macOS hotkeys і Wayland paste обрати за результатом spike;
+- Точний bundler і Wayland paste обрати за результатом spike; macOS Quartz tap
+  уже реалізований, але ще потребує фізичного приймання;
   не представляти варіанти як уже перевірені рішення.
 - Apple signing/notarization і Windows signing можуть потребувати сертифікатів.
   Підготувати збірку й перевірки незалежно від їх наявності; явно відобразити статус.
