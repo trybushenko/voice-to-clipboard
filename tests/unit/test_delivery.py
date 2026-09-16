@@ -82,6 +82,16 @@ class DeliveryTests(unittest.TestCase):
             finally:
                 guard.close()
 
+    def test_windows_background_focus_event_does_not_block_original_field(self):
+        from voice_to_clipboard.platform.focus import windows_event_changes_target
+        original, background, other = [42, 100], [42, 200], [42, 300]
+        self.assertFalse(windows_event_changes_target(original, background, original, False))
+        self.assertFalse(windows_event_changes_target(original, original, original, True))
+        self.assertTrue(windows_event_changes_target(original, other, other, True))
+        self.assertTrue(windows_event_changes_target(original, background, other, False))
+        self.assertTrue(windows_event_changes_target(original, other, original, True))
+        self.assertTrue(windows_event_changes_target(original, background, None, False))
+
     def test_mixed_shortcut_stops_without_changing_original_action(self):
         args = SimpleNamespace(model=None, inference_device='auto', no_overlay=True)
         process = Mock(); process.poll.return_value = None

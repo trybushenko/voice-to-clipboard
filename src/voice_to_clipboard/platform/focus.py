@@ -67,6 +67,16 @@ class FocusGuard:
         self.thread.join(timeout=.3)
 
 
+def windows_event_changes_target(initial, received, actual, sender_has_focus):
+    """UIA providers may emit focus events for unfocused background elements.
+
+    Shell_TrayWnd does this even while a text field retains focus. Check the
+    actual focused element as well; an event alone is not evidence of a change.
+    Once a real change is observed, the caller keeps the rejection sticky.
+    """
+    return actual != initial or (received != initial and sender_has_focus)
+
+
 def windows_probe():
     import ctypes
     import comtypes
@@ -92,9 +102,10 @@ def windows_probe():
             def HandleFocusChangedEvent(self, sender):
                 try:
                     received = identity(sender)
-                    if initial[0] is not None and received != initial[0]:
-                        invalid_reason[0] = (f'event {received!r} class={sender.CurrentClassName!r} has_focus={sender.CurrentHasKeyboardFocus!r}; '
-                                             f'initial={initial[0]!r}; current={identity(automation.GetFocusedElement())!r}')
+                    actual = identity(automation.GetFocusedElement())
+                    if initial[0] is not None and windows_event_changes_target(
+                            initial[0], received, actual, bool(sender.CurrentHasKeyboardFocus)):
+                        invalid_reason[0] = 'Focused field changed'
                         invalid.set()
                 except Exception as exc:
                     invalid_reason[0] = f'{type(exc).__name__}: {exc}'
