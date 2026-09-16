@@ -43,7 +43,7 @@ class FocusGuard:
                     self.sequence += 1
                     self.observed.notify_all()
         except Exception as exc:
-            self.error = str(exc)
+            self.error = f'{type(exc).__name__}: {exc}'
         finally:
             self.ready.set()
             if 'probe' in locals() and hasattr(probe, 'close'):
@@ -54,7 +54,8 @@ class FocusGuard:
 
     def check(self):
         if self.error or self.changed or not self.thread.is_alive():
-            raise RuntimeError('Paste target changed or cannot be verified. Text is in clipboard; paste manually')
+            raise RuntimeError('Paste target changed or cannot be verified. Text is in clipboard; paste manually. ' +
+                               (self.error or ('Focus changed' if self.changed else 'Focus monitor stopped')))
         with self.observed:
             sequence = self.sequence
             fresh = self.observed.wait_for(lambda: self.sequence > sequence or self.error, timeout=1)
@@ -101,11 +102,15 @@ def windows_probe():
         automation.AddFocusChangedEventHandler(None, handler)
         def snapshot():
             if invalid.is_set():
-                return None
+                raise RuntimeError('UIA focus event changed the original field')
             window = user.GetForegroundWindow()
             current = identity(automation.GetFocusedElement())
-            if not window or not current or current != initial[0]:
-                return None
+            if not window:
+                raise RuntimeError('Windows has no foreground window')
+            if not current:
+                raise RuntimeError('UIA focused field has no usable runtime identity (or is a password field)')
+            if current != initial[0]:
+                raise RuntimeError('UIA focused field differs from the initial field')
             return [int(window), current]
         def close():
             nonlocal automation, handler
@@ -168,6 +173,6 @@ class RemoteGuard:
             if result.get('ok') is not True:
                 raise RuntimeError('Paste destination was not confirmed')
         except (OSError, EOFError, ValueError, RuntimeError) as exc:
-            raise RuntimeError('Original paste target changed or host unavailable. Text is in clipboard; paste manually') from exc
+            raise RuntimeError(f'Original paste target changed or host unavailable. Text is in clipboard; paste manually. {exc}') from exc
     def close(self):
         pass
