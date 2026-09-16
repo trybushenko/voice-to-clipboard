@@ -7,6 +7,7 @@ import argparse
 import queue
 import sys
 import threading
+import time
 import tkinter as tk
 from voice_to_clipboard.platform.desktop import to_clipboard, do_paste
 from voice_to_clipboard.platform.focus import make_guard
@@ -53,6 +54,7 @@ class WindowsEdit:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--auto', action='store_true')
+    parser.add_argument('--overlay', action='store_true', help='Also verify that the real overlay preserves focus')
     parser.add_argument('--change-focus', action='store_true',
                         help='Verify that switching to another field and back blocks paste')
     args = parser.parse_args()
@@ -80,8 +82,19 @@ def main():
     passed = [False]
     def worker():
         guard = make_guard()
+        overlay = None
         try:
             guard.check()
+            if args.overlay:
+                from voice_to_clipboard.ui.overlay import Overlay
+                overlay = Overlay()
+                overlay.update(state='recording', elapsed=1)
+                time.sleep(1)
+                if overlay.process is None or overlay.process.poll() is not None:
+                    raise RuntimeError('Overlay failed to start')
+                overlay.update(state='transcribing', elapsed=1)
+                time.sleep(.3)
+                guard.check()
             if args.change_focus:
                 results.put(('change-focus', None))
                 if not changed.wait(5):
@@ -99,6 +112,8 @@ def main():
         except Exception as exc:
             results.put(str(exc))
         finally:
+            if overlay is not None:
+                overlay.close()
             guard.close()
     def start():
         if running[0]:

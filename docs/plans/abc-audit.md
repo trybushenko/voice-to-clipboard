@@ -47,3 +47,19 @@ GUI/tray/login startup/installer/doctor залишаються D/E, повна h
 
 [Детальний Windows протокол](../setup/windows-stage-c-test.md) ·
 [Головний план з окремими implementation/acceptance checkbox](desktop-experience-roadmap.md).
+
+
+## Windows-фідбек і виправлення — 2026-09-16
+
+Користувач не прийняв початковий C: standalone paste та L відмовляли з generic
+focus error. Реальний GUI-тест відтворив це на Windows 3.11/3.12; попередня CI
+перевірка лише створювала UIA-об’єкт і не підтверджувала вставку.
+
+Причина: UIA focus event від неактивної панелі задач (`Shell_TrayWnd`) помилково
+робив guard invalid, хоча actual focused element залишався початковим.
+Додано перевірку actual focus/sender focus, native keyboard-focus HWND,
+точну діагностику помилки та unit regression. Tk provider не розрізняє поля
+надійно, тому має явний clipboard-only fallback; GUI smoke використовує Win32 EDIT.
+CI тепер перевіряє реальну Unicode-вставку, оверлей та зміну поля з поверненням.
+Набір unit/integration виріс до 60 тестів. Повторне фізичне Windows-приймання
+залишається відкритим; зелений попередній CI не закривав цей дефект.
