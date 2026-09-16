@@ -93,7 +93,8 @@ def windows_probe():
                 try:
                     received = identity(sender)
                     if initial[0] is not None and received != initial[0]:
-                        invalid_reason[0] = f'event identity {received!r} differs from {initial[0]!r}'
+                        invalid_reason[0] = (f'event {received!r} class={sender.CurrentClassName!r} has_focus={sender.CurrentHasKeyboardFocus!r}; '
+                                             f'initial={initial[0]!r}; current={identity(automation.GetFocusedElement())!r}')
                         invalid.set()
                 except Exception as exc:
                     invalid_reason[0] = f'{type(exc).__name__}: {exc}'
