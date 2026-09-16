@@ -81,6 +81,7 @@ def windows_probe():
         user.GetForegroundWindow.restype = ctypes.c_void_p
         initial = [None]
         invalid = threading.Event()
+        invalid_reason = ['']
         def identity(element):
             if not element or element.CurrentIsPassword:
                 return None
@@ -90,9 +91,12 @@ def windows_probe():
             _com_interfaces_ = [module.IUIAutomationFocusChangedEventHandler]
             def HandleFocusChangedEvent(self, sender):
                 try:
-                    if initial[0] is not None and identity(sender) != initial[0]:
+                    received = identity(sender)
+                    if initial[0] is not None and received != initial[0]:
+                        invalid_reason[0] = f'event identity {received!r} differs from {initial[0]!r}'
                         invalid.set()
-                except Exception:
+                except Exception as exc:
+                    invalid_reason[0] = f'{type(exc).__name__}: {exc}'
                     invalid.set()
                 return 0
         handler = Handler()
@@ -102,7 +106,7 @@ def windows_probe():
         automation.AddFocusChangedEventHandler(None, handler)
         def snapshot():
             if invalid.is_set():
-                raise RuntimeError('UIA focus event changed the original field')
+                raise RuntimeError('UIA focus event: ' + invalid_reason[0])
             window = user.GetForegroundWindow()
             current = identity(automation.GetFocusedElement())
             if not window:
