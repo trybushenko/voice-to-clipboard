@@ -221,5 +221,8 @@ if __name__ == '__main__':
     language = sys.argv[1] if len(sys.argv) > 1 else 'uk'
     if sys.platform.startswith('linux'):
         window(language)
+    elif sys.platform == 'win32':
+        from voice_to_clipboard.ui.windows_overlay import window as native_window
+        native_window(language)
     else:
         tk_window(language)
