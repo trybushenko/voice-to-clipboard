@@ -89,6 +89,17 @@ def windows_probe():
         automation = CreateObject(module.CUIAutomation, interface=module.IUIAutomation)
         user = ctypes.WinDLL('user32', use_last_error=True)
         user.GetForegroundWindow.restype = ctypes.c_void_p
+        from ctypes import wintypes
+        class GUIThreadInfo(ctypes.Structure):
+            _fields_ = [('cbSize', wintypes.DWORD), ('flags', wintypes.DWORD),
+                        ('hwndActive', wintypes.HWND), ('hwndFocus', wintypes.HWND),
+                        ('hwndCapture', wintypes.HWND), ('hwndMenuOwner', wintypes.HWND),
+                        ('hwndMoveSize', wintypes.HWND), ('hwndCaret', wintypes.HWND),
+                        ('rcCaret', wintypes.RECT)]
+        user.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+        user.GetWindowThreadProcessId.restype = wintypes.DWORD
+        user.GetGUIThreadInfo.argtypes = [wintypes.DWORD, ctypes.POINTER(GUIThreadInfo)]
+        user.GetGUIThreadInfo.restype = wintypes.BOOL
         initial = [None]
         invalid = threading.Event()
         invalid_reason = ['']
@@ -127,7 +138,11 @@ def windows_probe():
                 raise RuntimeError('UIA focused field has no usable runtime identity (or is a password field)')
             if current != initial[0]:
                 raise RuntimeError('UIA focused field differs from the initial field')
-            return [int(window), current]
+            info = GUIThreadInfo(cbSize=ctypes.sizeof(GUIThreadInfo))
+            thread_id = user.GetWindowThreadProcessId(window, None)
+            if not thread_id or not user.GetGUIThreadInfo(thread_id, ctypes.byref(info)) or not info.hwndFocus:
+                raise RuntimeError('Native keyboard focus is unavailable')
+            return [int(window), current, int(info.hwndFocus)]
         def close():
             nonlocal automation, handler
             try:
