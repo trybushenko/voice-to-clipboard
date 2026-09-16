@@ -125,7 +125,10 @@ def windows_probe():
         handler = Handler()
         # Establish baseline before subscribing; a final snapshot also checks for a
         # change during subscription. The handler invalidates even if focus returns.
-        initial[0] = identity(automation.GetFocusedElement())
+        element = automation.GetFocusedElement()
+        if element and element.CurrentClassName.startswith('Tk'):
+            raise RuntimeError('Tk does not expose reliable field identity on Windows; paste manually')
+        initial[0] = identity(element)
         automation.AddFocusChangedEventHandler(None, handler)
         def snapshot():
             if invalid.is_set():

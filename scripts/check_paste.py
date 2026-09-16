@@ -5,10 +5,49 @@ The synthetic test replaces clipboard content, just like dictation does.
 """
 import argparse
 import queue
+import sys
 import threading
 import tkinter as tk
 from voice_to_clipboard.platform.desktop import to_clipboard, do_paste
 from voice_to_clipboard.platform.focus import make_guard
+
+
+class WindowsEdit:
+    """Real Win32 EDIT fields: Tk widgets do not expose distinct UIA focus."""
+    def __init__(self, parent, height):
+        import ctypes as c
+        from ctypes import wintypes as w
+        self.c = c
+        self.user = user = c.WinDLL('user32', use_last_error=True)
+        user.CreateWindowExW.argtypes = [w.DWORD, w.LPCWSTR, w.LPCWSTR, w.DWORD,
+                                        c.c_int, c.c_int, c.c_int, c.c_int,
+                                        w.HWND, w.HMENU, w.HINSTANCE, c.c_void_p]
+        user.CreateWindowExW.restype = w.HWND
+        user.SetFocus.argtypes = [w.HWND]
+        user.SetFocus.restype = w.HWND
+        user.GetFocus.restype = w.HWND
+        user.SetWindowTextW.argtypes = [w.HWND, w.LPCWSTR]
+        user.GetWindowTextLengthW.argtypes = [w.HWND]
+        user.GetWindowTextW.argtypes = [w.HWND, w.LPWSTR, c.c_int]
+        self.frame = tk.Frame(parent, width=610, height=height)
+        self.frame.pack(padx=12, pady=5)
+        parent.update_idletasks()
+        self.hwnd = user.CreateWindowExW(0, 'EDIT', '', 0x50010000 | 0x00800000 | 0x0004,
+                                         0, 0, 610, height, self.frame.winfo_id(), None, None, None)
+        if not self.hwnd:
+            raise c.WinError(c.get_last_error())
+        self.root = parent
+    def focus_force(self):
+        self.root.focus_force()
+        self.user.SetFocus(self.hwnd)
+    def has_focus(self):
+        return self.user.GetFocus() == self.hwnd
+    def delete(self, *args):
+        self.user.SetWindowTextW(self.hwnd, '')
+    def get(self, *args):
+        buffer = self.c.create_unicode_buffer(self.user.GetWindowTextLengthW(self.hwnd) + 1)
+        self.user.GetWindowTextW(self.hwnd, buffer, len(buffer))
+        return buffer.value
 
 
 def main():
@@ -20,11 +59,18 @@ def main():
     root = tk.Tk()
     root.title('Voice to Clipboard — paste verification')
     root.geometry('640x240')
-    text = tk.Text(root, height=5)
-    text.pack(fill='both', expand=True, padx=12, pady=12)
-    other = tk.Entry(root)
-    if args.change_focus:
-        other.pack(fill='x', padx=12)
+    if sys.platform == 'win32':
+        root.geometry('660x340')
+        text = WindowsEdit(root, 100)
+        other = WindowsEdit(root, 30) if args.change_focus else None
+        focused = text.has_focus
+    else:
+        text = tk.Text(root, height=5)
+        text.pack(fill='both', expand=True, padx=12, pady=12)
+        other = tk.Entry(root)
+        if args.change_focus:
+            other.pack(fill='x', padx=12)
+        focused = lambda: root.focus_get() == text
     changed = threading.Event()
     status = tk.StringVar(value='Press Test; keep focus in this window until the result appears.')
     tk.Label(root, textvariable=status, wraplength=610).pack(padx=12)
@@ -69,7 +115,7 @@ def main():
             passed[0] = isinstance(error, tuple) and error[0] == 'blocked' and not actual and not other.get()
             result = 'PASS: switching fields and returning blocked paste.' if passed[0] else f'FAIL: expected blocked paste; {error!r}'
         else:
-            passed[0] = error is None and actual == expected and root.focus_get() == text
+            passed[0] = error is None and actual == expected and focused()
             result = 'PASS: exact Unicode text inserted once; focus preserved.' if passed[0] else 'FAIL: ' + (error or 'Text did not appear exactly once in the original field')
         status.set(result)
         print(result, flush=True)
