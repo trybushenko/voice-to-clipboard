@@ -10,6 +10,22 @@ exits with a message and leaves the dictation process running.
 In the dictation CLI, Ctrl+C requests recording stop and waits for the final
 transcription. Further Ctrl+C presses during this drain do not discard the tail.
 
+The running host also accepts separate control commands:
+
+```sh
+voice-hotkeys --status
+voice-hotkeys --pause
+voice-hotkeys --resume
+voice-hotkeys --stop-recording
+voice-hotkeys --quit
+```
+
+Pause unregisters shortcuts and leaves an active recording running. Resume registers
+fresh shortcuts; events queued before pausing are discarded. Stop-recording only
+ends recording; Quit stops the host and drains its recording. The private control
+endpoint uses the same authenticated local transport as other app IPC. These are
+CLI controls; tray/menu controls are still planned.
+
 You can also use the CLI (`dictate` and `voice-to-clipboard` are aliases):
 
 ```sh
@@ -37,10 +53,21 @@ Custom MLX models accept an MLX Hugging Face repository in `--model`.
 
 The overlay closes with the recording process, including on errors. It shows no
 transcript. Disable with `voice-hotkeys --no-overlay` or omit `--overlay` on CLI.
-Automatic paste targets the focused window when transcription finishes; normal
-clipboard mode is preferable when switching chats. macOS paste uses Command+V;
-Windows/Linux use Ctrl+V. Windows notifications are provided by the overlay and
-console, not system toast notifications.
+Automatic paste verifies the original destination and waits for modifier release.
+Windows tracks the focused field with UI Automation; macOS uses Accessibility;
+X11 observes focus and navigation input. If the target changed or verification
+fails, the transcript remains in clipboard for manual paste. No caret restoration
+or Enter key is attempted. The result overlay briefly shows copied, paste shortcut
+sent, or manual-paste fallback. Input sent does not prove that an editor accepted it.
+
+`voice-hotkeys --hotkey-modifiers ctrl+alt` changes and saves the modifiers for all
+U/E/L shortcuts after registration succeeds. Use `alt+shift` to restore defaults.
+On macOS Alt means Option and the `win` modifier means Command. Prefer a combination
+that does not overlap your system layout switch. Windows reports detected conflicts;
+this application never changes system layout settings.
+
+See [stage C Windows tests](setup/windows-stage-c-test.md) for focus, held-modifier,
+repeat, clipboard and elevated-editor edge cases.
 
 ## Privacy and storage
 

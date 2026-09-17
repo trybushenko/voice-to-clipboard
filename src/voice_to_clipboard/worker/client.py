@@ -35,7 +35,7 @@ class RemoteModel:
                     spawn_background([sys.executable, '-m', 'voice_to_clipboard.worker.service'],
                                      env={**os.environ, 'DICTATE_RUNTIME': str(self.runtime)},
                                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                     stderr=subprocess.DEVNULL)
+                                     stderr=subprocess.DEVNULL, no_console=True)
                     launched = True
                 if time.monotonic() >= deadline:
                     raise TimeoutError(f'Не вдалося підключитися до моделі: {path}. '

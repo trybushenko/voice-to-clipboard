@@ -14,11 +14,11 @@ speak, press it again, and paste the transcript wherever you need it.
 
 | Platform | Speech engine | Clipboard | Overlay / shortcuts |
 | --- | --- | --- | --- |
-| Linux + NVIDIA | faster-whisper / CUDA | xclip (X11), wl-copy (Wayland) | GTK3; GNOME shortcuts or pynput on X11 |
-| Linux / Windows without NVIDIA | faster-whisper / CPU INT8 | Native Windows Unicode clipboard on Windows | Tk on Windows; pynput |
-| Windows + NVIDIA | faster-whisper / CUDA | Native Windows Unicode clipboard | Tk; pynput |
-| macOS Apple Silicon, including M4 | mlx-whisper / Metal | pbcopy | Tk; pynput with system permissions |
-| macOS Intel | faster-whisper / CPU INT8 | pbcopy | Tk; pynput with system permissions |
+| Linux + NVIDIA | faster-whisper / CUDA | xclip (X11), wl-copy (Wayland) | GTK3; GNOME shortcuts or native X11 grabs |
+| Linux / Windows without NVIDIA | faster-whisper / CPU INT8 | Native Windows Unicode clipboard on Windows | Tk on Windows; RegisterHotKey |
+| Windows + NVIDIA | faster-whisper / CUDA | Native Windows Unicode clipboard | Tk; RegisterHotKey |
+| macOS Apple Silicon, including M4 | mlx-whisper / Metal | pbcopy | Tk; selective Quartz tap with permissions |
+| macOS Intel | faster-whisper / CPU INT8 | pbcopy | Tk; selective Quartz tap with permissions |
 
 Auto-selection chooses MLX on an ARM64 Mac, CUDA when CTranslate2 detects an
 NVIDIA GPU, otherwise CPU. M4 matters: use **native ARM64 Python**, not Rosetta.
@@ -44,8 +44,8 @@ macOS, including native ARM64 Python for M4 Macs.
 | Alt+Shift+L | Ukrainian → clipboard and paste |
 
 Press the shortcut again to stop recording. The current hotkey host must be
-started manually; automatic login startup is planned. Windows hotkey/paste and
-Ctrl+C issues reported during testing remain tracked in the roadmap.
+started manually; automatic login startup is planned. Worker, native hotkey and guarded paste changes are tracked in the roadmap;
+physical desktop acceptance remains necessary on each target platform.
 
 See [usage and private local storage](docs/usage.md) for CLI options, history,
 model settings and platform limitations.

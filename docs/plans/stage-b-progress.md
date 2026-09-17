@@ -1,7 +1,15 @@
 # Етап B — поточний стан
 
+> Оновлення 2026-09-15: завершальна реалізація B/C додала background/no-console,
+> безперервний host focus guard і native focus events. Поточний стан —
+> [ревізія A/B/C](abc-audit.md); [повний Windows-гайд](../setup/windows-stage-c-test.md).
+> Нижче збережена історія попередніх перевірок; її відкриті implementation-пункти
+> замінено актуальним checklist головного плану. Ручне Windows/macOS приймання нових змін відкрите.
+
+
 2026-09-15. Етап A опублікований у коміті `69d97a8`; його CI пройшов на всіх
-трьох ОС. Зміни B наразі локальні й не означають завершеного Windows-приймання.
+трьох ОС. Основні зміни B вже змерджені в main (`905c1a6`) після позитивного
+Windows-фідбеку. Наступні CLI-control доробки входять до ревізії гілки C.
 
 ## Реалізовано
 
@@ -42,8 +50,8 @@
   обіцянкою незалежності від CTRL_CLOSE_EVENT. Перевірити GUI/no-console запуск,
   перш ніж додавати `CREATE_NO_WINDOW`; desktop startup належить наступному етапу.
 - Перевірити Windows CUDA та фізичний мікрофон, нативний lifecycle overlay.
-- Додати окремий стан Pause hotkeys поряд із Stop recording / Quit application;
-  зараз є stop recording та quit/drain/cancel, але немає pause/resume UI.
+- CLI Pause/Resume/Status/Stop/Quit додано в [ревізії A/B/C](abc-audit.md).
+  GUI pause/resume UI ще належить до D; нові CLI-команди потребують Windows/macOS smoke.
 
 ## Офіційні джерела
 
@@ -51,3 +59,11 @@
 і [Microsoft Process Creation Flags](https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags).
 `CREATE_NEW_PROCESS_GROUP` відключає Ctrl+C для нової групи; його не слід
 механічно змішувати з `CREATE_NEW_CONSOLE`, який цей прапорець ігнорує.
+
+## Приймання користувачем
+
+Користувач підтвердив успішне проходження Windows-сценаріїв; єдиний збій —
+тестова підміна SpeechGate в інтерактивному терміналі. Виправлено в `905c1a6`:
+числові поля та явні TTY/non-TTY перевірки. B змерджено в main за погодженням
+користувача. Попередній список відкритих пунктів збережений як історія; окремий
+Pause/resume GUI ще потребує реалізації; CLI уже дороблено в ревізії A/B/C.

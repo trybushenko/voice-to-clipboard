@@ -8,12 +8,12 @@ version = "0.1.0"
 description = "Local voice dictation to your clipboard on Linux, Windows and Apple Silicon"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.26,<3", "sounddevice>=0.5,<1"]
+dependencies = ["numpy>=1.26,<3", "sounddevice>=0.5,<1", "comtypes>=1.4,<2; sys_platform == 'win32'"]
 
 [project.optional-dependencies]
 whisper = ["faster-whisper>=1.2,<2"]
 mac = ["mlx-whisper>=0.4,<1; sys_platform == 'darwin' and platform_machine == 'arm64'"]
-hotkeys = ["pynput>=1.7,<2"]
+hotkeys = ["pynput>=1.7,<2", "pyobjc-framework-ApplicationServices>=10,<13; sys_platform == 'darwin'"]
 vad = ["webrtcvad-wheels>=2.0.14,<3"]
 
 [project.scripts]

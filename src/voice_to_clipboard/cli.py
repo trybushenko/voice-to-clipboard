@@ -149,6 +149,11 @@ def record(a, device, tty, gate_kwargs, stop_event):
         notify("⏳ Попередній запис ще обробляється")
         return
     atexit.register(session_lock.close)
+    paste_guard = None
+    if a.paste:
+        from .platform.focus import make_guard
+        paste_guard = make_guard()
+        atexit.register(paste_guard.close)
     try:
         base_text = latest_text() if a.append else ""
     except (OSError, ValueError) as exc:
@@ -286,17 +291,26 @@ def record(a, device, tty, gate_kwargs, stop_event):
         sys.exit(1)
 
     ok = to_clipboard(text)
+    delivery = "Copied to clipboard" if ok else "Copy failed; transcript saved in history"
     if a.paste and ok:
         try:
-            do_paste()
+            do_paste(text, paste_guard)
+            delivery = "Paste shortcut sent"
         except Exception as exc:
-            emit(f"[paste] {exc}; text is still in clipboard", tty)
+            delivery = str(exc)
+            emit(f"[paste] {delivery}", tty)
     if a.stdout or not tty:
         print(text)
     if tty:
         emit("\n\033[1m" + text + "\033[0m", tty)
         emit("[buffer] " + ("у буфері" if ok
                             else "копіювання не вдалося — текст є в історії та на екрані"), tty)
+    if paste_guard is not None:
+        paste_guard.close()
+    emit(f"[delivery] {delivery}", tty)
+    if a.overlay:
+        overlay.update(state="result", message=delivery)
+        time.sleep(2)
     overlay.close()
-    notify(f"✓ {len(text)} симв. у буфері" if ok else "✓ Готово (без буфера)")
+    notify(delivery)
 

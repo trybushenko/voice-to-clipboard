@@ -19,7 +19,7 @@ class Overlay:
                 from voice_to_clipboard.platform.processes import spawn_background
                 self.process = spawn_background(
                     [python, str(Path(__file__).resolve()), lang],
-                    stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, no_console=True)
                 self.thread = threading.Thread(target=self._write, daemon=True)
                 self.thread.start()
             except OSError:
@@ -39,9 +39,9 @@ class Overlay:
         finally:
             process.stdin.close()
 
-    def update(self, state='recording', elapsed=0, level=0):
+    def update(self, state='recording', elapsed=0, level=0, message=''):
         if self.process is not None:
-            self._enqueue(dict(state=state, elapsed=elapsed, level=level))
+            self._enqueue(dict(state=state, elapsed=elapsed, level=level, message=message))
 
     def _enqueue(self, message):
         try:
@@ -94,6 +94,8 @@ def window(lang):
     box.set_border_width(16)
     title = Gtk.Label(label='●  Запис  ·  ' + lang.upper())
     detail = Gtk.Label(label='00:00  ·  повтори хоткей для завершення')
+    detail.set_line_wrap(True)
+    detail.set_max_width_chars(48)
     bar = Gtk.ProgressBar()
     bar.set_size_request(290, 4)
     box.pack_start(title, False, False, 0)
@@ -131,9 +133,10 @@ def window(lang):
         except BlockingIOError:
             pass
         processing = state['state'] == 'transcribing'
-        title.set_text(('◌  Розпізнавання' if processing else '●  Запис') + '  ·  ' + lang.upper())
+        result = state['state'] == 'result'
+        title.set_text(('Готово' if result else '◌  Розпізнавання' if processing else '●  Запис') + '  ·  ' + lang.upper())
         seconds = int(state['elapsed'])
-        detail.set_text('Текст скоро буде в буфері' if processing else f'{seconds//60:02}:{seconds%60:02}  ·  повтори хоткей для завершення')
+        detail.set_text(state.get('message', '') if result else 'Текст скоро буде в буфері' if processing else f'{seconds//60:02}:{seconds%60:02}  ·  повтори хоткей для завершення')
         if processing:
             bar.pulse()
         else:
@@ -158,7 +161,7 @@ def tk_window(lang):
     title.pack(padx=20, pady=(14, 8))
     bar = ttk.Progressbar(root, length=290, maximum=1)
     bar.pack(padx=20)
-    detail = tk.Label(root, text='00:00 · press shortcut again to finish', fg='#c2cddd', bg='#18212f')
+    detail = tk.Label(root, wraplength=310, text='00:00 · press shortcut again to finish', fg='#c2cddd', bg='#18212f')
     detail.pack(padx=20, pady=(8, 14))
     root.update_idletasks()
     root.geometry(f'+{(root.winfo_screenwidth()-root.winfo_reqwidth())//2}+40')
@@ -196,9 +199,10 @@ def tk_window(lang):
             latest = message
         if latest:
             processing = latest['state'] == 'transcribing'
-            title.configure(text=('Transcribing' if processing else 'Recording') + ' · ' + lang.upper())
+            result = latest['state'] == 'result'
+            title.configure(text=('Done' if result else 'Transcribing' if processing else 'Recording') + ' · ' + lang.upper())
             seconds = int(latest['elapsed'])
-            detail.configure(text='Preparing clipboard…' if processing else f'{seconds//60:02}:{seconds%60:02} · press shortcut again to finish')
+            detail.configure(text=latest.get('message', '') if result else 'Preparing clipboard…' if processing else f'{seconds//60:02}:{seconds%60:02} · press shortcut again to finish')
             if processing:
                 bar.configure(mode='indeterminate')
                 bar.start(30)
@@ -217,5 +221,8 @@ if __name__ == '__main__':
     language = sys.argv[1] if len(sys.argv) > 1 else 'uk'
     if sys.platform.startswith('linux'):
         window(language)
+    elif sys.platform == 'win32':
+        from voice_to_clipboard.ui.windows_overlay import window as native_window
+        native_window(language)
     else:
         tk_window(language)

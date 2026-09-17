@@ -20,12 +20,20 @@ jobs:
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "macOS" ] && [ "$(uname -m)" = "arm64" ]; then
-            python -m pip install '.[mac]'
+            python -m pip install '.[mac,hotkeys]'
             python -c "import mlx_whisper"
           else
-            python -m pip install '.[whisper]'
+            python -m pip install '.[whisper,hotkeys]'
             python -c "import faster_whisper"
           fi
       - run: python -m unittest discover -s tests -v
       - run: voice-to-clipboard --help
       - run: python tests/unit/test_gate.py
+
+      - name: Windows real Unicode paste smoke
+        if: runner.os == 'Windows'
+        timeout-minutes: 2
+        run: |
+          python scripts/check_paste.py --auto --overlay
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/check_paste.py --auto --change-focus
