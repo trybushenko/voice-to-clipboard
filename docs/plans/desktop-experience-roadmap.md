@@ -5,7 +5,7 @@
 
 **Статус: A завершено; B/C прийняті користувачем на Windows 2026-09-17
 після focus/overlay виправлень і дозволені до merge в main. Фізична macOS
-матриця залишається відкритою. D розпочато в окремій тестовій гілці; E/F далі.**
+матриця залишається відкритою. D реалізовано в окремій тестовій гілці, desktop-приймання відкрите; E/F далі.**
 
 Позначення: `[x]` — конкретна реалізація або перевірка, для якої є доказ;
 `[ ]` — відсутня реалізація чи непроведена перевірка. Код і ручне приймання
@@ -134,7 +134,7 @@ dictate.py  # сумісна коренева обгортка
 - [x] Ревізія: окремі `voice-hotkeys --pause`, `--resume`, `--status`,
   `--stop-recording`, `--quit` через приватний IPC. Pause звільняє реєстрації,
   не обриває запис; resume створює новий listener, старі queued actions відкидаються.
-- [ ] GUI/menu pause/resume/quit — **D**, не реалізовано у CLI-поставці B.
+- [x] GUI/menu pause/resume/quit — реалізовано в окремій поставці **D**.
 - [x] No-console policy: worker/overlay використовують CREATE_NO_WINDOW;
   `voice-hotkeys --background` запускає незалежний host та dictation children.
   Повторний запуск повертає чинний PID; host-журнал без transcript/audio.
@@ -210,23 +210,29 @@ Secure desktop/екран входу не підтримуються. UIPI не 
 
 ### D. Desktop-застосунок, tray та автозапуск — P1
 
-- [ ] Єдиний користувацький процес: tray/menu bar, hotkeys, controller сесій, IPC;
+Реалізація у `codex/desktop-tray-autostart`. Нижче позначено код, а не
+фізичне login/permission приймання. [Звіт D](stage-d-verification.md) ·
+[Desktop testing guide](../setup/desktop-stage-d-test.md).
+
+- [x] Єдиний користувацький процес: tray/menu bar, hotkeys, controller сесій, IPC;
   окремий worker для розпізнавання. Мікрофон відкривається лише під час запису.
-- [ ] Стани: idle → recording → transcribing → delivered/error → idle;
+- [x] Стани: idle → recording → transcribing → delivered/error → idle;
   disabled та shutting-down обробляються явно. Один активний запис.
-- [ ] Пункти tray: почати/завершити, пауза хоткеїв, копіювати останнє, налаштування,
+- [x] Пункти tray: почати/завершити, пауза хоткеїв, копіювати останнє, налаштування,
   перевірити систему, відкрити журнал, автозапуск, вийти.
-- [ ] Windows: GUI launcher/Start Menu shortcut, користувацький автозапуск при вході
+- [x] Windows: GUI launcher/Start Menu shortcut, користувацький автозапуск при вході
   (обрати один механізм: Startup shortcut або HKCU Run). Не Windows Service у Session 0.
-- [ ] macOS: `.app`, menu bar, login item або LaunchAgent користувача.
+- [x] macOS: `.app`, menu bar, login item або LaunchAgent користувача.
   Підпис/notarization та стабільний bundle ID врахувати для дозволів після оновлення.
-- [ ] Linux: `.desktop` і XDG Autostart; за потреби systemd --user з коректною
+- [x] Linux: `.desktop` і XDG Autostart; за потреби systemd --user з коректною
   прив'язкою до графічної сесії. Не тримати одночасно два механізми автозапуску.
-- [ ] Повторний запуск відкриває стан чинного екземпляра, а не другого слухача.
-- [ ] App Exit звільняє hotkeys, microphone, worker, locks і overlay з bounded shutdown.
+- [x] Повторний запуск відкриває стан чинного екземпляра, а не другого слухача.
+- [x] App Exit звільняє hotkeys, microphone, власний worker, locks, panel і overlay:
+  до 120 секунд drain, потім cancellation лише owned processes.
   Вимкнення автозапуску з GUI має бути перевіреним зворотним шляхом.
-- [ ] CLI доступний через user PATH за бажанням, але installer створює всі launcher paths
-  самостійно. No-console процеси логують у файл з ротацією, а не у втрачений stderr.
+- [x] CLI доступний через user PATH за бажанням, а developer setup `--install` створює launcher paths
+  самостійно; bundled installer — E. No-console host збирає structured technical events у файл з ротацією,
+  без transcript/audio; довільний stderr не записується як користувацький текст.
 
 Приймання: установити → ввімкнути автозапуск → sign out/sign in → не відкриваючи
 термінал надиктувати U/E/L із браузера та VS Code. Закрити всі термінали — застосунок

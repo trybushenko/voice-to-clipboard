@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 
 def data_dir():
+    if os.environ.get('VOICE_TO_CLIPBOARD_DATA_DIR'):
+        return Path(os.environ['VOICE_TO_CLIPBOARD_DATA_DIR'])
     if sys.platform == 'win32':
         return Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData/Local')) / 'VoiceToClipboard'
     if sys.platform == 'darwin':
@@ -11,6 +13,8 @@ def data_dir():
 
 
 def cache_dir():
+    if os.environ.get('VOICE_TO_CLIPBOARD_CACHE_DIR'):
+        return Path(os.environ['VOICE_TO_CLIPBOARD_CACHE_DIR'])
     if sys.platform == 'win32':
         return data_dir() / 'cache'
     if sys.platform == 'darwin':

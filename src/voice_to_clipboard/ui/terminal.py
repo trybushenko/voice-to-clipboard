@@ -1,4 +1,6 @@
 import sys
+import os
+import json
 import threading
 import numpy as np
 
@@ -6,6 +8,14 @@ _out_lock = threading.Lock()
 
 def emit(text, tty):
     """Друк рядка так, щоб не побити рядок метра."""
+    if os.environ.get('DICTATE_TECHNICAL_ONLY') == '1':
+        event = next((name for name in ('retry', 'error', 'warn', 'paste', 'delivery')
+                      if text.startswith('[' + name + ']')), None)
+        if event:
+            with _out_lock:
+                sys.stderr.write(json.dumps({'event': event}) + '\n')
+                sys.stderr.flush()
+        return
     with _out_lock:
         if tty:
             sys.stderr.write("\r\033[K")

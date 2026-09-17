@@ -6,7 +6,7 @@ import time
 from ..worker.transport import Server, connect
 from ..worker.protocol import receive, send
 
-OPERATIONS = {'pause', 'resume', 'status', 'stop-recording', 'quit', 'check-paste'}
+OPERATIONS = {'pause', 'resume', 'status', 'stop-recording', 'quit', 'check-paste', 'start-uk', 'start-en', 'copy-last', 'settings', 'show', 'cancel'}
 
 
 def request(path, operation, **details):

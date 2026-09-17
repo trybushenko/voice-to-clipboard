@@ -13,7 +13,7 @@ from .platform.desktop import SessionLock, notify, to_clipboard, do_paste, confi
 from .core.speech_gate import SAMPLE_RATE, STUCK_WARN_S, SpeechGate
 from .core.recording import Recorder
 from .core.lifecycle import stop_on_interrupt
-from .core.session import SOCK, try_stop_running, stop_listener
+from .core.session import SOCK, GLOBAL_LOCK, try_stop_running, stop_listener
 from .core.history import read_history, save_history, latest_text
 from .core.transcription import Transcriber, load_model
 from .ui.terminal import emit, meter, _out_lock
@@ -138,14 +138,16 @@ def main():
 
 
 def record(a, device, tty, gate_kwargs, stop_event):
+    from .core.session_status import publish
     if try_stop_running():          # той самий хоткей вдруге = стоп
         sys.exit(0)
 
     # Keep ownership through transcription and clipboard delivery, too.
     os.makedirs(os.path.dirname(SOCK), exist_ok=True)
     try:
-        session_lock = SessionLock(SOCK + ".lock")
+        session_lock = SessionLock(GLOBAL_LOCK)
     except BlockingIOError:
+        publish("error", "Another dictation is active; finish it before starting a new recording")
         notify("⏳ Попередній запис ще обробляється")
         return
     atexit.register(session_lock.close)
@@ -165,6 +167,7 @@ def record(a, device, tty, gate_kwargs, stop_event):
     try:
         rec = Recorder(gate, device)
     except Exception as exc:
+        publish("error", "Microphone unavailable. Check the selected device and microphone permission.")
         emit(f"[error] мікрофон: {exc}", tty)
         notify(f"Мікрофон: {exc}", "critical")
         srv.close()
@@ -175,6 +178,7 @@ def record(a, device, tty, gate_kwargs, stop_event):
     from .ui.overlay import Overlay
     overlay = Overlay(a.overlay, a.lang)
     atexit.register(overlay.close)
+    publish("recording", "Microphone is recording")
     notify("● Запис")
     if tty:
         emit("\033[1m● МІКРОФОН УВІМКНЕНО\033[0m  "
@@ -239,6 +243,7 @@ def record(a, device, tty, gate_kwargs, stop_event):
             remove_endpoint(Path(SOCK))
 
     full = rec.finish()
+    publish("transcribing", "Finishing transcription")
     overlay.update(state="transcribing")
     if tty:
         emit(f"\033[1m■ Стоп\033[0m ({reason}), "
@@ -246,6 +251,7 @@ def record(a, device, tty, gate_kwargs, stop_event):
              f"{gate.speech_total:.1f}s мовлення", tty)
 
     if reason == "lead" or gate.speech_total < 0.35:
+        publish("delivered", "No speech detected; clipboard unchanged")
         notify("Нічого не почулось")
         scribe.close()
         sys.exit(0)
@@ -266,15 +272,18 @@ def record(a, device, tty, gate_kwargs, stop_event):
         holder["model"].close()
 
     if "error" in holder:
+        publish("error", "Model unavailable. Check model/backend settings and run System check.")
         notify(f"Модель: {holder['error']}", "critical")
         sys.exit(1)
 
     text = " ".join(scribe.parts).strip()
     if not text and scribe.errors:
+        publish("error", "Transcription failed; clipboard unchanged")
         notify("Не вдалося розпізнати запис; буфер не змінено", "critical")
         sys.exit(1)
     if not text:
         emit("[warn] порожній транскрипт", tty)
+        publish("delivered", "No speech detected; clipboard unchanged")
         notify("Тиша")
         sys.exit(0)
 
@@ -286,6 +295,7 @@ def record(a, device, tty, gate_kwargs, stop_event):
         emit(f"[error] не вдалося зберегти історію: {exc}", tty)
         notify("Не вдалося зберегти історію", "critical")
     if scribe.errors:
+        publish("error", "Incomplete transcription saved in history; clipboard unchanged")
         print(text)
         notify("Текст неповний: помилка розпізнавання. Перевір --history; буфер не змінено", "critical")
         sys.exit(1)
@@ -307,6 +317,9 @@ def record(a, device, tty, gate_kwargs, stop_event):
                             else "копіювання не вдалося — текст є в історії та на екрані"), tty)
     if paste_guard is not None:
         paste_guard.close()
+    publish("delivered" if ok else "error",
+            "Paste shortcut sent" if delivery == "Paste shortcut sent" else
+            "Copied to clipboard; paste manually" if ok else "Clipboard failed; transcript saved in history")
     emit(f"[delivery] {delivery}", tty)
     if a.overlay:
         overlay.update(state="result", message=delivery)
