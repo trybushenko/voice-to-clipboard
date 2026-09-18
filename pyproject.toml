@@ -14,12 +14,16 @@ dependencies = ["numpy>=1.26,<3", "sounddevice>=0.5,<1", "comtypes>=1.4,<2; sys_
 whisper = ["faster-whisper>=1.2,<2"]
 mac = ["mlx-whisper>=0.4,<1; sys_platform == 'darwin' and platform_machine == 'arm64'"]
 hotkeys = ["pynput>=1.7,<2", "pyobjc-framework-ApplicationServices>=10,<13; sys_platform == 'darwin'"]
+desktop = ["pystray>=0.19.5,<0.20", "Pillow>=10,<13"]
 vad = ["webrtcvad-wheels>=2.0.14,<3"]
 
 [project.scripts]
 voice-to-clipboard = "voice_to_clipboard.cli:main"
 dictate = "voice_to_clipboard.cli:main"
 voice-hotkeys = "voice_to_clipboard.ui.hotkeys:main"
+
+[project.gui-scripts]
+voice-desktop = "voice_to_clipboard.ui.desktop_app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

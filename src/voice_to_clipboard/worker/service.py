@@ -2,6 +2,8 @@
 import base64
 import os
 import socket
+import sys
+import json
 import numpy as np
 from ..platform.desktop import SessionLock
 from ..platform.files import remove_endpoint
@@ -62,6 +64,8 @@ def serve(runtime=RUNTIME, idle=300, make_model=factory):
                         except (EOFError, ConnectionError, socket.timeout):
                             pass
                         except Exception as exc:
+                            if os.environ.get('DICTATE_TECHNICAL_ONLY') == '1':
+                                print(json.dumps({'event': 'worker-error'}), file=sys.stderr, flush=True)
                             try:
                                 send(conn, {'error': str(exc)})
                             except OSError:

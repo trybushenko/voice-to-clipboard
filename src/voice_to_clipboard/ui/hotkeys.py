@@ -8,7 +8,7 @@ from ..platform.processes import spawn_background
 from ..core.session import try_stop_running
 
 
-def main():
+def main(argv=None, desktop=None):
     import os
     import json
     import queue
@@ -28,7 +28,8 @@ def main():
     for operation in ('pause', 'resume', 'status', 'stop-recording', 'quit'):
         commands.add_argument('--' + operation, dest='operation', action='store_const', const=operation,
                               help='Control the running hotkey host: ' + operation)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    args.desktop = desktop is not None
     endpoint = cache_dir() / 'dictate-hotkey-control.sock'
     if args.operation:
         try:
@@ -50,7 +51,8 @@ def main():
         args.hotkey_modifiers = args.hotkey_modifiers.lower()
     except (ValueError, RuntimeError, OSError) as exc:
         parser.error(str(exc))
-    if sys.platform.startswith('linux') and os.environ.get('WAYLAND_DISPLAY'):
+    wayland = sys.platform.startswith('linux') and os.environ.get('WAYLAND_DISPLAY')
+    if wayland and desktop is None:
         from ..platform.linux import wayland_hint
         parser.error('Wayland: ' + wayland_hint())
     if sys.platform == 'win32':
@@ -65,6 +67,8 @@ def main():
     launcher = SessionLauncher(args)
     actions = queue.Queue(maxsize=8)
     quitting = threading.Event()
+    cancel = threading.Event()
+    listener_error = ['']
     def enqueue(action):
         if not quitting.is_set():
             try:
@@ -82,29 +86,94 @@ def main():
         return NativeHotkeys(callbacks, args.hotkey_modifiers)
     controller = ListenerController(create_listener, enqueue)
     control = None
+    def status():
+        return {'state': 'stopping' if quitting.is_set() else 'paused' if controller.paused else 'listening',
+                'desktop': desktop is not None, 'pid': os.getpid(),
+                'phase': 'shutting-down' if quitting.is_set() else 'disabled' if controller.paused and launcher.state == 'idle' else launcher.state,
+                'worker_pid': launcher.worker.pid if launcher.worker is not None and launcher.worker.poll() is None else None,
+                'message': listener_error[0] or launcher.message,
+                'hotkey_modifiers': args.hotkey_modifiers,
+                'dictation_processes': sum(p.poll() is None for p in launcher.children)}
     def handle(payload):
         operation = payload["op"]
+        if operation == 'cancel':
+            if quitting.is_set():
+                cancel.set()
+            return status()
+        if quitting.is_set() and operation not in ('status', 'quit', 'check-paste'):
+            raise RuntimeError('Application is finishing dictation; wait or cancel from the tray')
+        if operation == 'show' and desktop is not None:
+            desktop.show_panel()
+        if operation == 'settings':
+            if desktop is None:
+                raise RuntimeError('Start the desktop app to change settings')
+            launcher.tick()
+            if launcher.children:
+                raise RuntimeError('Finish dictation before changing settings')
+            values = payload.get('values')
+            from ..core.desktop_settings import validate
+            from ..core.settings import save_settings
+            values = validate(values)
+            old = (args.hotkey_modifiers, args.model, args.inference_device, args.no_overlay)
+            paused = controller.paused
+            controller.pause()
+            try:
+                args.hotkey_modifiers = values['hotkey_modifiers']
+                args.model = values['model'] or None
+                args.inference_device = values['inference_device']
+                args.no_overlay = not values['overlay']
+                if not wayland and (not paused or args.hotkey_modifiers != old[0]):
+                    controller.resume()  # Verify changed registrations, without requiring permissions for unrelated settings.
+                    if paused:
+                        controller.pause()
+                save_settings(values)
+                if wayland:
+                    listener_error[0] = 'Wayland: use desktop shortcuts or tray recording; paste manually'
+                elif not controller.paused:
+                    listener_error[0] = ''
+            except Exception:
+                controller.pause()
+                args.hotkey_modifiers, args.model, args.inference_device, args.no_overlay = old
+                if not paused:
+                    controller.resume()
+                raise
+        if operation in ('start-uk', 'start-en'):
+            launcher.launch('uk' if operation == 'start-uk' else 'en')
+        if operation == 'copy-last':
+            from ..core.history import latest_text
+            from ..platform.desktop import to_clipboard
+            text = latest_text()
+            if not text or not to_clipboard(text):
+                raise RuntimeError('No saved transcript, or clipboard unavailable')
         if operation == "check-paste":
             return launcher.check_paste(payload.get("token"))
         if operation == 'pause':
             controller.pause()
             print('Hotkeys paused; active dictation continues. Use --resume or --stop-recording.', flush=True)
         elif operation == 'resume':
+            if wayland:
+                raise RuntimeError('Wayland: configure shortcuts in desktop settings; tray recording remains available')
             controller.resume()
+            listener_error[0] = ''
             print('Hotkeys resumed.', flush=True)
         elif operation == 'stop-recording':
             if launcher.children:
                 launcher.pending_stop = True
                 launcher.tick()
-            else:
+            elif desktop is None:
                 try_stop_running()
         elif operation == 'quit':
             quitting.set()
-        return {'state': 'stopping' if quitting.is_set() else 'paused' if controller.paused else 'listening',
-                'pid': os.getpid(),
-                'dictation_processes': sum(p.poll() is None for p in launcher.children)}
+        return status()
     try:
-        controller.resume()
+        try:
+            if wayland:
+                raise RuntimeError('Wayland: use desktop shortcuts or tray recording; paste manually')
+            controller.resume()
+        except Exception as exc:
+            if desktop is None:
+                raise
+            listener_error[0] = str(exc)
         control = ControlServer(endpoint)
         if explicit:
             save_modifiers(args.hotkey_modifiers)
@@ -112,31 +181,56 @@ def main():
         try:
             while not quitting.is_set():
                 control.dispatch(handle)
+                launcher.tick()
+                if desktop is not None:
+                    desktop.update(status())
                 if quitting.is_set():
                     break
                 if not controller.paused and not controller.listener.is_alive():
-                    break
+                    if desktop is None:
+                        break
+                    listener_error[0] = str(getattr(controller.listener, 'error', '') or 'Hotkeys stopped. Use Resume or Settings.')
+                    controller.pause()
                 try:
                     generation, lang, paste = actions.get(timeout=.1)
                     if controller.accepts(generation):
                         launcher.launch(lang, paste)
                 except queue.Empty:
                     launcher.tick()
-                except OSError as exc:
+                except (OSError, RuntimeError) as exc:
+                    launcher.state, launcher.message = 'error', str(exc)
                     print(f'Cannot start/stop dictation: {exc}', flush=True)
         except KeyboardInterrupt:
             print('Stopping hotkeys…', flush=True)
     finally:
         quitting.set()
         try:
-            if control is not None:
-                control.close()
             controller.pause()
+            if desktop is None:
+                if control is not None:
+                    control.close()
+                    control = None
+                drain_children(launcher.children)
+            else:
+                deadline = time.monotonic() + 120
+                while any(p.poll() is None for p in launcher.children):
+                    if control is not None:
+                        control.dispatch(handle)
+                    desktop.update(status())
+                    launcher.stop_running()
+                    if cancel.is_set() or time.monotonic() >= deadline:
+                        desktop.logger.warning('Shutdown cancelled unfinished dictation after cancellation/deadline')
+                        break
+                    time.sleep(.1)
         finally:
             try:
-                drain_children(launcher.children)
+                if desktop is not None:
+                    launcher.shutdown()
+                else:
+                    launcher.close()
             finally:
-                launcher.close()
+                if control is not None:
+                    control.close()
                 lock.close()
     if getattr(controller.listener, 'error', None):
         sys.exit(str(controller.listener.error))

@@ -20,10 +20,10 @@ jobs:
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "macOS" ] && [ "$(uname -m)" = "arm64" ]; then
-            python -m pip install '.[mac,hotkeys]'
+            python -m pip install '.[mac,hotkeys,desktop]'
             python -c "import mlx_whisper"
           else
-            python -m pip install '.[whisper,hotkeys]'
+            python -m pip install '.[whisper,hotkeys,desktop]'
             python -c "import faster_whisper"
           fi
       - run: python -m unittest discover -s tests -v
@@ -37,3 +37,8 @@ jobs:
           python scripts/check_paste.py --auto --overlay
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/check_paste.py --auto --change-focus
+
+      - name: Native desktop lifecycle smoke
+        if: runner.os == 'Windows' || runner.os == 'macOS'
+        timeout-minutes: 3
+        run: python scripts/check_desktop.py

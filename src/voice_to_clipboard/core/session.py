@@ -6,20 +6,22 @@ from ..platform.files import remove_endpoint
 from pathlib import Path
 from ..worker.transport import Server, connect
 
-SOCK = str(cache_dir() / "dictate.sock")
+SOCK = os.environ.get("DICTATE_SESSION_ENDPOINT", str(cache_dir() / "dictate.sock"))
+GLOBAL_LOCK = str(cache_dir() / "dictate.sock.lock")
 
-def try_stop_running():
-    if not os.path.exists(SOCK):
+def try_stop_running(path=None):
+    path = path or SOCK
+    if not os.path.exists(path):
         return False
     try:
-        with connect(SOCK, timeout=0.5) as s:
+        with connect(path, timeout=0.5) as s:
             s.sendall(b"stop")
         return True
     except socket.timeout:
         return True
     except (ConnectionRefusedError, FileNotFoundError):
-        if os.path.exists(SOCK):
-            remove_endpoint(Path(SOCK))                      # осиротілий сокет після падіння
+        if os.path.exists(path):
+            remove_endpoint(Path(path))                      # осиротілий сокет після падіння
         return False
 
 

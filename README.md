@@ -58,3 +58,13 @@ launchers. See [development and verification](docs/development.md).
 
 [Desktop experience roadmap](docs/plans/desktop-experience-roadmap.md) tracks
 remaining work and acceptance criteria.
+
+
+### Desktop app (stage D testing branch)
+
+Install the platform speech extra plus `desktop,hotkeys`, then run
+`python -m voice_to_clipboard.ui.desktop_app --install`. Launch **Voice to Clipboard**
+from the Start Menu, `~/Applications` on macOS, or the Linux application launcher.
+The tray/menu bar provides recording, pause, settings, diagnostics and login startup.
+This source installation uses the existing Python environment; bundled installers
+are a separate packaging stage. [Setup and full acceptance guide](docs/setup/desktop-stage-d-test.md).
