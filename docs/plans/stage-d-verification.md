@@ -35,6 +35,11 @@ B/C прийняті користувачем і змерджені; D зали�
   підміною registry, native Windows shortcut test виконується лише на Windows.
 - CI розширено real desktop lifecycle smoke на Windows/macOS; macOS без
   Accessibility дозволу має залишати доступну панель з disabled hotkeys.
+- [CI для реалізації `3f5c83c`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35189473637)
+  завершився успішно: усі 6 jobs (Windows, macOS, Ubuntu; Python 3.11 і 3.12).
+  На Windows пройшли справжня Unicode-вставка та desktop lifecycle smoke;
+  на macOS — desktop lifecycle smoke. Це не замінює перевірку login startup
+  і диктування на фізичному комп'ютері.
 
 ## Відкритий gate приймання
 
