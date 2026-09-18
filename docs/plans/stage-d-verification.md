@@ -1,7 +1,9 @@
 # Етап D — desktop, tray/menu bar та автозапуск
 
 Дата: 2026-09-17. Гілка `codex/desktop-tray-autostart`, база main `ad16169`.
-B/C прийняті користувачем і змерджені; D залишається окремо до desktop-приймання.
+B/C прийняті користувачем і змерджені. 2026-09-18 користувач підтвердив, що D
+працює чудово на Windows, та дозволив merge у main. Код D: `3f5c83c`;
+документована CI-ревізія: `4f9d03d`.
 
 ## Реалізація за вимогами D
 
@@ -41,13 +43,15 @@ B/C прийняті користувачем і змерджені; D зали�
   на macOS — desktop lifecycle smoke. Це не замінює перевірку login startup
   і диктування на фізичному комп'ютері.
 
-## Відкритий gate приймання
+## Приймання та залишок платформної перевірки
 
 Код D реалізований, але sign out/sign in, справжній мікрофон, system tray різних DE,
 Windows GPU та фізичний Mac M4 не можна позначити перевіреними лише за CI.
 Потрібен [desktop-протокол](../setup/desktop-stage-d-test.md), особливо:
 
-- [ ] Windows: Start Menu, login startup on/off, U/E/L, Pause/Quit під час speech/load.
+- [x] Windows: користувач прийняв етап D після наданого desktop-протоколу
+  (2026-09-18). Окремого покрокового звіту не надано; це user acceptance,
+  не твердження про інструментально перевірений кожен edge case.
 - [ ] macOS M4: arm64 runtime, `.app`, menu bar, permissions і LaunchAgent on/off.
 - [ ] Linux DE: видимість tray або явний panel fallback, XDG startup, старі bindings.
 - [ ] Long inference: штатний drain і явний cancel/deadline, без залишених owned processes.
