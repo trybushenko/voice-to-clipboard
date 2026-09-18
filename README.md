@@ -27,10 +27,9 @@ MLX uses greedy decoding; the faster-whisper `--beam` and Silero VAD options do 
 apply to MLX. Both use the recording speech gate. Accuracy/latency vary with hardware,
 microphone, language and background noise.
 
-Linux X11 recording and overlay were exercised on the development machine.
-CI runs CPU-only logic/IPC tests on Linux, Windows and macOS; it does not certify
-microphone permissions, physical audio devices or GUI focus on every desktop.
-Windows and macOS desktop integrations should be treated as an initial port.
+Windows desktop behavior has been accepted through user testing. CI checks Linux,
+Windows and macOS, including native desktop lifecycle checks on Windows/macOS.
+Physical Mac M4, permissions and login startup still need device-specific testing.
 
 ## Getting started
 
@@ -43,9 +42,20 @@ macOS, including native ARM64 Python for M4 Macs.
 | Alt+Shift+E | English → clipboard |
 | Alt+Shift+L | Ukrainian → clipboard and paste |
 
-Press the shortcut again to stop recording. The current hotkey host must be
-started manually; automatic login startup is planned. Worker, native hotkey and guarded paste changes are tracked in the roadmap;
-physical desktop acceptance remains necessary on each target platform.
+Press the shortcut again to stop recording. Launch **Voice to Clipboard** from
+Start Menu (Windows), `~/Applications` (macOS), or your Linux application menu.
+Its tray/menu bar provides recording, settings, diagnostics and **Start at login**;
+you do not need to keep a terminal open.
+
+**Installation currently requires Python and a one-time terminal setup.** There is
+no standalone installer yet. Follow the [step-by-step installation guide](docs/setup/installation.md)
+for prerequisites, setup without Git, your first recording and troubleshooting.
+Downloads are required for the first use of each model.
+
+The desktop shortcuts currently target Ukrainian and English. You can change their
+modifiers in Settings; other transcription languages are available through the CLI.
+Some runtime messages are still Ukrainian. Fully English messaging and configurable
+language/shortcut profiles are planned in stage D.1, not available yet.
 
 See [usage and private local storage](docs/usage.md) for CLI options, history,
 model settings and platform limitations.
@@ -58,13 +68,3 @@ launchers. See [development and verification](docs/development.md).
 
 [Desktop experience roadmap](docs/plans/desktop-experience-roadmap.md) tracks
 remaining work and acceptance criteria.
-
-
-### Desktop app (stage D testing branch)
-
-Install the platform speech extra plus `desktop,hotkeys`, then run
-`python -m voice_to_clipboard.ui.desktop_app --install`. Launch **Voice to Clipboard**
-from the Start Menu, `~/Applications` on macOS, or the Linux application launcher.
-The tray/menu bar provides recording, pause, settings, diagnostics and login startup.
-This source installation uses the existing Python environment; bundled installers
-are a separate packaging stage. [Setup and full acceptance guide](docs/setup/desktop-stage-d-test.md).
