@@ -80,6 +80,9 @@ def main():
                 assert json.loads((data/'settings.json').read_text())['profiles'] == changed['profiles']
                 request(endpoint, 'settings', values={**values, 'profiles': initial_profiles})
                 assert request(endpoint, 'status')['profiles'] == initial_profiles
+            expected_profiles = initial_profiles
+            if not restricted:
+                expected_profiles = request(endpoint, 'settings', values=profile_values)['profiles']
             request(endpoint, 'show')
             deadline = time.monotonic() + 8
             while not (cache/'dictate-panel.sock').exists() and time.monotonic() < deadline:
@@ -93,6 +96,16 @@ def main():
             assert app.wait(timeout=12) == 0
             assert not endpoint.exists()
             assert not list((cache/'dictate-desktop').glob('host-*')), 'Private worker runtime remained'
+            app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            deadline = time.monotonic() + 20
+            while not endpoint.exists() and time.monotonic() < deadline:
+                time.sleep(.1)
+            restarted = request(endpoint, 'status')
+            assert restarted['profiles'] == expected_profiles, restarted
+            assert restarted['pid'] != initial['pid'], restarted
+            request(endpoint, 'quit')
+            assert app.wait(timeout=12) == 0
             print('PASS: native tray/controller, pause/resume, settings, singleton panel and clean Quit; no microphone or model loaded')
         finally:
             if app.poll() is None:

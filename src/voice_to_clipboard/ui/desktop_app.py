@@ -296,6 +296,9 @@ def main():
         status = None
     if status is not None:
         if status.get('desktop'):
+            if 'profiles' not in status:
+                show_error('An older Voice to Clipboard host is still running. Quit it from the tray, then launch the updated app. Installing an update does not restart a running host.')
+                return
             request(endpoint(), 'show')
             return
         if status.get('dictation_processes'):

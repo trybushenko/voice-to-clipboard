@@ -69,3 +69,16 @@ class ProfileTests(unittest.TestCase):
             launcher.launch('en')
             command = spawn.call_args.args[0]
             self.assertEqual(command[command.index('--model') + 1], 'large-v3-turbo')
+
+    def test_all_languages_have_names_and_round_trip(self):
+        self.assertEqual(set(profiles.LANGUAGE_NAMES), set(profiles.LANGUAGES))
+        self.assertIn('Bulgarian (bg)', profiles.language_options())
+        self.assertIn('Indonesian (id)', profiles.language_options())
+        for option in profiles.language_options():
+            self.assertIn(profiles.language_code(option), profiles.LANGUAGES)
+        self.assertEqual(profiles.language_code('Polish'), 'pl')
+
+    def test_old_host_response_is_actionable_not_key_error(self):
+        with self.assertRaisesRegex(RuntimeError, 'Quit Voice to Clipboard'):
+            profiles.saved_profiles({'state': 'listening'})
+        self.assertEqual(profiles.saved_profiles({'profiles': profiles.defaults()}), profiles.defaults())

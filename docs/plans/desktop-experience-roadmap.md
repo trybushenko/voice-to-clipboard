@@ -447,3 +447,20 @@ first-run flow залишаються відкритими; весь D.1 не п
 
 [Test guide](../setup/language-profiles.md). Це реалізація основи кроків 2–3,
 а не закриття всього D.1/E.
+
+## Windows feedback follow-up — profiles/settings lifecycle
+
+- [x] All 100 supported languages have full English names; alphabetical dropdown.
+- [x] Apply waits for acknowledgment before close, shows persistent saved/error status,
+  and blocks repeated saves. Pending edits are not silently discarded on close.
+- [x] Missing profiles in an old-host response no longer breaks the panel poll loop;
+  compatibility checks explain that the resident app must be restarted after updating.
+- [x] Quit acknowledgment closes an idle panel immediately; live profiles refresh
+  only on change, preserving selection during periodic status updates.
+- [x] GUI smoke covers real Add/Apply/close, malformed host response recovery and Quit;
+  desktop smoke now verifies persisted profiles after a full process restart.
+- [x] Paste errors distinguish unreachable host from failed target verification;
+  Windows CI now tests the remote guard IPC with a real native editor and overlay.
+- [ ] Confirm the user's actual Polish/Indonesian hotkeys and paste failure on their
+  Windows machine after a complete host restart. The old-host explanation matches
+  symptoms but is not proven for that machine without its full error/log details.

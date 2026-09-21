@@ -37,6 +37,8 @@ def main():
         return
     control = ControlServer(panel_endpoint)
     root = tk.Tk()
+    closed = [False]
+    root.bind('<Destroy>', lambda event: closed.__setitem__(0, True) if event.widget is root else None)
     root.title('Voice to Clipboard — Settings and status')
     root.geometry('780x760')
     canvas = tk.Canvas(root, highlightthickness=0)
@@ -68,13 +70,20 @@ def main():
     def enqueue(function, callback=lambda value: None):
         try:
             work.put_nowait((function, callback))
+            return True
         except queue.Full:
             status.set("Please wait for the current operation")
+            return False
     def command(operation):
-        enqueue(lambda: request(endpoint(), operation))
+        def completed(value):
+            if operation == 'quit':
+                status.set('Finishing dictation and exiting…')
+                if not value.get('dictation_processes'):
+                    root.destroy()
+        enqueue(lambda: request(endpoint(), operation), completed)
     row = ttk.Frame(frame)
     row.pack(fill='x')
-    from ..core.profiles import LANGUAGES, LANGUAGE_NAMES, label as profile_label, validate as validate_profiles
+    from ..core.profiles import LANGUAGES, LANGUAGE_NAMES, label as profile_label, validate as validate_profiles, language_options, language_code, saved_profiles
     settings = load()
     profiles = [dict(p) for p in settings['profiles']]
     active_profiles = [dict(p) for p in profiles]
@@ -118,14 +127,13 @@ def main():
     profile_frame.pack(fill='x', pady=6)
     profile_list = tk.Listbox(profile_frame, height=4, exportselection=False)
     profile_list.pack(fill='x')
-    language = tk.StringVar(value='en')
+    language = tk.StringVar(value='English (en)')
     letter = tk.StringVar(value='e')
     delivery = tk.BooleanVar(value=False)
     profile_model = tk.StringVar()
     editor = ttk.Frame(profile_frame)
     editor.pack(fill='x')
-    language_options = [f"{code} — {LANGUAGE_NAMES.get(code, code)}" for code in sorted(LANGUAGES)]
-    language_choice = ttk.Combobox(editor, textvariable=language, values=language_options, width=22)
+    language_choice = ttk.Combobox(editor, textvariable=language, values=language_options(), width=25, state='readonly')
     language_choice.pack(side='left')
     ttk.Label(editor, text='Key A–Z').pack(side='left')
     ttk.Entry(editor, textvariable=letter, width=4).pack(side='left')
@@ -140,18 +148,21 @@ def main():
         selection = profile_list.curselection()
         if selection:
             p = profiles[selection[0]]
-            language.set(p['language'])
+            language.set(f"{LANGUAGE_NAMES[p['language']]} ({p['language']})")
             letter.set(p['key'])
             delivery.set(p['paste'])
             profile_model.set(p['model'])
     profile_list.bind('<<ListboxSelect>>', selected)
     def edit_profile(mode):
+        if save_pending[0]:
+            feedback.set('Wait for Apply to finish before editing profiles.')
+            return
         candidate = [dict(p) for p in profiles]
         selection = profile_list.curselection()
         try:
             if mode != 'add' and not selection:
                 raise ValueError('Select a profile first')
-            profile = dict(language=language.get().split(' — ')[0].strip().lower(),
+            profile = dict(language=language_code(language.get()),
                            key=letter.get().strip(), paste=delivery.get(), model=profile_model.get().strip())
             if mode == 'add':
                 candidate.append(profile)
@@ -161,7 +172,7 @@ def main():
                 del candidate[selection[0]]
             profiles[:] = validate_profiles(candidate)
             refresh_profiles()
-            status.set('Profile changes are pending. Click Apply settings to activate them.')
+            feedback.set('Profile changes are pending. Click Apply settings to activate them.')
         except ValueError as exc:
             messagebox.showerror('Profiles', str(exc), parent=root)
     buttons = ttk.Frame(profile_frame)
@@ -169,12 +180,37 @@ def main():
     for text, mode in [('Add', 'add'), ('Update selected', 'update'), ('Remove selected', 'remove')]:
         ttk.Button(buttons, text=text, command=lambda mode=mode: edit_profile(mode)).pack(side='left')
     refresh_profiles()
+    compatible = [False]
+    save_pending = [False]
+    close_after_save = [False]
+    feedback = tk.StringVar(value='Add or update a profile, then Apply. Closing this window keeps the tray app running.')
+    ttk.Label(profile_frame, textvariable=feedback, wraplength=680).pack(anchor='w')
+    def saved(value):
+        active_profiles[:] = saved_profiles(value)
+        profiles[:] = [dict(p) for p in active_profiles]
+        refresh_profiles()
+        refresh_start()
+        feedback.set('Saved and active. You can close Settings; shortcuts remain available.')
+        if close_after_save[0]:
+            root.destroy()
     def save():
+        if not compatible[0]:
+            feedback.set('Waiting for a compatible host. If this persists, Quit the tray app and relaunch after updating.')
+            return
+        if save_pending[0]:
+            return
         values = {'hotkey_modifiers': mods.get(), 'model': model.get().strip(),
                   'inference_device': device.get(), 'overlay': overlay.get(),
                   'schema_version': 2, 'profiles': [dict(p) for p in profiles]}
-        enqueue(lambda: request(endpoint(), 'settings', values=values), lambda value: (active_profiles.__setitem__(slice(None), value['profiles']), refresh_start(), status.set('Settings saved.')))
-    ttk.Button(form, text='Apply all settings and profiles', command=save).grid(row=4, columnspan=2, sticky='w', pady=8)
+        save_pending[0] = True
+        apply_button.configure(state='disabled')
+        feedback.set('Saving and registering shortcuts…')
+        if not enqueue(lambda: request(endpoint(), 'settings', values=values), saved):
+            save_pending[0] = False
+            apply_button.configure(state='normal')
+            feedback.set('Busy; settings were not submitted. Try Apply again.')
+    apply_button = ttk.Button(form, text='Apply all settings and profiles', command=save)
+    apply_button.grid(row=4, columnspan=2, sticky='w', pady=8)
     def autostart():
         desired = auto.get()
         def changed(value):
@@ -217,14 +253,35 @@ def main():
     poll_pending = [False]
     misses = [0]
     def received(value):
+        compatible[0] = False
+        current_profiles = saved_profiles(value)
+        compatible[0] = True
+        if profiles == active_profiles and not save_pending[0] and current_profiles != active_profiles:
+            active_profiles[:] = current_profiles
+            profiles[:] = [dict(p) for p in current_profiles]
+            refresh_profiles()
+            refresh_start()
         poll_pending[0] = False
         misses[0] = 0
         status.set(f"{value.get('phase', value['state'])} · hotkeys {value['state']}\n{value.get('message', '')}")
+    def close_window():
+        if save_pending[0]:
+            close_after_save[0] = True
+            feedback.set('Waiting for Apply to finish before closing…')
+            return
+        if profiles != active_profiles:
+            if not messagebox.askyesno('Unsaved profiles', 'Discard pending profile changes and close Settings?', parent=root):
+                return
+        root.destroy()
+    root.protocol('WM_DELETE_WINDOW', close_window)
     def poll():
         control.dispatch(show)
         try:
             while True:
                 callback, value, error = results.get_nowait()
+                if callback is saved:
+                    save_pending[0] = False
+                    apply_button.configure(state='normal')
                 if error:
                     if callback is received:
                         poll_pending[0] = False
@@ -233,15 +290,28 @@ def main():
                             root.destroy()
                             return
                     else:
+                        close_after_save[0] = False
+                        feedback.set('Not saved: ' + error)
                         messagebox.showerror('Voice to Clipboard', error, parent=root)
                 else:
-                    callback(value)
+                    try:
+                        callback(value)
+                    except tk.TclError:
+                        return
+                    except Exception as exc:
+                        poll_pending[0] = False
+                        close_after_save[0] = False
+                        feedback.set(str(exc))
         except queue.Empty:
             pass
+        if closed[0]:
+            return
         if not poll_pending[0]:
             poll_pending[0] = True
-            enqueue(lambda: request(endpoint(), 'status'), received)
-        root.after(500, poll)
+            if not enqueue(lambda: request(endpoint(), 'status'), received):
+                poll_pending[0] = False
+        if not closed[0]:
+            root.after(500, poll)
     root.after(100, poll)
     try:
         root.mainloop()

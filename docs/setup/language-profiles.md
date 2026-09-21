@@ -12,7 +12,7 @@ Ukrainian presets on a clean install. English can also be edited or replaced.
 
 In Settings → Language profiles:
 
-1. Choose the Whisper language code (e.g. `pl — Polish`).
+1. Choose a language by its full English name (e.g. `Polish (pl)`); the list is alphabetical.
 2. Choose a unique A–Z letter. All profiles use the shared shortcut modifiers above.
    macOS uses physical ANSI key positions; Alt means Option and Win means Command.
 3. Enable Paste with hotkey if desired; otherwise the result goes to clipboard.
@@ -54,3 +54,26 @@ your previous shortcuts manually; that installation cannot be identified reliabl
 This delivery does not include per-profile modifier sets, a model download wizard,
 or automatic validation of arbitrary custom model repositories. Those remain follow-up
 work; shared modifiers and per-profile letters are fully configurable now.
+
+## Updating after Windows feedback
+
+Before installing an update, **Quit the tray application**, not just the Settings
+window. Or run `.\.venv\Scripts\voice-hotkeys.exe --quit` and wait for the tray
+icon to disappear. Pull this branch, reinstall the package, then relaunch. A running
+host keeps its old code even after pip installation; incompatible hosts now produce
+an explicit restart instruction.
+
+- Add Polish/P and Indonesian/I, Apply, wait for **Saved and active**, close Settings,
+  then reopen it. Both profiles must remain, and their hotkeys must work.
+- Repeat Apply followed immediately by closing Settings: the window waits for the
+  save acknowledgment. A failed save leaves it open with a reason.
+- Remove a profile, Apply, Quit the entire tray app, relaunch: it stays removed.
+- Select Bulgarian, Indonesian and other previously unnamed languages by full name.
+- Quit app while idle: no Check system or other click is needed to close Settings.
+- Test paste from an editor with Settings closed. Genuine focus changes still block
+  paste. Connection failures and target-verification failures now have distinct
+  messages; include the full detail if the issue persists.
+
+Automated GUI check: `python scripts/check_settings_panel.py` (isolated settings,
+no audio). Windows paste/host IPC check: `python scripts/check_paste.py --auto
+--overlay --remote-host` (replaces clipboard with test text).
