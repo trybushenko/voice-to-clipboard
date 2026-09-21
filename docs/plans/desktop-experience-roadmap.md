@@ -254,7 +254,8 @@ Secure desktop/екран входу не підтримуються. UIPI не 
   first recording, startup, troubleshooting/update/uninstall: `ee67444`.
   Це документація, не підтвердження clean-machine installation.
 - [x] Частковий English CLI/GTK переклад реалізовано: `f3a3333`, 74 тести OK
-  (4 platform skips). Ще не змерджено; весь English-аудит не завершено.
+  (4 platform skips). Аудит завершено у `d54e1e2`; користувач дозволив merge
+  без окремого ручного приймання текстових змін.
 - [x] Remote прибрано: merged B/C і D branches видалено. Залишені `main` та
   `codex/english-cli-messages` з незмердженою частиною D.1.
 
@@ -270,8 +271,7 @@ Secure desktop/екран входу не підтримуються. UIPI не 
 | 6 | E installers та lifecycle | Windows installer, macOS ARM64 app/DMG, обраний Linux package; update/uninstall/autostart перевірено; runtime included; signing status чесно задокументовано |
 | 7 | F release acceptance | Clean Windows без Python/Git/CUDA, Ubuntu та фізичний M4; GUI/paste/permissions/login, NVIDIA окремо, довгі сесії; version/checksums/release notes і відомі обмеження |
 
-Почати наступну робочу сесію з **кроку 1**, перевіривши git status і CI поточної
-гілки. Для кроків 2–3 спочатку спроєктувати schema/migration та спільне model-language
+Наступна реалізація — **крок 2**, після завершення merge English-поставки. Для кроків 2–3 спочатку спроєктувати schema/migration та спільне model-language
 mapping; не зашивати нові мови в окремі копії U/E/L-команд. Кожну поставку вести
 в одній активній гілці від актуального main; завершені гілки прибирати після merge.
 F-тести додавати під час відповідної реалізації, фінальний gate — на release artifacts.
@@ -295,12 +295,12 @@ F-тести додавати під час відповідної реаліз�
 calibration, recording/delivery notifications, terminal meter та GTK overlay
 англійською. Це лише текстові зміни: мови transcript, defaults та shortcuts
 не змінені. Перевірено CLI `--help` і regression suite (74 тести, 4 platform skips).
-Повний аудит інших модулів, configurable profiles і first-run flow залишаються
-відкритими; весь D.1 не позначено завершеним.
+Повний аудит інших модулів завершено у `d54e1e2`. Configurable profiles і
+first-run flow залишаються відкритими; весь D.1 не позначено завершеним.
 
 - [x] README/setup source onboarding англійською оновлено в main (`ee67444`).
-- [ ] English by default для всіх UI, tray, CLI/help, progress, помилок,
-  діагностики та технічних логів (частковий переклад у `f3a3333`).
+- [x] Власні UI, tray, CLI/help, progress, помилки, diagnostics і technical logs
+  англійською (`f3a3333`, `d54e1e2`); сторонні помилки можуть бути мовою ОС.
   Мова інтерфейсу не змінює мову transcript; не перекладати голос автоматично.
 - [ ] Налаштовувані профілі: language + повна hotkey combination + delivery
   (clipboard або paste). Без прив'язки U/E/L до фіксованих мов; за потреби
@@ -414,10 +414,9 @@ calibration, recording/delivery notifications, terminal meter та GTK overlay
   навмисна ASR vocabulary підказка для української моделі; її не змінено.
   Коментарі/docstrings і користувацький transcript не є текстом інтерфейсу.
 - [x] 74 regression tests: OK, 4 platform skips. CLI help перевірено раніше.
-- [ ] Перевірка останнього CI та ручне приймання повідомлень Windows → merge
-  `codex/english-cli-messages` → видалення гілки.
+- [x] Користувач дозволив merge текстових змін без окремого ручного Windows-приймання.
+- CI `35589166283` ще виконувався під час підготовки merge; локальний suite успішний.
 
 Власні повідомлення тепер англійською; сторонні бібліотеки та ОС можуть повертати
 помилки мовою системи. Профілі, мовна маршрутизація та first-run UI — наступні
-кроки 2–3; D.1 загалом ще відкритий. Після merge оновити застереження про
-українські runtime messages у main README/installation.
+кроки 2–3; D.1 загалом ще відкритий. README/installation оновлено: власні повідомлення англійською.

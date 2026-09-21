@@ -109,8 +109,8 @@ menu-started sessions copy to clipboard. **Copy last transcript** restores the l
 In **Settings**, change shortcut modifiers if Alt+Shift conflicts with keyboard
 layout switching; for example, `ctrl+alt`. The U/E/L keys and languages are currently
 fixed in the desktop app. Other languages are available via CLI `--lang`; fully
-configurable language profiles and English-only runtime messaging are planned.
-Some current runtime messages are Ukrainian.
+configurable language profiles are planned. Application messages are in English;
+errors from the OS or dependencies may use the system language.
 
 ## 4. Start automatically and exit safely
 
