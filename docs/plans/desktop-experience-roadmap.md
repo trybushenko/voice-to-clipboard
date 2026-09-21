@@ -436,6 +436,7 @@ first-run flow залишаються відкритими; весь D.1 не п
 - [x] Вибрана модель/мова явно передаються recorder; стандарт — multilingual turbo,
   без української спеціалізованої моделі. Non-English + .en відхиляється.
 - [x] Settings відкривається на першому запуску; README/installation оновлено.
+- [x] 80 local regression tests: OK (4 platform skips).
 - [x] Local desktop smoke: English-only, застосування Polish, видалення профілю,
   singleton panel і Quit; без мікрофона/завантаження моделі.
 - [ ] Cross-platform CI нової поставки та реальне Polish/English диктування.
