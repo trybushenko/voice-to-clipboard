@@ -239,6 +239,53 @@ Secure desktop/екран входу не підтримуються. UIPI не 
 термінал надиктувати U/E/L із браузера та VS Code. Закрити всі термінали — застосунок
 працює. Pause/Resume/Exit та повторний запуск не залишають zombie-процесів.
 
+### Поточна черга виконання — ревізія 2026-09-21
+
+Цей документ — єдине джерело статусу. Детальні вимоги D.1/E/F нижче;
+черга тут визначає порядок поставок, а не замінює їхні acceptance criteria.
+
+**Зафіксований результат**
+
+- [x] A: структура пакета, tests/docs/scripts та сумісні точки входу.
+- [x] B/C: Windows worker, lifecycle, hotkeys та guarded paste; прийнято користувачем.
+- [x] D: desktop/tray, settings, autostart, shutdown; прийнято користувачем;
+  merge у main `9347285`. Фізичний M4 та повна Linux DE матриця ще відкриті.
+- [x] README та source onboarding англійською для актуального main, ZIP без Git,
+  first recording, startup, troubleshooting/update/uninstall: `ee67444`.
+  Це документація, не підтвердження clean-machine installation.
+- [x] Частковий English CLI/GTK переклад реалізовано: `f3a3333`, 74 тести OK
+  (4 platform skips). Ще не змерджено; весь English-аудит не завершено.
+- [x] Remote прибрано: merged B/C і D branches видалено. Залишені `main` та
+  `codex/english-cli-messages` з незмердженою частиною D.1.
+
+**Наступні поставки — виконувати послідовно**
+
+| № | Робота | Критерій завершення |
+| --- | --- | --- |
+| 1 | Завершити English-аудит у поточній `codex/english-cli-messages`: notifications, model/worker, clipboard, overlay, CLI та diagnostics | Усі власні user-facing рядки англійською, без перекладу transcript; тести, CI, перевірка помилок/індикатора; приймання → merge → видалення гілки |
+| 2 | D.1 profiles: versioned settings schema, migration U/E/L, language/model compatibility, повні shortcuts і delivery | Старі prefs збережено; Polish/English/Ukrainian профілі; duplicate/conflict validation, atomic save та rollback; pause/restart/paste без регресій |
+| 3 | D.1 first-run UI та редактор профілів | Новий користувач обирає мову, shortcut і copy/paste без редагування файлів; existing users не втрачають конфігурацію; польськомовний тестувальник проходить сценарій |
+| 4 | E packaging spike і рішення про bundler | Пробні frozen builds Windows CPU та macOS ARM64: worker spawn, audio, native UI/dependencies; зафіксовані support matrix, обмеження, спосіб збірки |
+| 5 | E doctor, downloads і розширення onboarding | Модель: progress/cancel/retry/offline; перевірка backend реальною inference; зрозуміле відновлення без CUDA/мікрофона/диска/мережі; використовує UI кроку 3, не створює другий wizard |
+| 6 | E installers та lifecycle | Windows installer, macOS ARM64 app/DMG, обраний Linux package; update/uninstall/autostart перевірено; runtime included; signing status чесно задокументовано |
+| 7 | F release acceptance | Clean Windows без Python/Git/CUDA, Ubuntu та фізичний M4; GUI/paste/permissions/login, NVIDIA окремо, довгі сесії; version/checksums/release notes і відомі обмеження |
+
+Почати наступну робочу сесію з **кроку 1**, перевіривши git status і CI поточної
+гілки. Для кроків 2–3 спочатку спроєктувати schema/migration та спільне model-language
+mapping; не зашивати нові мови в окремі копії U/E/L-команд. Кожну поставку вести
+в одній активній гілці від актуального main; завершені гілки прибирати після merge.
+F-тести додавати під час відповідної реалізації, фінальний gate — на release artifacts.
+
+**Як підтримувати статус під час роботи**
+
+- В одному коміті з реалізацією оновлювати відповідний пункт цього документа:
+  зроблене, commit/branch, перевірки та що лишилося. `[x]` ставити лише за доказом.
+- Відрізняти «код готовий», «CI успішний», «перевірено користувачем» і «змерджено».
+  Зелений CI не закриває physical hardware/login acceptance.
+- Після кожної поставки оновлювати README/installation, якщо змінився user flow;
+  залишати короткий test guide і наступну конкретну дію.
+- Не включати LLM rewriting, cloud transcription чи автоматичне надсилання тексту.
+
 ### D.1. International onboarding — наступна окрема поставка
 
 Заплановано 2026-09-18 за фідбеком користувача та польського тестувальника.
@@ -251,8 +298,9 @@ calibration, recording/delivery notifications, terminal meter та GTK overlay
 Повний аудит інших модулів, configurable profiles і first-run flow залишаються
 відкритими; весь D.1 не позначено завершеним.
 
+- [x] README/setup source onboarding англійською оновлено в main (`ee67444`).
 - [ ] English by default для всіх UI, tray, CLI/help, progress, помилок,
-  діагностики та технічних логів; переклад README/setup onboarding.
+  діагностики та технічних логів (частковий переклад у `f3a3333`).
   Мова інтерфейсу не змінює мову transcript; не перекладати голос автоматично.
 - [ ] Налаштовувані профілі: language + повна hotkey combination + delivery
   (clipboard або paste). Без прив'язки U/E/L до фіксованих мов; за потреби
