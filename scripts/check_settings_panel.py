@@ -69,14 +69,20 @@ def main():
         with patch('voice_to_clipboard.core.host_control.request', side_effect=request), patch('voice_to_clipboard.platform.launchers.enabled', return_value=False), patch('tkinter.messagebox.showerror', side_effect=lambda *args, **kwargs: errors.append(str(args))):
             with patch.object(tk.Tk, 'mainloop', drive):
                 desktop_panel.main()
+                import gc
+                gc.collect()  # Collect destroyed Tcl interpreters on their owning thread.
             assert [p['language'] for p in load()['profiles']] == ['en', 'pl'], load()
             save_settings({'profiles': [{'language': 'en', 'key': 'e', 'paste': False, 'model': ''}]})
             malformed_reply[0] = True
             with patch.object(tk.Tk, 'mainloop', lambda root: drive(root, recover=True)):
                 desktop_panel.main()
+                import gc
+                gc.collect()  # Collect destroyed Tcl interpreters on their owning thread.
             assert [p['language'] for p in load()['profiles']] == ['en', 'pl']
             with patch.object(tk.Tk, 'mainloop', lambda root: drive(root, quit_only=True)):
                 desktop_panel.main()
+                import gc
+                gc.collect()  # Collect destroyed Tcl interpreters on their owning thread.
         assert not errors, errors
         print('PASS: real Tk Add, Apply followed immediately by close, saved profile reload, and Quit without extra clicks')
 

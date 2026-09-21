@@ -55,23 +55,30 @@ def main():
     work = queue.Queue(maxsize=16)
     results = queue.Queue()
     stopping = threading.Event()
+    callbacks = {}
+    next_callback = [0]
     def worker():
         while not stopping.is_set():
             try:
-                function, callback = work.get(timeout=.2)
+                function, callback_id = work.get(timeout=.2)
             except queue.Empty:
                 continue
             try:
                 value = function()
-                results.put((callback, value, None))
+                results.put((callback_id, value, None))
             except Exception as exc:
-                results.put((callback, None, str(exc)))
-    threading.Thread(target=worker, daemon=True).start()
+                results.put((callback_id, None, str(exc)))
+    worker_thread = threading.Thread(target=worker, daemon=True)
+    worker_thread.start()
     def enqueue(function, callback=lambda value: None):
+        callback_id = next_callback[0]
+        next_callback[0] += 1
+        callbacks[callback_id] = callback
         try:
-            work.put_nowait((function, callback))
+            work.put_nowait((function, callback_id))
             return True
         except queue.Full:
+            callbacks.pop(callback_id, None)
             status.set("Please wait for the current operation")
             return False
     def command(operation):
@@ -214,14 +221,17 @@ def main():
     def autostart():
         desired = auto.get()
         def changed(value):
-            auto.set(value)
-            status.set('Login startup enabled.' if value else 'Login startup disabled.')
+            auto.set(value['enabled'])
+            if value['error']:
+                raise RuntimeError(value['error'])
+            status.set('Login startup enabled.' if value['enabled'] else 'Login startup disabled.')
         def apply():
+            error = None
             try:
                 set_enabled(desired)
-            finally:
-                results.put((lambda value: auto.set(value), enabled(), None))
-            return enabled()
+            except Exception as exc:
+                error = str(exc)
+            return {'enabled': enabled(), 'error': error}
         enqueue(apply, changed)
     ttk.Checkbutton(frame, text='Start at login (current user only)', variable=auto, command=autostart).pack(anchor='w')
     checks = tk.Text(frame, height=9, wrap='word')
@@ -278,7 +288,8 @@ def main():
         control.dispatch(show)
         try:
             while True:
-                callback, value, error = results.get_nowait()
+                callback_id, value, error = results.get_nowait()
+                callback = callbacks.pop(callback_id)
                 if callback is saved:
                     save_pending[0] = False
                     apply_button.configure(state='normal')
@@ -317,6 +328,8 @@ def main():
         root.mainloop()
     finally:
         stopping.set()
+        worker_thread.join(timeout=11)
+        callbacks.clear()  # Release all Tk-owning callbacks on the UI thread.
         control.close()
         lock.close()
 
