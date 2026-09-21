@@ -405,3 +405,19 @@ calibration, recording/delivery notifications, terminal meter та GTK overlay
 - [Windows SendInput](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput) — обмеження UIPI, стан клавіш і значення результату.
 - [faster-whisper GPU requirements](https://github.com/SYSTRAN/faster-whisper#gpu) — runtime залежності CUDA/cuDNN, не вимога універсального Toolkit 12.8.
 - [XDG GlobalShortcuts portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.GlobalShortcuts.html) — можливість реєстрації shortcuts на підтримуваних desktops.
+
+## English-аудит — 2026-09-21, завершення кроку 1 (код)
+
+- [x] Перекладено решту власних runtime-повідомлень: VAD dependency, history
+  validation, worker connection timeout, model/transcription retry/error.
+- [x] AST-аудит усіх Python-модулів src: єдиний український executable string —
+  навмисна ASR vocabulary підказка для української моделі; її не змінено.
+  Коментарі/docstrings і користувацький transcript не є текстом інтерфейсу.
+- [x] 74 regression tests: OK, 4 platform skips. CLI help перевірено раніше.
+- [ ] Перевірка останнього CI та ручне приймання повідомлень Windows → merge
+  `codex/english-cli-messages` → видалення гілки.
+
+Власні повідомлення тепер англійською; сторонні бібліотеки та ОС можуть повертати
+помилки мовою системи. Профілі, мовна маршрутизація та first-run UI — наступні
+кроки 2–3; D.1 загалом ще відкритий. Після merge оновити застереження про
+українські runtime messages у main README/installation.

@@ -35,7 +35,7 @@ class SpeechGate:
                 self.vad = webrtcvad.Vad(aggressiveness)
             except ImportError:
                 if mode == "webrtc":
-                    sys.exit("webrtcvad не встановлений: "
+                    sys.exit("webrtcvad is not installed: "
                              "pip install webrtcvad-wheels")
         self.margin_min = margin_min
         self.margin_max = margin_max

@@ -57,12 +57,12 @@ class Transcriber(threading.Thread):
                 t = time.monotonic()
                 text = self._transcribe(audio)
             except Exception as exc:
-                emit(f"[retry] транскрипція: {exc}", self.tty)
+                emit(f"[retry] transcription: {exc}", self.tty)
                 try:
                     text = self._transcribe(audio)
                 except Exception as retry_exc:
                     self.errors.append(str(retry_exc))
-                    emit(f"[error] фрагмент не розпізнано: {retry_exc}", self.tty)
+                    emit(f"[error] segment transcription failed: {retry_exc}", self.tty)
                     continue
             if text:
                 self.parts.append(text)
@@ -81,7 +81,7 @@ def load_model(holder, ready, name, compute, tty, one_shot=False, backend="auto"
         holder["model"] = m
     except Exception as exc:
         holder["error"] = exc
-        emit(f"[error] модель: {exc}", tty)
+        emit(f"[error] model: {exc}", tty)
     finally:
         ready.set()
 

@@ -14,7 +14,7 @@ def read_history():
             not isinstance(e, dict) or not isinstance(e.get("text"), str)
             for e in entries
         ):
-            raise ValueError("Некоректний формат історії")
+            raise ValueError("Invalid history format")
         return entries
     except FileNotFoundError:
         return []

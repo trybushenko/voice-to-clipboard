@@ -38,8 +38,8 @@ class RemoteModel:
                                      stderr=subprocess.DEVNULL, no_console=True)
                     launched = True
                 if time.monotonic() >= deadline:
-                    raise TimeoutError(f'Не вдалося підключитися до моделі: {path}. '
-                                       'Перевірте доступ до файлу та повторіть диктування.') from exc
+                    raise TimeoutError(f'Could not connect to the model: {path}. '
+                                       'Check file access and retry dictation.') from exc
                 time.sleep(min(delay, max(0, deadline - time.monotonic())))
                 delay = min(delay * 2, .25)
         try:
