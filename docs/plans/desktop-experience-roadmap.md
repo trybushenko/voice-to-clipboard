@@ -239,13 +239,68 @@ Secure desktop/екран входу не підтримуються. UIPI не 
 термінал надиктувати U/E/L із браузера та VS Code. Закрити всі термінали — застосунок
 працює. Pause/Resume/Exit та повторний запуск не залишають zombie-процесів.
 
+### Поточна черга виконання — ревізія 2026-09-21
+
+Цей документ — єдине джерело статусу. Детальні вимоги D.1/E/F нижче;
+черга тут визначає порядок поставок, а не замінює їхні acceptance criteria.
+
+**Зафіксований результат**
+
+- [x] A: структура пакета, tests/docs/scripts та сумісні точки входу.
+- [x] B/C: Windows worker, lifecycle, hotkeys та guarded paste; прийнято користувачем.
+- [x] D: desktop/tray, settings, autostart, shutdown; прийнято користувачем;
+  merge у main `9347285`. Фізичний M4 та повна Linux DE матриця ще відкриті.
+- [x] README та source onboarding англійською для актуального main, ZIP без Git,
+  first recording, startup, troubleshooting/update/uninstall: `ee67444`.
+  Це документація, не підтвердження clean-machine installation.
+- [x] Частковий English CLI/GTK переклад реалізовано: `f3a3333`, 74 тести OK
+  (4 platform skips). Аудит завершено у `d54e1e2`; користувач дозволив merge
+  без окремого ручного приймання текстових змін.
+- [x] Remote прибрано: merged B/C і D branches видалено. Залишені `main` та
+  `codex/english-cli-messages` з незмердженою частиною D.1.
+
+**Наступні поставки — виконувати послідовно**
+
+| № | Робота | Критерій завершення |
+| --- | --- | --- |
+| 1 | Завершити English-аудит у поточній `codex/english-cli-messages`: notifications, model/worker, clipboard, overlay, CLI та diagnostics | Усі власні user-facing рядки англійською, без перекладу transcript; тести, CI, перевірка помилок/індикатора; приймання → merge → видалення гілки |
+| 2 | D.1 profiles: versioned settings schema, migration U/E/L, language/model compatibility, повні shortcuts і delivery | Старі prefs збережено; Polish/English/Ukrainian профілі; duplicate/conflict validation, atomic save та rollback; pause/restart/paste без регресій |
+| 3 | D.1 first-run UI та редактор профілів | Новий користувач обирає мову, shortcut і copy/paste без редагування файлів; existing users не втрачають конфігурацію; польськомовний тестувальник проходить сценарій |
+| 4 | E packaging spike і рішення про bundler | Пробні frozen builds Windows CPU та macOS ARM64: worker spawn, audio, native UI/dependencies; зафіксовані support matrix, обмеження, спосіб збірки |
+| 5 | E doctor, downloads і розширення onboarding | Модель: progress/cancel/retry/offline; перевірка backend реальною inference; зрозуміле відновлення без CUDA/мікрофона/диска/мережі; використовує UI кроку 3, не створює другий wizard |
+| 6 | E installers та lifecycle | Windows installer, macOS ARM64 app/DMG, обраний Linux package; update/uninstall/autostart перевірено; runtime included; signing status чесно задокументовано |
+| 7 | F release acceptance | Clean Windows без Python/Git/CUDA, Ubuntu та фізичний M4; GUI/paste/permissions/login, NVIDIA окремо, довгі сесії; version/checksums/release notes і відомі обмеження |
+
+Наступна реалізація — **крок 2**, після завершення merge English-поставки. Для кроків 2–3 спочатку спроєктувати schema/migration та спільне model-language
+mapping; не зашивати нові мови в окремі копії U/E/L-команд. Кожну поставку вести
+в одній активній гілці від актуального main; завершені гілки прибирати після merge.
+F-тести додавати під час відповідної реалізації, фінальний gate — на release artifacts.
+
+**Як підтримувати статус під час роботи**
+
+- В одному коміті з реалізацією оновлювати відповідний пункт цього документа:
+  зроблене, commit/branch, перевірки та що лишилося. `[x]` ставити лише за доказом.
+- Відрізняти «код готовий», «CI успішний», «перевірено користувачем» і «змерджено».
+  Зелений CI не закриває physical hardware/login acceptance.
+- Після кожної поставки оновлювати README/installation, якщо змінився user flow;
+  залишати короткий test guide і наступну конкретну дію.
+- Не включати LLM rewriting, cloud transcription чи автоматичне надсилання тексту.
+
 ### D.1. International onboarding — наступна окрема поставка
 
 Заплановано 2026-09-18 за фідбеком користувача та польського тестувальника.
 Це новий scope, не незавершена частина прийнятого D. Почати в окремій гілці.
 
-- [ ] English by default для всіх UI, tray, CLI/help, progress, помилок,
-  діагностики та технічних логів; переклад README/setup onboarding.
+Часткова поставка 2026-09-21: `codex/english-cli-messages` перекладає CLI help,
+calibration, recording/delivery notifications, terminal meter та GTK overlay
+англійською. Це лише текстові зміни: мови transcript, defaults та shortcuts
+не змінені. Перевірено CLI `--help` і regression suite (74 тести, 4 platform skips).
+Повний аудит інших модулів завершено у `d54e1e2`. Configurable profiles і
+first-run flow залишаються відкритими; весь D.1 не позначено завершеним.
+
+- [x] README/setup source onboarding англійською оновлено в main (`ee67444`).
+- [x] Власні UI, tray, CLI/help, progress, помилки, diagnostics і technical logs
+  англійською (`f3a3333`, `d54e1e2`); сторонні помилки можуть бути мовою ОС.
   Мова інтерфейсу не змінює мову transcript; не перекладати голос автоматично.
 - [ ] Налаштовувані профілі: language + повна hotkey combination + delivery
   (clipboard або paste). Без прив'язки U/E/L до фіксованих мов; за потреби
@@ -350,3 +405,18 @@ Secure desktop/екран входу не підтримуються. UIPI не 
 - [Windows SendInput](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput) — обмеження UIPI, стан клавіш і значення результату.
 - [faster-whisper GPU requirements](https://github.com/SYSTRAN/faster-whisper#gpu) — runtime залежності CUDA/cuDNN, не вимога універсального Toolkit 12.8.
 - [XDG GlobalShortcuts portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.GlobalShortcuts.html) — можливість реєстрації shortcuts на підтримуваних desktops.
+
+## English-аудит — 2026-09-21, завершення кроку 1 (код)
+
+- [x] Перекладено решту власних runtime-повідомлень: VAD dependency, history
+  validation, worker connection timeout, model/transcription retry/error.
+- [x] AST-аудит усіх Python-модулів src: єдиний український executable string —
+  навмисна ASR vocabulary підказка для української моделі; її не змінено.
+  Коментарі/docstrings і користувацький transcript не є текстом інтерфейсу.
+- [x] 74 regression tests: OK, 4 platform skips. CLI help перевірено раніше.
+- [x] Користувач дозволив merge текстових змін без окремого ручного Windows-приймання.
+- CI `35589166283` ще виконувався під час підготовки merge; локальний suite успішний.
+
+Власні повідомлення тепер англійською; сторонні бібліотеки та ОС можуть повертати
+помилки мовою системи. Профілі, мовна маршрутизація та first-run UI — наступні
+кроки 2–3; D.1 загалом ще відкритий. README/installation оновлено: власні повідомлення англійською.

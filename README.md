@@ -54,8 +54,8 @@ Downloads are required for the first use of each model.
 
 The desktop shortcuts currently target Ukrainian and English. You can change their
 modifiers in Settings; other transcription languages are available through the CLI.
-Some runtime messages are still Ukrainian. Fully English messaging and configurable
-language/shortcut profiles are planned in stage D.1, not available yet.
+Application messages are in English; errors from the OS or dependencies may use
+the system language. Configurable language/shortcut profiles are planned in D.1.
 
 See [usage and private local storage](docs/usage.md) for CLI options, history,
 model settings and platform limitations.

@@ -92,8 +92,8 @@ def window(lang):
     win.stick()
     box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
     box.set_border_width(16)
-    title = Gtk.Label(label='●  Запис  ·  ' + lang.upper())
-    detail = Gtk.Label(label='00:00  ·  повтори хоткей для завершення')
+    title = Gtk.Label(label='●  Recording  ·  ' + lang.upper())
+    detail = Gtk.Label(label='00:00  ·  press the shortcut again to stop')
     detail.set_line_wrap(True)
     detail.set_max_width_chars(48)
     bar = Gtk.ProgressBar()
@@ -134,9 +134,9 @@ def window(lang):
             pass
         processing = state['state'] == 'transcribing'
         result = state['state'] == 'result'
-        title.set_text(('Готово' if result else '◌  Розпізнавання' if processing else '●  Запис') + '  ·  ' + lang.upper())
+        title.set_text(('Done' if result else '◌  Transcribing' if processing else '●  Recording') + '  ·  ' + lang.upper())
         seconds = int(state['elapsed'])
-        detail.set_text(state.get('message', '') if result else 'Текст скоро буде в буфері' if processing else f'{seconds//60:02}:{seconds%60:02}  ·  повтори хоткей для завершення')
+        detail.set_text(state.get('message', '') if result else 'Text will be copied to clipboard shortly' if processing else f'{seconds//60:02}:{seconds%60:02}  ·  press the shortcut again to stop')
         if processing:
             bar.pulse()
         else:

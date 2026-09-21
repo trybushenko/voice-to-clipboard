@@ -21,8 +21,8 @@ from .ui.terminal import emit, meter, _out_lock
 def calibrate(seconds, gate_kwargs, device):
     gate = SpeechGate(**gate_kwargs)
     rec = Recorder(gate, device)
-    print(f"WebRTC VAD: {'є' if gate.vad else 'НЕМА (тільки енергетичний)'}")
-    print("Говори нормальним голосом, потім помовч 5 секунд.\n")
+    print(f"WebRTC VAD: {'available' if gate.vad else 'unavailable (energy only)'}")
+    print("Speak normally, then remain silent for 5 seconds.\n")
     try:
         while rec.elapsed() < seconds:
             time.sleep(0.1)
@@ -31,12 +31,12 @@ def calibrate(seconds, gate_kwargs, device):
     except KeyboardInterrupt:
         pass
     rec.finish()
-    print(f"\n\nмовлення всього: {gate.speech_total:.1f}s, "
-          f"фон {gate.floor_db:.1f} dB, пік {gate._peak_db:.1f} dB")
-    print("Під час мовлення має бути МОВЛЕННЯ, у паузах — пауза.")
-    print("  мовлення читається як пауза  -> зменш --margin-min")
-    print("  тиша читається як мовлення   -> збільш --margin-min "
-          "або --aggressiveness 3, або --vad energy")
+    print(f"\n\ntotal speech: {gate.speech_total:.1f}s, "
+          f"noise floor {gate.floor_db:.1f} dB, peak {gate._peak_db:.1f} dB")
+    print("Expect SPEECH while speaking and pause during silence.")
+    print("  speech detected as silence -> decrease --margin-min")
+    print("  silence detected as speech -> increase --margin-min "
+          "or use --aggressiveness 3, or --vad energy")
 
 
 def parse_args(argv=None):
@@ -49,14 +49,14 @@ def parse_args(argv=None):
     p.add_argument("--beam", type=int, default=1)
     p.add_argument("--silence", type=float,
                    default=float(os.environ.get("DICTATE_SILENCE", "0")),
-                   help="секунд тишi до автостопу; 0 = тільки ручний стоп")
+                   help="seconds of silence before automatic stop; 0 = manual stop only")
     p.add_argument("--partial-silence", type=float, default=1.2,
-                   help="пауза, по якій нарізається сегмент для лайв-виводу")
+                   help="pause length that triggers a live transcription segment")
     p.add_argument("--max", type=float, default=600.0)
     p.add_argument("--max-lead", type=float, default=20.0,
-                   help="кинути, якщо за цей час не почулось нічого")
+                   help="stop if no speech is detected within this many seconds")
     p.add_argument("--device", default=None,
-                   help="індекс або назва мікрофона (див. --list-devices)")
+                   help="microphone index or name (see --list-devices)")
     p.add_argument("--list-devices", action="store_true")
     p.add_argument("--vad", choices=["auto", "webrtc", "energy"],
                    default="auto")
@@ -67,22 +67,22 @@ def parse_args(argv=None):
     p.add_argument("--paste", action="store_true")
     p.add_argument("--stdout", action="store_true")
     p.add_argument("--live", dest="live", action="store_true", default=True,
-                   help="фонове розпізнавання під час запису (увімкнене типово)")
+                   help="transcribe in the background while recording (enabled by default)")
     p.add_argument("--no-live", dest="live", action="store_false")
     p.add_argument("--calibrate", type=float, metavar="SECONDS", default=None)
-    p.add_argument("--copy-last", action="store_true", help="скопіювати останній повний текст")
-    p.add_argument("--append", action="store_true", help="додиктувати до останнього повного тексту")
-    p.add_argument("--history", action="store_true", help="показати останні 50 транскриптів")
-    p.add_argument("--one-shot", action="store_true", help="звільнити модель після запису")
-    p.add_argument("--model-status", action="store_true", help="стан фонової моделі")
-    p.add_argument("--unload-model", action="store_true", help="звільнити GPU після диктування")
-    p.add_argument("--overlay", action="store_true", help="тимчасовий індикатор запису поверх вікон")
+    p.add_argument("--copy-last", action="store_true", help="copy the last full transcript")
+    p.add_argument("--append", action="store_true", help="append dictation to the last full transcript")
+    p.add_argument("--history", action="store_true", help="show the last 50 transcripts")
+    p.add_argument("--one-shot", action="store_true", help="unload the model after recording")
+    p.add_argument("--model-status", action="store_true", help="show background model status")
+    p.add_argument("--unload-model", action="store_true", help="unload the model to release GPU memory")
+    p.add_argument("--overlay", action="store_true", help="show a temporary recording overlay")
     p.add_argument("--backend", choices=["auto", "faster-whisper", "mlx"], default=os.environ.get("DICTATE_BACKEND", "auto"))
     p.add_argument("--inference-device", choices=["auto", "cpu", "cuda", "metal"], default=os.environ.get("DICTATE_INFERENCE_DEVICE", "auto"))
     a = p.parse_args(argv)
     if (a.silence < 0 or a.partial_silence < 0 or a.max <= 0
             or a.max_lead <= 0 or a.beam < 1):
-        p.error("часові межі та beam повинні мати коректні додатні значення")
+        p.error("time limits and beam must have valid positive values")
     return a
 
 
@@ -94,7 +94,7 @@ def main():
         try:
             print(json.dumps(control("shutdown" if a.unload_model else "status"), ensure_ascii=False))
         except (OSError, EOFError) as exc:
-            sys.exit(f"Модель зайнята або недоступна: {exc}")
+            sys.exit(f"Model is busy or unavailable: {exc}")
         return
     if a.history or a.copy_last:
         try:
@@ -103,15 +103,15 @@ def main():
                 return
             text = latest_text()
             if not text:
-                notify("Історія поки порожня")
+                notify("History is empty")
                 return
             if not to_clipboard(text):
-                notify("Не вдалося скопіювати текст", "critical")
+                notify("Could not copy text", "critical")
                 sys.exit(1)
-            notify("✓ Останній текст скопійовано")
+            notify("✓ Last transcript copied")
             return
         except (OSError, ValueError) as exc:
-            sys.exit(f"Історія: {exc}")
+            sys.exit(f"History: {exc}")
 
     if a.list_devices:
         import sounddevice as sd
@@ -148,7 +148,7 @@ def record(a, device, tty, gate_kwargs, stop_event):
         session_lock = SessionLock(GLOBAL_LOCK)
     except BlockingIOError:
         publish("error", "Another dictation is active; finish it before starting a new recording")
-        notify("⏳ Попередній запис ще обробляється")
+        notify("⏳ The previous recording is still being processed")
         return
     atexit.register(session_lock.close)
     paste_guard = None
@@ -159,7 +159,7 @@ def record(a, device, tty, gate_kwargs, stop_event):
     try:
         base_text = latest_text() if a.append else ""
     except (OSError, ValueError) as exc:
-        sys.exit(f"Історія: {exc}")
+        sys.exit(f"History: {exc}")
 
     srv = stop_listener(stop_event)
 
@@ -168,8 +168,8 @@ def record(a, device, tty, gate_kwargs, stop_event):
         rec = Recorder(gate, device)
     except Exception as exc:
         publish("error", "Microphone unavailable. Check the selected device and microphone permission.")
-        emit(f"[error] мікрофон: {exc}", tty)
-        notify(f"Мікрофон: {exc}", "critical")
+        emit(f"[error] microphone: {exc}", tty)
+        notify(f"Microphone: {exc}", "critical")
         srv.close()
         if os.path.exists(SOCK):
             remove_endpoint(Path(SOCK))
@@ -179,11 +179,11 @@ def record(a, device, tty, gate_kwargs, stop_event):
     overlay = Overlay(a.overlay, a.lang)
     atexit.register(overlay.close)
     publish("recording", "Microphone is recording")
-    notify("● Запис")
+    notify("● Recording")
     if tty:
-        emit("\033[1m● МІКРОФОН УВІМКНЕНО\033[0m  "
+        emit("\033[1m● MICROPHONE ON\033[0m  "
              f"(vad={'webrtc' if gate.vad else 'energy'}, "
-             f"стоп: {a.silence or '—'}s тишi або Ctrl+C)", tty)
+             f"stop: {a.silence or '—'}s of silence or Ctrl+C)", tty)
 
     holder, ready = {}, threading.Event()
     threading.Thread(target=load_model, daemon=True,
@@ -215,8 +215,8 @@ def record(a, device, tty, gate_kwargs, stop_event):
             # майже завжди означає, що шум читається як голос.
             if not warned and gate.speech_run > STUCK_WARN_S:
                 warned = True
-                emit("[warn] мовлення не вщухає — схоже, шум читається як "
-                     "голос. Ctrl+C, потім `--calibrate 20` і підніми "
+                emit("[warn] continuous speech detected; background noise may be treated as "
+                     "speech. Press Ctrl+C, then run `--calibrate 20` and increase "
                      "--margin-min.", tty)
 
             # Нарізка сегмента по паузі: транскрипція йде у фоні, поки
@@ -246,13 +246,13 @@ def record(a, device, tty, gate_kwargs, stop_event):
     publish("transcribing", "Finishing transcription")
     overlay.update(state="transcribing")
     if tty:
-        emit(f"\033[1m■ Стоп\033[0m ({reason}), "
-             f"{len(full)/SAMPLE_RATE:.1f}s аудіо, "
-             f"{gate.speech_total:.1f}s мовлення", tty)
+        emit(f"\033[1m■ Stopped\033[0m ({reason}), "
+             f"{len(full)/SAMPLE_RATE:.1f}s audio, "
+             f"{gate.speech_total:.1f}s speech", tty)
 
     if reason == "lead" or gate.speech_total < 0.35:
         publish("delivered", "No speech detected; clipboard unchanged")
-        notify("Нічого не почулось")
+        notify("No speech detected")
         scribe.close()
         sys.exit(0)
 
@@ -262,10 +262,10 @@ def record(a, device, tty, gate_kwargs, stop_event):
     scribe.close()
 
     if not ready.is_set():
-        notify("⏳ Дочекайся моделі")
+        notify("⏳ Waiting for the model")
         if tty:
-            emit("[wait] модель ще вантажиться…", tty)
-    notify("⏳ Завершую розпізнавання")
+            emit("[wait] model is still loading…", tty)
+    notify("⏳ Finishing transcription")
     while scribe.is_alive():
         scribe.join(timeout=.1)
     if not a.one_shot and "model" in holder:
@@ -273,18 +273,18 @@ def record(a, device, tty, gate_kwargs, stop_event):
 
     if "error" in holder:
         publish("error", "Model unavailable. Check model/backend settings and run System check.")
-        notify(f"Модель: {holder['error']}", "critical")
+        notify(f"Model: {holder['error']}", "critical")
         sys.exit(1)
 
     text = " ".join(scribe.parts).strip()
     if not text and scribe.errors:
         publish("error", "Transcription failed; clipboard unchanged")
-        notify("Не вдалося розпізнати запис; буфер не змінено", "critical")
+        notify("Could not transcribe the recording; clipboard unchanged", "critical")
         sys.exit(1)
     if not text:
-        emit("[warn] порожній транскрипт", tty)
+        emit("[warn] empty transcript", tty)
         publish("delivered", "No speech detected; clipboard unchanged")
-        notify("Тиша")
+        notify("Silence")
         sys.exit(0)
 
     if base_text:
@@ -292,12 +292,12 @@ def record(a, device, tty, gate_kwargs, stop_event):
     try:
         save_history(text, complete=not scribe.errors)
     except (OSError, ValueError) as exc:
-        emit(f"[error] не вдалося зберегти історію: {exc}", tty)
-        notify("Не вдалося зберегти історію", "critical")
+        emit(f"[error] could not save history: {exc}", tty)
+        notify("Could not save history", "critical")
     if scribe.errors:
         publish("error", "Incomplete transcription saved in history; clipboard unchanged")
         print(text)
-        notify("Текст неповний: помилка розпізнавання. Перевір --history; буфер не змінено", "critical")
+        notify("Incomplete transcript: transcription failed. Check --history; clipboard unchanged", "critical")
         sys.exit(1)
 
     ok = to_clipboard(text)
@@ -313,8 +313,8 @@ def record(a, device, tty, gate_kwargs, stop_event):
         print(text)
     if tty:
         emit("\n\033[1m" + text + "\033[0m", tty)
-        emit("[buffer] " + ("у буфері" if ok
-                            else "копіювання не вдалося — текст є в історії та на екрані"), tty)
+        emit("[buffer] " + ("copied to clipboard" if ok
+                            else "copy failed; text is available in history and on screen"), tty)
     if paste_guard is not None:
         paste_guard.close()
     publish("delivered" if ok else "error",
