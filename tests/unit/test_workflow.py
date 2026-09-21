@@ -68,7 +68,7 @@ class WorkflowTests(unittest.TestCase):
             else:
                 inject.assert_not_called()
             if tty:
-                self.assertTrue(any("поріг" in str(call) for call in stream.write.call_args_list))
+                self.assertTrue(any("threshold" in str(call) for call in stream.write.call_args_list))
 
     def test_cli_preserves_hotkey_options_and_live_toggle(self):
         uk = d.parse_args(['--silence', '0', '--lang', 'uk', '--overlay'])

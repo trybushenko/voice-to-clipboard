@@ -244,6 +244,13 @@ Secure desktop/екран входу не підтримуються. UIPI не 
 Заплановано 2026-09-18 за фідбеком користувача та польського тестувальника.
 Це новий scope, не незавершена частина прийнятого D. Почати в окремій гілці.
 
+Часткова поставка 2026-09-21: `codex/english-cli-messages` перекладає CLI help,
+calibration, recording/delivery notifications, terminal meter та GTK overlay
+англійською. Це лише текстові зміни: мови transcript, defaults та shortcuts
+не змінені. Перевірено CLI `--help` і regression suite (74 тести, 4 platform skips).
+Повний аудит інших модулів, configurable profiles і first-run flow залишаються
+відкритими; весь D.1 не позначено завершеним.
+
 - [ ] English by default для всіх UI, tray, CLI/help, progress, помилок,
   діагностики та технічних логів; переклад README/setup onboarding.
   Мова інтерфейсу не змінює мову transcript; не перекладати голос автоматично.

@@ -7,7 +7,7 @@ import numpy as np
 _out_lock = threading.Lock()
 
 def emit(text, tty):
-    """Друк рядка так, щоб не побити рядок метра."""
+    """Print a line without corrupting the meter."""
     if os.environ.get('DICTATE_TECHNICAL_ONLY') == '1':
         event = next((name for name in ('retry', 'error', 'warn', 'paste', 'delivery')
                       if text.startswith('[' + name + ']')), None)
@@ -28,13 +28,13 @@ def meter(gate, elapsed, model_ready):
     frac = float(np.clip((gate.last_db - lo) / (hi - lo), 0.0, 1.0))
     bar = "█" * int(frac * 22) + "░" * (22 - int(frac * 22))
     if gate.in_speech:
-        state = "\033[32m● МОВЛЕННЯ\033[0m"
+        state = "\033[32m● SPEECH\033[0m"
     elif gate.armed:
-        state = f"\033[33m  пауза {gate.silence_run:4.1f}s\033[0m"
+        state = f"\033[33m  pause {gate.silence_run:4.1f}s\033[0m"
     else:
-        state = "\033[2m  чекаю…   \033[0m"
+        state = "\033[2m  waiting…   \033[0m"
     flags = ("V" if gate.vad_hit else "·") + ("M" if model_ready else "·")
     return (f"\r\033[K[{elapsed:5.1f}s] {gate.last_db:6.1f} dB "
-            f"|{bar}| фон {gate.floor_db:6.1f} поріг {gate.threshold_db:6.1f} "
+            f"|{bar}| noise floor {gate.floor_db:6.1f} threshold {gate.threshold_db:6.1f} "
             f"{flags} {state}")
 
