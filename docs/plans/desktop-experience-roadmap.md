@@ -464,3 +464,10 @@ first-run flow залишаються відкритими; весь D.1 не п
 - [ ] Confirm the user's actual Polish/Indonesian hotkeys and paste failure on their
   Windows machine after a complete host restart. The old-host explanation matches
   symptoms but is not proven for that machine without its full error/log details.
+
+- [x] Windows 3.11 GUI smoke reproduced a Tk shutdown crash (`Tcl_AsyncDelete`).
+  Fixed callback ownership: worker handles integer IDs, UI retains/releases callbacks,
+  and shutdown joins the worker. Commit `c368776`.
+- [x] [Repeat CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35637032624):
+  all 6 jobs passed (Windows/macOS/Linux, Python 3.11/3.12), including actual Settings
+  interactions and remote-guard native paste on Windows. Local suite: 82 tests, 4 skips.
