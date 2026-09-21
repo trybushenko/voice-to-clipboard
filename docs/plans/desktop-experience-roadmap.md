@@ -439,7 +439,9 @@ first-run flow залишаються відкритими; весь D.1 не п
 - [x] 80 local regression tests: OK (4 platform skips).
 - [x] Local desktop smoke: English-only, застосування Polish, видалення профілю,
   singleton panel і Quit; без мікрофона/завантаження моделі.
-- [ ] Cross-platform CI нової поставки та реальне Polish/English диктування.
+- [x] [CI реалізації bc4b718](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35590195313):
+  Windows/macOS/Linux × Python 3.11/3.12, усі 6 jobs успішні.
+- [ ] Реальне Polish/English диктування та приймання профілів користувачем.
 - [ ] Незалежні modifiers для кожного профілю (зараз спільні), повний first-run
   wizard з mic/download progress, перевірка довільних custom model repositories.
 
