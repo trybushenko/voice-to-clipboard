@@ -38,9 +38,16 @@ def main():
     control = ControlServer(panel_endpoint)
     root = tk.Tk()
     root.title('Voice to Clipboard — Settings and status')
-    root.geometry('670x650')
-    frame = ttk.Frame(root, padding=16)
-    frame.pack(fill='both', expand=True)
+    root.geometry('780x760')
+    canvas = tk.Canvas(root, highlightthickness=0)
+    scrollbar = ttk.Scrollbar(root, orient='vertical', command=canvas.yview)
+    scrollbar.pack(side='right', fill='y')
+    canvas.pack(side='left', fill='both', expand=True)
+    canvas.configure(yscrollcommand=scrollbar.set)
+    frame = ttk.Frame(canvas, padding=16)
+    content = canvas.create_window((0, 0), window=frame, anchor='nw')
+    frame.bind('<Configure>', lambda event: canvas.configure(scrollregion=canvas.bbox('all')))
+    canvas.bind('<Configure>', lambda event: canvas.itemconfigure(content, width=event.width))
     status = tk.StringVar(value='Connecting…')
     ttk.Label(frame, textvariable=status, wraplength=630).pack(anchor='w', pady=(0, 12))
     work = queue.Queue(maxsize=16)
@@ -67,9 +74,25 @@ def main():
         enqueue(lambda: request(endpoint(), operation))
     row = ttk.Frame(frame)
     row.pack(fill='x')
-    for label, operation in [('Start Ukrainian', 'start-uk'), ('Start English', 'start-en'),
-                             ('Stop recording', 'stop-recording')]:
-        ttk.Button(row, text=label, command=lambda op=operation: command(op)).pack(side='left', padx=3)
+    from ..core.profiles import LANGUAGES, LANGUAGE_NAMES, label as profile_label, validate as validate_profiles
+    settings = load()
+    profiles = [dict(p) for p in settings['profiles']]
+    active_profiles = [dict(p) for p in profiles]
+    selected_start = tk.StringVar()
+    start_choice = ttk.Combobox(row, textvariable=selected_start, state='readonly', width=30)
+    start_choice.pack(side='left')
+    def refresh_start():
+        start_choice['values'] = [profile_label(p) for p in active_profiles]
+        if profiles:
+            start_choice.current(0)
+    refresh_start()
+    def start_recording():
+        index = start_choice.current()
+        if index >= 0:
+            key = active_profiles[index]['key']
+            enqueue(lambda: request(endpoint(), 'start-profile', key=key))
+    ttk.Button(row, text='Start (clipboard)', command=start_recording).pack(side='left', padx=3)
+    ttk.Button(row, text='Stop recording', command=lambda: command('stop-recording')).pack(side='left', padx=3)
     row = ttk.Frame(frame)
     row.pack(fill='x', pady=8)
     for label, operation in [('Pause shortcuts', 'pause'), ('Resume', 'resume'), ('Copy last', 'copy-last')]:
@@ -83,19 +106,75 @@ def main():
     form = ttk.LabelFrame(frame, text='Dictation settings', padding=12)
     form.pack(fill='x', pady=10)
     for number, (label, variable, values) in enumerate([
-            ('Shortcut modifiers (U/E/L)', mods, ['alt+shift', 'ctrl+alt', 'ctrl+alt+shift']),
+            ('Shortcut modifiers (all profiles)', mods, ['alt+shift', 'ctrl+alt', 'ctrl+alt+shift']),
             ('Inference device', device, ['auto', 'cpu', 'cuda', 'metal']),
-            ('Model (empty = existing default)', model, None)]):
+            ('Default model (empty = multilingual turbo)', model, None)]):
         ttk.Label(form, text=label).grid(row=number, column=0, sticky='w', padx=5, pady=5)
         entry = ttk.Combobox(form, textvariable=variable, values=values) if values else ttk.Entry(form, textvariable=variable)
         entry.grid(row=number, column=1, sticky='ew', padx=5)
     form.columnconfigure(1, weight=1)
     ttk.Checkbutton(form, text='Show recording overlay', variable=overlay).grid(row=3, columnspan=2, sticky='w')
+    profile_frame = ttk.LabelFrame(frame, text='Language profiles — shared modifiers above + chosen letter', padding=8)
+    profile_frame.pack(fill='x', pady=6)
+    profile_list = tk.Listbox(profile_frame, height=4, exportselection=False)
+    profile_list.pack(fill='x')
+    language = tk.StringVar(value='en')
+    letter = tk.StringVar(value='e')
+    delivery = tk.BooleanVar(value=False)
+    profile_model = tk.StringVar()
+    editor = ttk.Frame(profile_frame)
+    editor.pack(fill='x')
+    language_options = [f"{code} — {LANGUAGE_NAMES.get(code, code)}" for code in sorted(LANGUAGES)]
+    language_choice = ttk.Combobox(editor, textvariable=language, values=language_options, width=22)
+    language_choice.pack(side='left')
+    ttk.Label(editor, text='Key A–Z').pack(side='left')
+    ttk.Entry(editor, textvariable=letter, width=4).pack(side='left')
+    ttk.Checkbutton(editor, text='Paste with hotkey', variable=delivery).pack(side='left')
+    ttk.Label(profile_frame, text='Model override (empty = default model; custom models must support the language)').pack(anchor='w')
+    ttk.Entry(profile_frame, textvariable=profile_model).pack(fill='x')
+    def refresh_profiles():
+        profile_list.delete(0, 'end')
+        for p in profiles:
+            profile_list.insert('end', profile_label(p) + (' → paste' if p['paste'] else ' → clipboard'))
+    def selected(event=None):
+        selection = profile_list.curselection()
+        if selection:
+            p = profiles[selection[0]]
+            language.set(p['language'])
+            letter.set(p['key'])
+            delivery.set(p['paste'])
+            profile_model.set(p['model'])
+    profile_list.bind('<<ListboxSelect>>', selected)
+    def edit_profile(mode):
+        candidate = [dict(p) for p in profiles]
+        selection = profile_list.curselection()
+        try:
+            if mode != 'add' and not selection:
+                raise ValueError('Select a profile first')
+            profile = dict(language=language.get().split(' — ')[0].strip().lower(),
+                           key=letter.get().strip(), paste=delivery.get(), model=profile_model.get().strip())
+            if mode == 'add':
+                candidate.append(profile)
+            elif mode == 'update':
+                candidate[selection[0]] = profile
+            else:
+                del candidate[selection[0]]
+            profiles[:] = validate_profiles(candidate)
+            refresh_profiles()
+            status.set('Profile changes are pending. Click Apply settings to activate them.')
+        except ValueError as exc:
+            messagebox.showerror('Profiles', str(exc), parent=root)
+    buttons = ttk.Frame(profile_frame)
+    buttons.pack(fill='x')
+    for text, mode in [('Add', 'add'), ('Update selected', 'update'), ('Remove selected', 'remove')]:
+        ttk.Button(buttons, text=text, command=lambda mode=mode: edit_profile(mode)).pack(side='left')
+    refresh_profiles()
     def save():
         values = {'hotkey_modifiers': mods.get(), 'model': model.get().strip(),
-                  'inference_device': device.get(), 'overlay': overlay.get()}
-        enqueue(lambda: request(endpoint(), 'settings', values=values), lambda value: status.set('Settings saved.'))
-    ttk.Button(form, text='Apply settings', command=save).grid(row=4, columnspan=2, sticky='w', pady=8)
+                  'inference_device': device.get(), 'overlay': overlay.get(),
+                  'schema_version': 2, 'profiles': [dict(p) for p in profiles]}
+        enqueue(lambda: request(endpoint(), 'settings', values=values), lambda value: (active_profiles.__setitem__(slice(None), value['profiles']), refresh_start(), status.set('Settings saved.')))
+    ttk.Button(form, text='Apply all settings and profiles', command=save).grid(row=4, columnspan=2, sticky='w', pady=8)
     def autostart():
         desired = auto.get()
         def changed(value):

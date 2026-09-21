@@ -420,3 +420,27 @@ first-run flow залишаються відкритими; весь D.1 не п
 Власні повідомлення тепер англійською; сторонні бібліотеки та ОС можуть повертати
 помилки мовою системи. Профілі, мовна маршрутизація та first-run UI — наступні
 кроки 2–3; D.1 загалом ще відкритий. README/installation оновлено: власні повідомлення англійською.
+
+## Мовні профілі — поставка 2026-09-21
+
+Гілка `codex/language-profiles`; уточнення користувача: тільки English preset
+для нової інсталяції, усі інші мови — виключно явний вибір.
+
+- [x] English/E clipboard для чистої інсталяції; CLI default language також en.
+- [x] Version 2 preferences; наявні settings/history мігрують U/E/L, видалені
+  профілі після збереження не повертаються. Моделі/історія не видаляються.
+- [x] Settings: Add/Update/Remove профілю (language, A–Z key, paste, model override),
+  спільні modifiers; Apply з validation, registration rollback та atomic persistence.
+- [x] Native callbacks і tray/Settings меню будуються лише з обраних профілів.
+  macOS physical key mapping розширено до A–Z.
+- [x] Вибрана модель/мова явно передаються recorder; стандарт — multilingual turbo,
+  без української спеціалізованої моделі. Non-English + .en відхиляється.
+- [x] Settings відкривається на першому запуску; README/installation оновлено.
+- [x] Local desktop smoke: English-only, застосування Polish, видалення профілю,
+  singleton panel і Quit; без мікрофона/завантаження моделі.
+- [ ] Cross-platform CI нової поставки та реальне Polish/English диктування.
+- [ ] Незалежні modifiers для кожного профілю (зараз спільні), повний first-run
+  wizard з mic/download progress, перевірка довільних custom model repositories.
+
+[Test guide](../setup/language-profiles.md). Це реалізація основи кроків 2–3,
+а не закриття всього D.1/E.

@@ -3,7 +3,7 @@
 Local voice dictation for writing prompts, messages and notes. Press a shortcut,
 speak, press it again, and paste the transcript wherever you need it.
 
-- Ukrainian and English shortcuts; any Whisper language via `--lang`.
+- Configurable language profiles; English is the only preset for new users.
 - Transcribes during pauses while you continue speaking.
 - Keeps Whisper warm between recordings; exits after five idle minutes.
 - Optional recording/transcribing overlay.
@@ -36,11 +36,11 @@ Physical Mac M4, permissions and login startup still need device-specific testin
 [Installation instructions](docs/setup/installation.md) cover Linux, Windows and
 macOS, including native ARM64 Python for M4 Macs.
 
-| Shortcut | Action |
-| --- | --- |
-| Alt+Shift+U | Ukrainian → clipboard |
-| Alt+Shift+E | English → clipboard |
-| Alt+Shift+L | Ukrainian → clipboard and paste |
+New installations start with **Alt+Shift+E → English → clipboard**. Settings opens
+on first launch. Add only the languages you want in **Language profiles**, choose a
+letter and clipboard/paste, then **Apply all settings and profiles**. Modifiers are
+shared across profiles. Existing users keep their U/E/L profiles during migration;
+remove unwanted profiles in Settings. No Ukrainian-specific model is selected for new users.
 
 Press the shortcut again to stop recording. Launch **Voice to Clipboard** from
 Start Menu (Windows), `~/Applications` (macOS), or your Linux application menu.
@@ -52,10 +52,8 @@ no standalone installer yet. Follow the [step-by-step installation guide](docs/s
 for prerequisites, setup without Git, your first recording and troubleshooting.
 Downloads are required for the first use of each model.
 
-The desktop shortcuts currently target Ukrainian and English. You can change their
-modifiers in Settings; other transcription languages are available through the CLI.
 Application messages are in English; errors from the OS or dependencies may use
-the system language. Configurable language/shortcut profiles are planned in D.1.
+the system language. See [profile setup and testing](docs/setup/language-profiles.md).
 
 See [usage and private local storage](docs/usage.md) for CLI options, history,
 model settings and platform limitations.

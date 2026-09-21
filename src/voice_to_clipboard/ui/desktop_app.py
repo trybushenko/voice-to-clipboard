@@ -109,6 +109,8 @@ class Bridge:
                     set_enabled(not enabled())
                     self.logger.info('Autostart preference updated')
                     self.icon.update_menu()
+                elif isinstance(operation, tuple):
+                    request(endpoint(), 'start-profile', key=operation[1])
                 elif operation == 'log':
                     from .desktop_panel import open_log
                     open_log()
@@ -174,6 +176,9 @@ def run():
         except (OSError, RuntimeError, EOFError):
             logger.info('Legacy model is busy or unavailable; leaving it alone')
         from ..platform.launchers import enabled
+        from ..core.profiles import label
+        from ..core.settings import read_settings
+        first_run = not read_settings()
         item = pystray.MenuItem
         def action(operation):
             return lambda icon, entry: bridge.submit(operation)
@@ -182,8 +187,9 @@ def run():
             return status.get('dictation_processes', 0) == 0 and status.get('phase') != 'shutting-down'
         menu = pystray.Menu(
             item(lambda entry: 'Status: ' + bridge.status().get('phase', 'starting'), action('panel'), default=True),
-            item('Start Ukrainian (clipboard)', action('start-uk'), enabled=idle),
-            item('Start English (clipboard)', action('start-en'), enabled=idle),
+            item('Start recording (clipboard)', pystray.Menu(lambda:
+                tuple(item(label(p), action(('profile', p['key'])), enabled=idle)
+                      for p in bridge.status().get('profiles', [])))),
             item('Stop recording', action('stop-recording'), enabled=lambda entry: bridge.status().get('phase') in ('starting', 'recording')),
             item('Pause shortcuts', action('pause'), checked=lambda entry: bridge.status().get('state') == 'paused'),
             item('Resume shortcuts', action('resume')),
@@ -220,12 +226,14 @@ def run():
             host = threading.Thread(target=host_main, name='dictation-controller')
             host.start()
             threading.Thread(target=bridge.action_loop, daemon=True).start()
+            if first_run:
+                bridge.submit('panel')
             previous = None
             while not bridge.done.wait(.25):
                 status = bridge.status()
                 phase = status.get('phase', 'idle')
                 label = 'paused' if status.get('state') == 'paused' and phase == 'idle' else phase
-                current = (label, status.get('message'))
+                current = (label, status.get('message'), repr(status.get('profiles')))
                 if current != previous:
                     icon.icon = image_for(label)
                     icon.title = ('Voice to Clipboard — ' + label + ': ' + status.get('message', ''))[:120]

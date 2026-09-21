@@ -45,7 +45,7 @@ def parse_args(argv=None):
                                                      "large-v3-turbo"))
     p.add_argument("--compute", default=os.environ.get("DICTATE_COMPUTE",
                                                        "auto"))
-    p.add_argument("--lang", default=os.environ.get("DICTATE_LANG", "uk"))
+    p.add_argument("--lang", default=os.environ.get("DICTATE_LANG", "en"))
     p.add_argument("--beam", type=int, default=1)
     p.add_argument("--silence", type=float,
                    default=float(os.environ.get("DICTATE_SILENCE", "0")),

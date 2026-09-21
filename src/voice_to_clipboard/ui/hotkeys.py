@@ -18,11 +18,11 @@ def main(argv=None, desktop=None):
     from ..core.host_control import ControlServer, ListenerController, request
     from ..platform.windows_hotkeys import parse_modifiers
     configure_text_output()
-    parser = argparse.ArgumentParser(description='Global U/E/L dictation shortcuts. Ctrl+C quits after draining recording.')
+    parser = argparse.ArgumentParser(description='Configured language-profile shortcuts. Ctrl+C quits after draining recording.')
     parser.add_argument('--no-overlay', action='store_true')
     parser.add_argument('--inference-device', choices=['auto', 'cpu', 'cuda', 'metal'], default='auto')
     parser.add_argument('--model', default=None)
-    parser.add_argument('--hotkey-modifiers', help='Modifiers for U/E/L, e.g. ctrl+alt; saved after successful registration')
+    parser.add_argument('--hotkey-modifiers', help='Shared modifiers for profile shortcuts, e.g. ctrl+alt; saved after successful registration')
     commands = parser.add_mutually_exclusive_group()
     commands.add_argument('--background', action='store_true', help='Start a console-independent host and return')
     for operation in ('pause', 'resume', 'status', 'stop-recording', 'quit'):
@@ -30,6 +30,8 @@ def main(argv=None, desktop=None):
                               help='Control the running hotkey host: ' + operation)
     args = parser.parse_args(argv)
     args.desktop = desktop is not None
+    from ..core.desktop_settings import load as load_desktop_settings
+    from ..core.settings import save_settings
     endpoint = cache_dir() / 'dictate-hotkey-control.sock'
     if args.operation:
         try:
@@ -46,6 +48,7 @@ def main(argv=None, desktop=None):
         return
     explicit = args.hotkey_modifiers is not None
     try:
+        args.profiles = load_desktop_settings()['profiles']
         args.hotkey_modifiers = args.hotkey_modifiers or read_modifiers()
         parse_modifiers(args.hotkey_modifiers)
         args.hotkey_modifiers = args.hotkey_modifiers.lower()
@@ -84,7 +87,7 @@ def main(argv=None, desktop=None):
             return create(callbacks, args.hotkey_modifiers)
         from ..platform.linux import NativeHotkeys
         return NativeHotkeys(callbacks, args.hotkey_modifiers)
-    controller = ListenerController(create_listener, enqueue)
+    controller = ListenerController(create_listener, enqueue, lambda: args.profiles)
     control = None
     def status():
         return {'state': 'stopping' if quitting.is_set() else 'paused' if controller.paused else 'listening',
@@ -92,6 +95,7 @@ def main(argv=None, desktop=None):
                 'phase': 'shutting-down' if quitting.is_set() else 'disabled' if controller.paused and launcher.state == 'idle' else launcher.state,
                 'worker_pid': launcher.worker.pid if launcher.worker is not None and launcher.worker.poll() is None else None,
                 'message': listener_error[0] or launcher.message,
+                'profiles': args.profiles,
                 'hotkey_modifiers': args.hotkey_modifiers,
                 'dictation_processes': sum(p.poll() is None for p in launcher.children)}
     def handle(payload):
@@ -113,16 +117,17 @@ def main(argv=None, desktop=None):
             values = payload.get('values')
             from ..core.desktop_settings import validate
             from ..core.settings import save_settings
-            values = validate(values)
-            old = (args.hotkey_modifiers, args.model, args.inference_device, args.no_overlay)
+            values = validate({**load_desktop_settings(), **values}) if isinstance(values, dict) else validate(values)
+            old = (args.hotkey_modifiers, args.model, args.inference_device, args.no_overlay, args.profiles)
             paused = controller.paused
             controller.pause()
             try:
+                args.profiles = values['profiles']
                 args.hotkey_modifiers = values['hotkey_modifiers']
                 args.model = values['model'] or None
                 args.inference_device = values['inference_device']
                 args.no_overlay = not values['overlay']
-                if not wayland and (not paused or args.hotkey_modifiers != old[0]):
+                if not wayland and (not paused or (args.hotkey_modifiers != old[0] or args.profiles != old[4])):
                     controller.resume()  # Verify changed registrations, without requiring permissions for unrelated settings.
                     if paused:
                         controller.pause()
@@ -133,12 +138,21 @@ def main(argv=None, desktop=None):
                     listener_error[0] = ''
             except Exception:
                 controller.pause()
-                args.hotkey_modifiers, args.model, args.inference_device, args.no_overlay = old
+                args.hotkey_modifiers, args.model, args.inference_device, args.no_overlay, args.profiles = old
                 if not paused:
                     controller.resume()
                 raise
+        if operation == 'start-profile':
+            profile = next((p for p in args.profiles if p['key'] == payload.get('key')), None)
+            if profile is None:
+                raise ValueError('Profile no longer exists; reopen Settings')
+            launcher.launch(profile['language'], False, model=profile['model'])
         if operation in ('start-uk', 'start-en'):
-            launcher.launch('uk' if operation == 'start-uk' else 'en')
+            language = 'uk' if operation == 'start-uk' else 'en'
+            profile = next((p for p in args.profiles if p['language'] == language), None)
+            if profile is None:
+                raise ValueError('Add this language in Settings first')
+            launcher.launch(language, model=profile['model'])
         if operation == 'copy-last':
             from ..core.history import latest_text
             from ..platform.desktop import to_clipboard
@@ -177,7 +191,9 @@ def main(argv=None, desktop=None):
         control = ControlServer(endpoint)
         if explicit:
             save_modifiers(args.hotkey_modifiers)
-        print(f'Ready: {args.hotkey_modifiers}+U Ukrainian | +E English | +L Ukrainian + paste. Ctrl+C to quit.', flush=True)
+        save_settings({'schema_version': 2, 'profiles': args.profiles})
+        print('Ready: ' + ' | '.join(args.hotkey_modifiers + '+' + p['key'].upper() +
+              ' ' + p['language'] + (' + paste' if p['paste'] else '') for p in args.profiles), flush=True)
         try:
             while not quitting.is_set():
                 control.dispatch(handle)
@@ -194,7 +210,8 @@ def main(argv=None, desktop=None):
                 try:
                     generation, lang, paste = actions.get(timeout=.1)
                     if controller.accepts(generation):
-                        launcher.launch(lang, paste)
+                        profile = lang
+                        launcher.launch(profile['language'], profile['paste'], model=profile['model'])
                 except queue.Empty:
                     launcher.tick()
                 except (OSError, RuntimeError) as exc:

@@ -15,7 +15,8 @@ def main():
         folder = Path(folder)
         data, cache = folder / 'data', folder / 'cache'
         data.mkdir(); cache.mkdir()
-        (data / 'settings.json').write_text(json.dumps({'hotkey_modifiers': 'ctrl+alt+shift'}))
+        (data / 'settings.json').write_text(json.dumps({'hotkey_modifiers': 'ctrl+alt+shift', 'schema_version': 2,
+            'profiles': [{'language': 'en', 'key': 'e', 'paste': False, 'model': ''}]}))
         env = {**os.environ, 'VOICE_TO_CLIPBOARD_DATA_DIR': str(data), 'VOICE_TO_CLIPBOARD_CACHE_DIR': str(cache)}
         endpoint = cache / 'dictate-hotkey-control.sock'
         command = [sys.executable, '-m', 'voice_to_clipboard.ui.desktop_app', '--run']
@@ -43,6 +44,8 @@ def main():
                         pass
                 else:
                     assert request(endpoint, 'resume')['state'] == 'listening'
+            initial_profiles = request(endpoint, 'status')['profiles']
+            assert [p['language'] for p in initial_profiles] == ['en'], initial_profiles
             values = {'hotkey_modifiers': 'ctrl+alt+shift', 'model': '', 'inference_device': 'cpu', 'overlay': False}
             request(endpoint, 'settings', values=values)
             assert json.loads((data/'settings.json').read_text())['inference_device'] == 'cpu'
@@ -68,6 +71,15 @@ def main():
                 finally:
                     reserved.stop()
                     reserved.join(timeout=2)
+            profile_values = {**values, 'profiles': [
+                {'language': 'en', 'key': 'e', 'paste': False, 'model': ''},
+                {'language': 'pl', 'key': 'p', 'paste': True, 'model': 'small'}]}
+            if not restricted:
+                changed = request(endpoint, 'settings', values=profile_values)
+                assert [p['language'] for p in changed['profiles']] == ['en', 'pl']
+                assert json.loads((data/'settings.json').read_text())['profiles'] == changed['profiles']
+                request(endpoint, 'settings', values={**values, 'profiles': initial_profiles})
+                assert request(endpoint, 'status')['profiles'] == initial_profiles
             request(endpoint, 'show')
             deadline = time.monotonic() + 8
             while not (cache/'dictate-panel.sock').exists() and time.monotonic() < deadline:

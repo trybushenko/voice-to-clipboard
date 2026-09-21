@@ -6,7 +6,7 @@ import time
 from ..worker.transport import Server, connect
 from ..worker.protocol import receive, send
 
-OPERATIONS = {'pause', 'resume', 'status', 'stop-recording', 'quit', 'check-paste', 'start-uk', 'start-en', 'copy-last', 'settings', 'show', 'cancel'}
+OPERATIONS = {'pause', 'resume', 'status', 'stop-recording', 'quit', 'check-paste', 'start-uk', 'start-en', 'copy-last', 'settings', 'show', 'cancel', 'start-profile'}
 
 
 def request(path, operation, **details):
@@ -82,7 +82,8 @@ class ControlServer:
 
 
 class ListenerController:
-    def __init__(self, factory, enqueue):
+    def __init__(self, factory, enqueue, profiles=None):
+        self.profiles = profiles
         self.factory = factory
         self.enqueue = enqueue
         self.listener = None
@@ -101,6 +102,9 @@ class ListenerController:
                 self.enqueue((generation, lang, paste))
         callbacks = {'u': lambda: emit('uk'), 'e': lambda: emit('en'),
                      'l': lambda: emit('uk', True)}
+        if self.profiles is not None:
+            callbacks = {p['key']: (lambda p=p: emit(p, p['paste']))
+                         for p in self.profiles()}
         listener = self.factory(callbacks)
         try:
             listener.start()
