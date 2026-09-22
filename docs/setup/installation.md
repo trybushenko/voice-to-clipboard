@@ -96,21 +96,25 @@ paste. Native global shortcuts and automatic paste are not generally available.
 ## 3. Make your first recording
 
 1. Open the app and put the cursor in a text editor.
-2. Press **Alt+Shift+E** for English or **Alt+Shift+U** for Ukrainian.
+2. Press **Alt+Shift+E** for English (the only profile on a fresh installation).
 3. Speak, then press the same shortcut again to stop. First use may take longer
    while downloading/loading the model; allow it to finish.
 4. Wait for transcription to finish, then paste with **Ctrl+V** (Mac: **Cmd+V**).
-5. For Ukrainian with automatic insertion, use **Alt+Shift+L**. If the original
-   field cannot be verified or focus changes, text stays in clipboard for manual paste.
+5. Add other languages in **Settings → Language profiles**. Choose the language,
+   a shortcut letter, optional paste delivery and model override; click **Add**,
+   then **Apply all settings and profiles**. No other language is enabled automatically.
 
-You can also use **Start English / Start Ukrainian → Stop recording** in the tray;
-menu-started sessions copy to clipboard. **Copy last transcript** restores the last result.
+The tray's **Start recording (clipboard)** submenu lists only configured profiles.
+Menu-started sessions copy to clipboard; use your profile's hotkey for automatic paste.
+If focus cannot be verified, paste manually. **Copy last transcript** restores the last result.
 
-In **Settings**, change shortcut modifiers if Alt+Shift conflicts with keyboard
-layout switching; for example, `ctrl+alt`. The U/E/L keys and languages are currently
-fixed in the desktop app. Other languages are available via CLI `--lang`; fully
-configurable language profiles are planned. Application messages are in English;
-errors from the OS or dependencies may use the system language.
+All profiles share the modifiers selected in Settings (e.g. `ctrl+alt` to avoid
+Windows layout-switch conflicts), with a separate A–Z key for each profile.
+Existing users retain their previous U/E/L profiles; remove any you do not need.
+The default model is multilingual `large-v3-turbo`; no model downloads until dictation.
+An optional custom model must support the profile language and selected backend.
+Application messages are in English; dependency/OS errors may use the system language.
+See [profile configuration and acceptance checks](language-profiles.md).
 
 ## 4. Start automatically and exit safely
 

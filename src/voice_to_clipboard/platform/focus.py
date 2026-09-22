@@ -206,7 +206,9 @@ class RemoteGuard:
             result = request(self.path, 'check-paste', token=self.token)
             if result.get('ok') is not True:
                 raise RuntimeError('Paste destination was not confirmed')
-        except (OSError, EOFError, ValueError, RuntimeError) as exc:
-            raise RuntimeError(f'Original paste target changed or host unavailable. Text is in clipboard; paste manually. {exc}') from exc
+        except (OSError, EOFError) as exc:
+            raise RuntimeError(f'Cannot contact the dictation host to verify paste. Text is in clipboard; paste manually. Restart Voice to Clipboard. {exc}') from exc
+        except (ValueError, RuntimeError) as exc:
+            raise RuntimeError(f'Paste verification failed. Text is in clipboard; paste manually. {exc}') from exc
     def close(self):
         pass

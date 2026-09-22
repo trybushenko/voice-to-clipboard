@@ -1,7 +1,11 @@
 # Usage and storage
 
-`voice-hotkeys` stays open to listen for Alt+Shift+U/E/L. Run it manually when
-needed; installation does not add a login service. Stop it with Ctrl+C. The host stops accepting shortcuts, requests the active
+For daily use, launch the desktop app from your application menu. Its tray provides
+Settings, language profiles and optional Start at login. Fresh installations have
+only English/E; existing U/E/L preferences are migrated. See [profiles](setup/language-profiles.md).
+
+The optional foreground CLI `voice-hotkeys` listens for your configured profiles.
+Run it manually when needed; this command alone does not enable login startup. Stop it with Ctrl+C. The host stops accepting shortcuts, requests the active
 recording to finish, and waits for transcription/clipboard delivery. A second
 Ctrl+C during this wait explicitly cancels its owned dictation processes. The
 persistent model remains independent. If draining exceeds 15 minutes, the host
@@ -24,7 +28,7 @@ Pause unregisters shortcuts and leaves an active recording running. Resume regis
 fresh shortcuts; events queued before pausing are discarded. Stop-recording only
 ends recording; Quit stops the host and drains its recording. The private control
 endpoint uses the same authenticated local transport as other app IPC. These are
-CLI controls; tray/menu controls are still planned.
+CLI controls; equivalent actions are available from the desktop tray/menu.
 
 You can also use the CLI (`dictate` and `voice-to-clipboard` are aliases):
 
@@ -43,13 +47,14 @@ dictate --model-status            # query idle worker
 dictate --unload-model            # unload idle worker now
 ```
 
-The default is `large-v3-turbo`, Ukrainian, manual stop, with a 10-minute recording
+The CLI default is `large-v3-turbo`, English, manual stop, with a 10-minute recording
 limit and 20-second initial silence timeout. English shortcuts select English
 explicitly. On Apple Silicon use `--backend mlx` (the automatic default), or
 install the whisper extra and use `--backend faster-whisper --inference-device cpu`.
 Custom MLX models accept an MLX Hugging Face repository in `--model`.
 `DICTATE_MODEL`, `DICTATE_LANG`, `DICTATE_COMPUTE`, `DICTATE_PROMPT` and
-`DICTATE_SILENCE`, `DICTATE_BACKEND` and `DICTATE_INFERENCE_DEVICE` can override defaults.
+`DICTATE_SILENCE`, `DICTATE_BACKEND` and `DICTATE_INFERENCE_DEVICE` can override CLI defaults. Desktop profiles explicitly select language/model; use Settings
+for those rather than relying on CLI environment overrides.
 
 The overlay closes with the recording process, including on errors. It shows no
 transcript. Disable with `voice-hotkeys --no-overlay` or omit `--overlay` on CLI.
@@ -61,7 +66,7 @@ or Enter key is attempted. The result overlay briefly shows copied, paste shortc
 sent, or manual-paste fallback. Input sent does not prove that an editor accepted it.
 
 `voice-hotkeys --hotkey-modifiers ctrl+alt` changes and saves the modifiers for all
-U/E/L shortcuts after registration succeeds. Use `alt+shift` to restore defaults.
+configured profile shortcuts after registration succeeds. Use `alt+shift` to restore defaults.
 On macOS Alt means Option and the `win` modifier means Command. Prefer a combination
 that does not overlap your system layout switch. Windows reports detected conflicts;
 this application never changes system layout settings.

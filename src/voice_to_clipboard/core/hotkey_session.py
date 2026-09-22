@@ -120,7 +120,7 @@ class SessionLauncher:
             if self.stop_running():
                 self.pending_stop = False
 
-    def launch(self, lang, paste=False):
+    def launch(self, lang, paste=False, model=None):
         self.tick()
         if self.children:
             # Never change the first invocation's language or --paste action.
@@ -131,8 +131,8 @@ class SessionLauncher:
             return
         command = [sys.executable, '-m', 'voice_to_clipboard', '--lang', lang,
                    '--silence', '0', '--inference-device', self.args.inference_device]
-        if self.args.model:
-            command += ['--model', self.args.model]
+        chosen_model = model or self.args.model or 'large-v3-turbo'
+        command += ['--model', chosen_model]
         if lang == 'en':
             command += ['--beam', '5']
         environment = dict(os.environ)

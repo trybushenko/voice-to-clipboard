@@ -53,6 +53,7 @@ class WindowsEdit:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--remote-host', action='store_true', help='Verify paste through the host IPC guard')
     parser.add_argument('--auto', action='store_true')
     parser.add_argument('--overlay', action='store_true', help='Also verify that the real overlay preserves focus')
     parser.add_argument('--change-focus', action='store_true',
@@ -81,7 +82,32 @@ def main():
     running = [False]
     passed = [False]
     def worker():
-        guard = make_guard()
+        guard = make_guard(local=True)
+        owner_guard = guard
+        remote_stop = threading.Event()
+        server = temporary = remote_thread = None
+        if args.remote_host:
+            import tempfile
+            import os
+            import secrets
+            from pathlib import Path
+            from voice_to_clipboard.core.host_control import ControlServer
+            from voice_to_clipboard.platform.focus import RemoteGuard
+            temporary = tempfile.TemporaryDirectory(prefix='vtc-paste-', dir=None if os.name == 'nt' else '/tmp')
+            path = Path(temporary.name) / 'control.sock'
+            token = secrets.token_hex(32)
+            server = ControlServer(path)
+            def verify(payload):
+                if payload.get('token') != token:
+                    raise RuntimeError('Invalid paste token')
+                owner_guard.check()
+                return {'ok': True}
+            def dispatch():
+                while not remote_stop.wait(.01):
+                    server.dispatch(verify)
+            remote_thread = threading.Thread(target=dispatch, daemon=True)
+            remote_thread.start()
+            guard = RemoteGuard(token, str(path))
         overlay = None
         try:
             guard.check()
@@ -115,6 +141,14 @@ def main():
             if overlay is not None:
                 overlay.close()
             guard.close()
+            owner_guard.close()
+            remote_stop.set()
+            if remote_thread is not None:
+                remote_thread.join(timeout=2)
+            if server is not None:
+                server.close()
+            if temporary is not None:
+                temporary.cleanup()
     def start():
         if running[0]:
             return
