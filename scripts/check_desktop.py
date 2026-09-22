@@ -10,6 +10,17 @@ from voice_to_clipboard.core.host_control import request
 from voice_to_clipboard.platform.processes import spawn_background
 
 
+def wait_ready(endpoint, process):
+    deadline = time.monotonic() + 20
+    while time.monotonic() < deadline and process.poll() is None:
+        try:
+            return request(endpoint, 'status')
+        except (OSError, EOFError):
+            # A Unix socket path exists after bind(), before listen() is ready.
+            time.sleep(.01)
+    raise RuntimeError('Desktop did not become ready')
+
+
 def main():
     with tempfile.TemporaryDirectory(prefix='vtc-', dir=None if sys.platform == 'win32' else '/tmp') as folder:
         folder = Path(folder)
@@ -23,13 +34,7 @@ def main():
         app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
-            deadline = time.monotonic() + 20
-            while not endpoint.exists():
-                if app.poll() is not None or time.monotonic() > deadline:
-                    log = data / 'logs/desktop.log'
-                    raise RuntimeError(log.read_text() if log.exists() else 'Desktop did not start')
-                time.sleep(.1)
-            initial = request(endpoint, 'status')
+            initial = wait_ready(endpoint, app)
             assert initial['desktop'] is True, initial
             assert initial['dictation_processes'] == 0 and initial['worker_pid'] is None, initial
             restricted = sys.platform == 'darwin' and initial['state'] == 'paused'
@@ -102,10 +107,7 @@ def main():
             for _ in range(5):
                 app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                deadline = time.monotonic() + 20
-                while not endpoint.exists() and time.monotonic() < deadline:
-                    time.sleep(.01)
-                restarted = request(endpoint, 'status')
+                restarted = wait_ready(endpoint, app)
                 assert restarted['profiles'] == expected_profiles, restarted
                 assert restarted['pid'] != initial['pid'], restarted
                 request(endpoint, 'quit')
