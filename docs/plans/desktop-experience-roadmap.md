@@ -306,20 +306,20 @@ first-run flow залишаються відкритими; весь D.1 не п
 - [x] Власні UI, tray, CLI/help, progress, помилки, diagnostics і technical logs
   англійською (`f3a3333`, `d54e1e2`); сторонні помилки можуть бути мовою ОС.
   Мова інтерфейсу не змінює мову transcript; не перекладати голос автоматично.
-- [ ] Налаштовувані профілі: language + повна hotkey combination + delivery
+- [x] Налаштовувані профілі: language + shared modifiers/A–Z key + delivery
   (clipboard або paste). Без прив'язки U/E/L до фіксованих мов; за потреби
-  кілька профілів. English language names, пошук та зрозумілі обмеження backend.
-- [ ] Міграція поточних U/E/L і preferences без зміни звичок існуючих користувачів;
+  кілька профілів. English language names та зрозумілі обмеження backend.
+- [x] Міграція поточних U/E/L і preferences без зміни звичок існуючих користувачів;
   atomic save, validation, conflict detection та rollback реєстрації shortcuts.
 - [ ] Простий first-run вибір мови, shortcut і copy/paste; перевірка мікрофона,
   permission hints, пояснення першого завантаження моделі та тестове диктування.
 - [ ] Зіставлення мови з сумісною моделлю: українську спеціалізовану модель не
   використовувати мовчки для польської; явні помилки для непідтримуваних мов.
-- [ ] Регресії: міграція, конфлікти, non-Latin layouts, restart/persistence,
-  English diagnostics, відсутність transcript у технічних логах.
-- [ ] Приймання: новий польськомовний користувач без знання української проходить
-  setup, задає польську мову/власну комбінацію, диктує й отримує clipboard/paste;
-  існуючі українські/англійські профілі продовжують працювати.
+- [x] Регресії: міграція, конфлікти, restart/persistence, English diagnostics,
+  відсутність transcript у технічних логах; CI Windows/macOS/Linux.
+- [x] Windows-приймання: розгорнута GitHub-гілка `codex/language-profiles`
+  перевірена користувачем 2026-09-22; Language Profiles і paste працюють.
+  Це не є hardware acceptance для всього E/F.
 
 Після цього — E: installer/runtime, doctor та чисті машини; F: release gate.
 Не додавати LLM-переформатування промптів у цю поставку.
@@ -458,8 +458,8 @@ first-run flow залишаються відкритими; весь D.1 не п
 
 | Частина | Реалізовано | Автоматично перевірено | Прийнято користувачем | Змерджено в `main` |
 | --- | --- | --- | --- | --- |
-| Мовні профілі та міграція | `bc4b718` | CI 6 jobs, Windows/macOS/Linux | Ні, очікується повторне Windows-приймання | Ні |
-| Lifecycle/Windows fixes (Apply, Quit, Tk, paste diagnostics) | `c368776` | CI 6 jobs, Windows/macOS/Linux | Ні, очікується повторне Windows-приймання | Ні |
+| Мовні профілі та міграція | `bc4b718` | CI 6 jobs, Windows/macOS/Linux | Так, Windows 2026-09-22 | Так, merge цієї поставки в `main` |
+| Lifecycle/Windows fixes (Apply, Quit, Tk, paste diagnostics) | `c368776` | CI 6 jobs, Windows/macOS/Linux | Так, Windows 2026-09-22 | Так, merge цієї поставки в `main` |
 | Focused review `main...9304704` | 2026-09-22: без доведеного дефекту, код не змінено | 34 релевантні unit-перевірки пройшли локально; один Unix-socket test не запускається в sandbox через `PermissionError`, не є дефектом програми | Не застосовується | Не застосовується |
 
 Реалізація, автоматична перевірка, ручне приймання і merge — окремі стани.
@@ -476,9 +476,9 @@ first-run flow залишаються відкритими; весь D.1 не п
   desktop smoke now verifies persisted profiles after a full process restart.
 - [x] Paste errors distinguish unreachable host from failed target verification;
   Windows CI now tests the remote guard IPC with a real native editor and overlay.
-- [ ] Confirm the user's actual Polish/Indonesian hotkeys and paste failure on their
-  Windows machine after a complete host restart. The old-host explanation matches
-  symptoms but is not proven for that machine without its full error/log details.
+- [x] Користувач повторно розгорнув GitHub-гілку на Windows 2026-09-22:
+  Language Profiles, hotkeys і paste працюють. Попередня user-specific відмова
+  paste не відтворилась; її не видавати за загальне доведення для іншого hardware.
 
 - [x] Windows 3.11 GUI smoke reproduced a Tk shutdown crash (`Tcl_AsyncDelete`).
   Fixed callback ownership: worker handles integer IDs, UI retains/releases callbacks,

@@ -27,11 +27,13 @@ shortcuts, тимчасовий overlay, автозапуск. Windows, Linux т
 - Linux development venv: `venv/bin/python`; Windows приклади: `.venv\Scripts\python.exe`.
 - Main містить прийняті A/B/C/D, актуальний source onboarding і English messaging.
   Відомий merge main: `100ebd5` (перевірити, чи не з'явилися нові коміти).
-- Активна незмерджена гілка: `codex/language-profiles`.
-- Останній код перед handoff: `c368776`; документована ревізія: `8f09b5f`.
+- D.1 Language Profiles та Windows lifecycle fixes прийняті користувачем на
+  Windows 2026-09-22 і змерджені в `main`; функціональну remote-гілку видалено.
+- Останній функціональний код поставки: `c368776`; завершальне документаційне
+  рев’ю: `2e0276a`.
 - Інші завершені remote-гілки прибрані. Перевірити реальний remote перед наступними діями.
-- Гілку профілів **ще не прийнято після останніх виправлень Windows**. Не плутати
-  прийняті B/C/D з прийманням нової функціональності D.1.
+- Не плутати це приймання D.1 з незавершеними E/F: installers, hardware matrix,
+  first-run wizard та незалежні modifiers усе ще окремі поставки.
 
 ## Що вже зроблено у D.1
 
@@ -49,27 +51,16 @@ English runtime messages змерджені. У гілці профілів ре
 - Виправлено відтворений Windows Tk crash `Tcl_AsyncDelete`: worker передає callback IDs,
   GUI callbacks залишаються у UI thread; shutdown очікує завершення worker.
 
-## Незакритий фідбек і наступна конкретна дія
+## Приймання D.1 і наступна конкретна дія
 
-Користувач повідомляв: нові мови зникають, shortcuts не працюють; Quit потребує
-зайвого кліку; L дає `host unavailable` / `original paste target changed`.
-Останні зміни виправляють lifecycle/UI; старий resident host після pip-update —
-правдоподібна причина несумісності, але НЕ доведена причина всіх помилок на його ПК.
+Користувач розгорнув GitHub-гілку на Windows 2026-09-22 і підтвердив, що Language
+Profiles працюють чудово. Це приймає профілі, hotkeys, Apply/close, Quit і paste
+для його сценарію. Focus guard залишається увімкненим: відмова при дійсній зміні
+поля все ще є правильною поведінкою.
 
-Потрібно повторне Windows-приймання після повного Quit → update → relaunch:
-
-1. Polish/P, Indonesian/I → Add → Apply → Saved and active.
-2. Закрити/відкрити Settings; потім Quit у треї та новий запуск. Профілі й hotkeys збережені.
-3. Видалити профіль, Apply, restart: він не повертається, shortcut звільнено.
-4. Apply і негайний close; помилка registration; repeated Apply; Quit idle/recording/transcribing.
-5. Автовставка з редактора, Settings закрито; зміна поля повинна й надалі блокувати paste.
-6. При відмові отримати ПОВНИЙ новий текст помилки, ОС/Python/commit, редактор,
-   shortcut/modifiers, момент зміни фокусу; технічний log без приватної history.
-
-Не вимикати focus guard, щоб приховати paste-помилку. Не заявляти про її повне
-усунення лише за CI. Якщо фідбеку ще немає — виконати сфокусоване code review
-`main...HEAD`, усунути доведені дефекти та підготувати короткий manual protocol.
-Не починати великий packaging rewrite до стабілізації цієї поставки.
+Наступна поставка має бути однією обмеженою незакритою частиною D.1: незалежні
+modifiers для кожного профілю **або** простий first-run/model onboarding — не
+обидві одразу. Packaging rewrite не починати без окремого рішення.
 
 ## Завершення сфокусованого рев’ю 2026-09-22
 
