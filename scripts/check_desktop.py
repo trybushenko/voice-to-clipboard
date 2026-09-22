@@ -99,17 +99,24 @@ def main():
             assert app.wait(timeout=12) == 0
             assert not endpoint.exists()
             assert not list((cache/'dictate-desktop').glob('host-*')), 'Private worker runtime remained'
-            app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
-                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            deadline = time.monotonic() + 20
-            while not endpoint.exists() and time.monotonic() < deadline:
-                time.sleep(.1)
-            restarted = request(endpoint, 'status')
-            assert restarted['profiles'] == expected_profiles, restarted
-            assert restarted['pid'] != initial['pid'], restarted
-            request(endpoint, 'quit')
-            assert app.wait(timeout=12) == 0
+            for _ in range(5):
+                app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                deadline = time.monotonic() + 20
+                while not endpoint.exists() and time.monotonic() < deadline:
+                    time.sleep(.01)
+                restarted = request(endpoint, 'status')
+                assert restarted['profiles'] == expected_profiles, restarted
+                assert restarted['pid'] != initial['pid'], restarted
+                request(endpoint, 'quit')
+                assert app.wait(timeout=12) == 0
+                assert not endpoint.exists()
             print('PASS: native tray/controller, pause/resume, settings, singleton panel and clean Quit; no microphone or model loaded')
+        except Exception:
+            log = data / 'logs/desktop.log'
+            if log.exists():
+                print(log.read_text(encoding='utf-8'), flush=True)
+            raise
         finally:
             if app.poll() is None:
                 try:

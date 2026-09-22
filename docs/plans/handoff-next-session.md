@@ -5,6 +5,15 @@
 
 ## Поточна поставка: індивідуальні modifiers
 
+Review follow-up: користувач прийняв роботу `1051bbe` на Windows. Review виявив
+втрату modifiers при downgrade і macOS 3.12 Quit timeout у CI `35715091939`.
+Виправлення: schema v3 (читає v2, старий main відмовляється від v3 до запису),
+macOS stop поставлено у головну AppKit-чергу після запуску event loop.
+Native smoke тепер повторює швидкий restart/Quit п’ять разів і друкує technical
+log при збої. Локально: 88 tests OK, 4 skips; Tk smoke і desktop smoke OK;
+валідатор попереднього main відхилив новий формат, bytes settings не змінилися.
+Повторний кросплатформний CI виправлень ще очікується. Merge не виконано.
+
 Гілка `codex/profile-modifiers` створена від актуального `origin/main` `c27e602`.
 Реалізовано optional `modifiers` у профілі, редактор у Settings і native bindings
 Windows/macOS/X11. Порожній override успадковує default; старі version 2 settings

@@ -17,6 +17,19 @@ from voice_to_clipboard.ui import terminal
 
 
 class DesktopTests(unittest.TestCase):
+    def test_macos_quit_is_queued_until_native_loop_dispatches(self):
+        from voice_to_clipboard.ui.desktop_app import stop_icon
+        pending = []
+        helper = SimpleNamespace(callAfter=pending.append)
+        icon = Mock()
+        with patch('sys.platform', 'darwin'), patch.dict('sys.modules', {
+                'PyObjCTools': SimpleNamespace(AppHelper=helper)}):
+            stop_icon(icon)
+        icon.stop.assert_not_called()
+        self.assertEqual(len(pending), 1)
+        pending.pop()()
+        icon.stop.assert_called_once()
+
     def test_settings_reject_invalid_values(self):
         for values in ([], {'hotkey_modifiers': 'alt+banana'}, {'overlay': 'yes'}, {'model': 42}, {'inference_device': 'gpu'}):
             with self.assertRaises((ValueError, TypeError)):

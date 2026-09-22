@@ -193,7 +193,7 @@ def main(argv=None, desktop=None):
         control = ControlServer(endpoint)
         if explicit:
             save_modifiers(args.hotkey_modifiers)
-        save_settings({'schema_version': 2, 'profiles': args.profiles})
+        save_settings({'schema_version': 3, 'profiles': args.profiles})
         print('Ready: ' + ' | '.join((p.get('modifiers') or args.hotkey_modifiers) + '+' + p['key'].upper() +
               ' ' + p['language'] + (' + paste' if p['paste'] else '') for p in args.profiles), flush=True)
         try:

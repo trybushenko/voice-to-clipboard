@@ -16,6 +16,16 @@ def endpoint():
     return cache_dir() / 'dictate-hotkey-control.sock'
 
 
+def stop_icon(icon):
+    if sys.platform == 'darwin':
+        from PyObjCTools import AppHelper
+        # pystray starts setup before NSApplication.run(). Queue shutdown on
+        # that loop so an immediate Quit cannot be lost before it starts.
+        AppHelper.callAfter(icon.stop)
+    else:
+        icon.stop()
+
+
 def show_error(message):
     import tkinter as tk
     from tkinter import messagebox
@@ -219,7 +229,7 @@ def run():
                 bridge.update({'state': 'paused', 'phase': 'error', 'message': str(exc), 'dictation_processes': 0})
             finally:
                 bridge.done.set()
-                icon.stop()
+                stop_icon(icon)
         def setup(icon):
             nonlocal host
             icon.visible = True

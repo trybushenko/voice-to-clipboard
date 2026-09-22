@@ -461,7 +461,10 @@ first-run flow залишаються відкритими; весь D.1 не п
 - [x] Автоматично перевірено локально: 85 regression tests (4 platform skips),
   окремий Quartz matching/repeat test; GUI/native smoke результати у handoff.
 - [ ] CI нової гілки: результат перевірити після push.
-- [ ] Прийнято користувачем: очікується Windows-тест індивідуальних shortcuts.
+- [x] Прийнято користувачем: Windows-тест індивідуальних shortcuts (`1051bbe`).
+- [x] Review fixes: schema v3 захищає overrides від старого host при downgrade;
+  macOS shutdown ставиться в AppKit-чергу; smoke перевіряє 5 швидких restart/Quit.
+  Локально 88 tests OK (4 skips), Tk/native smoke OK. Повторний CI очікується.
 - [ ] Змерджено: лише після приймання.
 
 Межі: літери профілів залишаються унікальними; Wayland — manual bindings.

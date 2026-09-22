@@ -55,8 +55,12 @@ your previous shortcuts manually; that installation cannot be identified reliabl
 - Run unit tests and `scripts/check_desktop.py`; the latter does not record audio.
 
 Individual modifier sets are supported. Letters must still be unique, even when
-modifiers differ. Existing version 2 settings keep their inherited modifiers;
-the optional profile `modifiers` field is saved only for explicit overrides.
+modifiers differ. Existing version 2 settings keep their inherited modifiers and
+are migrated to version 3 on save/startup. Existing overrides from the initial
+version 2 branch also survive migration. Older releases reject version 3 rather
+than silently deleting individual modifiers; downgrade requires a compatible
+settings backup. History is unchanged. The optional profile `modifiers` field
+is saved only for explicit overrides.
 A model download wizard and validation of arbitrary custom model repositories
 remain follow-up work. Quit before updating: an older running host cannot preserve
 individual modifiers, and the updated Settings panel requires a host restart.

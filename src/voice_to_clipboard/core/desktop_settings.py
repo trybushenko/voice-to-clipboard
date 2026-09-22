@@ -20,10 +20,10 @@ def validate(values):
         raise ValueError('Choose auto, cpu, cuda or metal')
     if type(result['overlay']) is not bool:
         raise ValueError('Overlay must be enabled or disabled')
-    if values.get('schema_version', 2) != 2:
+    if values.get('schema_version', 2) not in (2, 3):
         raise ValueError('Unsupported settings version; upgrade the app before editing')
     result['profiles'] = profiles.validate(values.get('profiles', profiles.defaults()))
-    result['schema_version'] = 2
+    result['schema_version'] = 3
     for profile in result['profiles']:
         model = profile['model'] or result['model']
         if profile['language'] != 'en' and model.endswith('.en'):

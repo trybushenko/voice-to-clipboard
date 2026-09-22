@@ -214,7 +214,7 @@ def main():
             return
         values = {'hotkey_modifiers': mods.get(), 'model': model.get().strip(),
                   'inference_device': device.get(), 'overlay': overlay.get(),
-                  'schema_version': 2, 'profiles': [dict(p) for p in profiles]}
+                  'schema_version': 3, 'profiles': [dict(p) for p in profiles]}
         save_pending[0] = True
         apply_button.configure(state='disabled')
         feedback.set('Saving and registering shortcuts…')

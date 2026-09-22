@@ -16,10 +16,18 @@ class ProfileTests(unittest.TestCase):
             original['profiles'].append(dict(language='pl', key='p', modifiers='CTRL+ALT'))
             settings.save_settings(desktop_settings.validate(original))
             restored = desktop_settings.load()
+            self.assertEqual(settings.read_settings()['schema_version'], 3)
             self.assertEqual(restored['hotkey_modifiers'], 'ctrl+shift')
             self.assertEqual(restored['profiles'][1]['modifiers'], 'alt+ctrl')
             self.assertEqual(settings.read_settings()['other'], 42)
             self.assertNotIn('modifiers', restored['profiles'][0])
+
+    def test_schema_two_overrides_are_upgraded_without_loss(self):
+        values = {'schema_version': 2, 'profiles': [dict(language='pl', key='p', modifiers='ctrl+alt')]}
+        migrated = desktop_settings.validate(values)
+        self.assertEqual(migrated['schema_version'], 3)
+        self.assertEqual(migrated['profiles'][0]['modifiers'], 'alt+ctrl')
+        self.assertEqual(desktop_settings.validate(migrated), migrated)
 
     def test_profile_modifiers_reject_invalid_and_normalize_empty(self):
         for modifiers in ('ctrl+ctrl', 'banana', 42, None):
@@ -31,7 +39,7 @@ class ProfileTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder, patch('voice_to_clipboard.platform.paths.data_dir', return_value=Path(folder)), patch.object(desktop_settings, 'read_settings', return_value={}):
             result = desktop_settings.load()
         self.assertEqual(result['profiles'], profiles.defaults())
-        self.assertEqual(result['schema_version'], 2)
+        self.assertEqual(result['schema_version'], 3)
 
     def test_existing_preferences_migrate_without_overwriting_model(self):
         with patch.object(desktop_settings, 'read_settings', return_value={'hotkey_modifiers': 'ctrl+alt', 'model': 'custom'}):
