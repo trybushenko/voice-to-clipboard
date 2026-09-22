@@ -5,6 +5,17 @@ from voice_to_clipboard.platform.windows_hotkeys import NativeHotkeys, parse_mod
 
 
 class WindowsHotkeyTests(unittest.TestCase):
+    def test_individual_modifiers_and_partial_conflict_cleanup(self):
+        api = Mock()
+        api.RegisterHotKey.side_effect = [True, False]
+        listener = NativeHotkeys({'e': Mock(), 'p': Mock()},
+                                 {'e': 'alt+shift', 'p': 'ctrl+alt'}, api_factory=lambda: api)
+        with self.assertRaisesRegex(RuntimeError, r'ctrl\+alt\+P'):
+            listener.start()
+        self.assertEqual([call.args[2] for call in api.RegisterHotKey.call_args_list],
+                         [MOD_NOREPEAT | 5, MOD_NOREPEAT | 3])
+        api.UnregisterHotKey.assert_called_once_with(None, 1)
+
     def test_register_dispatch_and_unregister(self):
         api = Mock()
         api.RegisterHotKey.return_value = True

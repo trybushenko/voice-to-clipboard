@@ -7,6 +7,26 @@ from voice_to_clipboard.core.host_control import ListenerController
 
 
 class ProfileTests(unittest.TestCase):
+    def test_profile_modifiers_preserve_legacy_and_roundtrip(self):
+        from voice_to_clipboard.core import settings
+        with tempfile.TemporaryDirectory() as folder, patch.object(settings, 'data_dir', return_value=Path(folder)):
+            settings.save_settings({'hotkey_modifiers': 'ctrl+shift', 'profiles': profiles.defaults(), 'other': 42})
+            original = desktop_settings.load()
+            self.assertNotIn('modifiers', original['profiles'][0])
+            original['profiles'].append(dict(language='pl', key='p', modifiers='CTRL+ALT'))
+            settings.save_settings(desktop_settings.validate(original))
+            restored = desktop_settings.load()
+            self.assertEqual(restored['hotkey_modifiers'], 'ctrl+shift')
+            self.assertEqual(restored['profiles'][1]['modifiers'], 'alt+ctrl')
+            self.assertEqual(settings.read_settings()['other'], 42)
+            self.assertNotIn('modifiers', restored['profiles'][0])
+
+    def test_profile_modifiers_reject_invalid_and_normalize_empty(self):
+        for modifiers in ('ctrl+ctrl', 'banana', 42, None):
+            with self.assertRaises(ValueError):
+                profiles.validate([dict(language='en', key='e', modifiers=modifiers)])
+        self.assertEqual(profiles.validate([dict(language='en', key='e', modifiers=' ')]), profiles.defaults())
+
     def test_new_user_has_only_english_and_no_ukrainian_shortcuts(self):
         with tempfile.TemporaryDirectory() as folder, patch('voice_to_clipboard.platform.paths.data_dir', return_value=Path(folder)), patch.object(desktop_settings, 'read_settings', return_value={}):
             result = desktop_settings.load()

@@ -1,6 +1,6 @@
 # Language profiles
 
-Testing branch: `codex/language-profiles`. Quit the app, switch to this branch,
+Testing branch: `codex/profile-modifiers`. Quit the app, switch to this branch,
 repeat your platform's pip installation with speech/hotkeys/desktop extras, then
 launch the app normally. Do not delete your real settings/history to test defaults.
 
@@ -13,7 +13,10 @@ Ukrainian presets on a clean install. English can also be edited or replaced.
 In Settings → Language profiles:
 
 1. Choose a language by its full English name (e.g. `Polish (pl)`); the list is alphabetical.
-2. Choose a unique A–Z letter. All profiles use the shared shortcut modifiers above.
+2. Choose a unique A–Z letter. Leave **Profile modifiers** empty to inherit
+   **Default shortcut modifiers**, or enter an individual combination such as
+   `ctrl+alt`. Supported modifiers: `alt`, `ctrl`, `shift`, `win`, joined with `+`.
+   Changing the default affects only profiles without an override.
    macOS uses physical ANSI key positions; Alt means Option and Win means Command.
 3. Enable Paste with hotkey if desired; otherwise the result goes to clipboard.
 4. Leave model override empty for the shared default, or enter a compatible model.
@@ -51,9 +54,25 @@ your previous shortcuts manually; that installation cannot be identified reliabl
 - Existing installation: U/E/L retained, history and selected model preserved.
 - Run unit tests and `scripts/check_desktop.py`; the latter does not record audio.
 
-This delivery does not include per-profile modifier sets, a model download wizard,
-or automatic validation of arbitrary custom model repositories. Those remain follow-up
-work; shared modifiers and per-profile letters are fully configurable now.
+Individual modifier sets are supported. Letters must still be unique, even when
+modifiers differ. Existing version 2 settings keep their inherited modifiers;
+the optional profile `modifiers` field is saved only for explicit overrides.
+A model download wizard and validation of arbitrary custom model repositories
+remain follow-up work. Quit before updating: an older running host cannot preserve
+individual modifiers, and the updated Settings panel requires a host restart.
+
+## Individual modifier acceptance
+
+1. Keep English/E on the default modifiers. Add Polish/P with `ctrl+alt`.
+2. Apply, close Settings, and test both shortcuts. Each starts its own language;
+   pressing again stops recording. The default modifiers + P must not start Polish.
+3. Quit and relaunch. The override remains. Change default modifiers: English
+   follows the new default; Polish remains on Ctrl+Alt+P.
+4. Clear Polish's Profile modifiers, click Update selected, then Apply. Polish
+   now uses the default. Invalid modifiers or occupied native shortcuts must
+   reject Apply and preserve the previous saved and active configuration.
+5. Pause/Resume must restore both bindings. Paste-enabled profiles retain the
+   existing original-field guard.
 
 ## Updating after Windows feedback
 

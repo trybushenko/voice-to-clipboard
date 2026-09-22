@@ -65,8 +65,9 @@ fails, the transcript remains in clipboard for manual paste. No caret restoratio
 or Enter key is attempted. The result overlay briefly shows copied, paste shortcut
 sent, or manual-paste fallback. Input sent does not prove that an editor accepted it.
 
-`voice-hotkeys --hotkey-modifiers ctrl+alt` changes and saves the modifiers for all
-configured profile shortcuts after registration succeeds. Use `alt+shift` to restore defaults.
+`voice-hotkeys --hotkey-modifiers ctrl+alt` changes and saves the default modifiers
+after registration succeeds. Profiles with individual overrides keep their modifiers.
+Use `alt+shift` to restore the default; edit overrides in Settings.
 On macOS Alt means Option and the `win` modifier means Command. Prefer a combination
 that does not overlap your system layout switch. Windows reports detected conflicts;
 this application never changes system layout settings.

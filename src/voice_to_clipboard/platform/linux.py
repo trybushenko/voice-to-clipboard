@@ -124,7 +124,6 @@ class NativeHotkeys(threading.Thread):
             display = Display()
             root = display.screen().root
             masks = {'alt': X.Mod1Mask, 'ctrl': X.ControlMask, 'shift': X.ShiftMask, 'win': X.Mod4Mask}
-            modifiers = sum(masks[name] for name in self.modifiers.split('+'))
             callbacks = {}
             errors = []
             num = display.keysym_to_keycode(XK.string_to_keysym('Num_Lock'))
@@ -133,6 +132,8 @@ class NativeHotkeys(threading.Thread):
                 if num in codes and num:
                     num_mask |= 1 << index
             for key, callback in self.callbacks.items():
+                label = self.modifiers[key] if isinstance(self.modifiers, dict) else self.modifiers
+                modifiers = sum(masks[name] for name in label.split('+'))
                 code = display.keysym_to_keycode(XK.string_to_keysym(key))
                 if not code:
                     raise RuntimeError(f'X11 key unavailable: {key}')
@@ -144,7 +145,7 @@ class NativeHotkeys(threading.Thread):
                     grabbed.append((code, mask))
                 display.sync()
                 if errors:
-                    raise RuntimeError(f'Hotkey {self.modifiers}+{key} is already assigned. '
+                    raise RuntimeError(f'Hotkey {label}+{key} is already assigned. '
                                        'Use desktop bindings OR voice-hotkeys, not both.')
             self.ready.set()
             down = set()

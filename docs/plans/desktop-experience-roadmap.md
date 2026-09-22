@@ -1,8 +1,8 @@
 # План: надійне диктування без термінала на Windows, macOS і Linux
 
 Для нового чату: [handoff і порядок до релізу](handoff-next-session.md)
-(ревізія 2026-09-22). Найближча дія — приймання останніх Windows-виправлень
-у `codex/language-profiles`, не нова реалізація профілів з нуля.
+(ревізія 2026-09-22). Мовні профілі прийняті й змерджені (`c27e602`).
+Найближча дія — приймання індивідуальних modifiers у `codex/profile-modifiers`.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -446,11 +446,26 @@ first-run flow залишаються відкритими; весь D.1 не п
 - [x] [CI реалізації bc4b718](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35590195313):
   Windows/macOS/Linux × Python 3.11/3.12, усі 6 jobs успішні.
 - [ ] Реальне Polish/English диктування та приймання профілів користувачем.
-- [ ] Незалежні modifiers для кожного профілю (зараз спільні), повний first-run
-  wizard з mic/download progress, перевірка довільних custom model repositories.
+- [x] Незалежні modifiers для кожного профілю — реалізація в `codex/profile-modifiers`;
+  ручне приймання та merge окремо нижче.
+- [ ] Повний first-run wizard з mic/download progress, перевірка довільних custom model repositories.
 
 [Test guide](../setup/language-profiles.md). Це реалізація основи кроків 2–3,
 а не закриття всього D.1/E.
+
+## Незалежні modifiers — поставка 2026-09-22
+
+- [x] Реалізовано у `codex/profile-modifiers` від `main` (`c27e602`): optional
+  profile modifiers, успадкування default для старих settings, редактор Settings,
+  Windows/macOS/X11 native registrations та збереження чинного rollback.
+- [x] Автоматично перевірено локально: 85 regression tests (4 platform skips),
+  окремий Quartz matching/repeat test; GUI/native smoke результати у handoff.
+- [ ] CI нової гілки: результат перевірити після push.
+- [ ] Прийнято користувачем: очікується Windows-тест індивідуальних shortcuts.
+- [ ] Змерджено: лише після приймання.
+
+Межі: літери профілів залишаються унікальними; Wayland — manual bindings.
+Onboarding, model download та installers не входять у цю поставку.
 
 ## Windows feedback follow-up — profiles/settings lifecycle
 

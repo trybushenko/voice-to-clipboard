@@ -122,7 +122,7 @@ def main():
     form = ttk.LabelFrame(frame, text='Dictation settings', padding=12)
     form.pack(fill='x', pady=10)
     for number, (label, variable, values) in enumerate([
-            ('Shortcut modifiers (all profiles)', mods, ['alt+shift', 'ctrl+alt', 'ctrl+alt+shift']),
+            ('Default shortcut modifiers', mods, ['alt+shift', 'ctrl+alt', 'ctrl+alt+shift']),
             ('Inference device', device, ['auto', 'cpu', 'cuda', 'metal']),
             ('Default model (empty = multilingual turbo)', model, None)]):
         ttk.Label(form, text=label).grid(row=number, column=0, sticky='w', padx=5, pady=5)
@@ -130,7 +130,7 @@ def main():
         entry.grid(row=number, column=1, sticky='ew', padx=5)
     form.columnconfigure(1, weight=1)
     ttk.Checkbutton(form, text='Show recording overlay', variable=overlay).grid(row=3, columnspan=2, sticky='w')
-    profile_frame = ttk.LabelFrame(frame, text='Language profiles — shared modifiers above + chosen letter', padding=8)
+    profile_frame = ttk.LabelFrame(frame, text='Language profiles — default or individual shortcut modifiers', padding=8)
     profile_frame.pack(fill='x', pady=6)
     profile_list = tk.Listbox(profile_frame, height=4, exportselection=False)
     profile_list.pack(fill='x')
@@ -138,6 +138,7 @@ def main():
     letter = tk.StringVar(value='e')
     delivery = tk.BooleanVar(value=False)
     profile_model = tk.StringVar()
+    profile_modifiers = tk.StringVar()
     editor = ttk.Frame(profile_frame)
     editor.pack(fill='x')
     language_choice = ttk.Combobox(editor, textvariable=language, values=language_options(), width=25, state='readonly')
@@ -145,6 +146,9 @@ def main():
     ttk.Label(editor, text='Key A–Z').pack(side='left')
     ttk.Entry(editor, textvariable=letter, width=4).pack(side='left')
     ttk.Checkbutton(editor, text='Paste with hotkey', variable=delivery).pack(side='left')
+    ttk.Label(profile_frame, text='Profile modifiers (empty = default above)').pack(anchor='w')
+    ttk.Combobox(profile_frame, textvariable=profile_modifiers,
+                 values=['', 'alt+shift', 'ctrl+alt', 'ctrl+alt+shift']).pack(fill='x')
     ttk.Label(profile_frame, text='Model override (empty = default model; custom models must support the language)').pack(anchor='w')
     ttk.Entry(profile_frame, textvariable=profile_model).pack(fill='x')
     def refresh_profiles():
@@ -159,6 +163,7 @@ def main():
             letter.set(p['key'])
             delivery.set(p['paste'])
             profile_model.set(p['model'])
+            profile_modifiers.set(p.get('modifiers', ''))
     profile_list.bind('<<ListboxSelect>>', selected)
     def edit_profile(mode):
         if save_pending[0]:
@@ -170,7 +175,8 @@ def main():
             if mode != 'add' and not selection:
                 raise ValueError('Select a profile first')
             profile = dict(language=language_code(language.get()),
-                           key=letter.get().strip(), paste=delivery.get(), model=profile_model.get().strip())
+                           key=letter.get().strip(), paste=delivery.get(), model=profile_model.get().strip(),
+                           modifiers=profile_modifiers.get().strip())
             if mode == 'add':
                 candidate.append(profile)
             elif mode == 'update':
@@ -265,6 +271,8 @@ def main():
     def received(value):
         compatible[0] = False
         current_profiles = saved_profiles(value)
+        if value.get('profile_modifiers') is not True:
+            raise RuntimeError('Quit Voice to Clipboard from the tray and relaunch the updated app to edit profile modifiers.')
         compatible[0] = True
         if profiles == active_profiles and not save_pending[0] and current_profiles != active_profiles:
             active_profiles[:] = current_profiles

@@ -36,11 +36,19 @@ def validate(profiles):
         if lang != 'en' and model.endswith('.en'):
             raise ValueError('English-only .en models cannot transcribe other languages')
         result.append(dict(language=lang, key=key, paste=paste, model=model))
+        modifiers = profile.get('modifiers', '')
+        if not isinstance(modifiers, str):
+            raise ValueError('Profile modifiers must be text')
+        if modifiers.strip():
+            from ..platform.windows_hotkeys import parse_modifiers, MODIFIERS
+            mask = parse_modifiers(modifiers.strip())
+            result[-1]['modifiers'] = '+'.join(name for name, bit in MODIFIERS.items() if mask & bit)
     return result
 
 
 def label(profile):
-    return LANGUAGE_NAMES.get(profile['language'], profile['language']) + ' (' + profile['key'].upper() + ')'
+    shortcut = (profile.get('modifiers', '') + '+' if profile.get('modifiers') else '') + profile['key'].upper()
+    return LANGUAGE_NAMES.get(profile['language'], profile['language']) + ' (' + shortcut + ')'
 
 
 def language_options():

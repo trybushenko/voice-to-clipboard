@@ -61,19 +61,22 @@ def main():
                 try:
                     reserved.start()
                     try:
-                        request(endpoint, 'settings', values={**values, 'hotkey_modifiers': 'ctrl+alt+win'})
+                        request(endpoint, 'settings', values={**values, 'profiles': [
+                            {**initial_profiles[0], 'modifiers': 'ctrl+alt+win'}]})
                         raise AssertionError('Conflicting shortcut settings accepted')
                     except RuntimeError:
                         pass
                     restored = request(endpoint, 'status')
                     assert restored['state'] == 'listening' and restored['hotkey_modifiers'] == 'ctrl+alt+shift', restored
                     assert json.loads((data/'settings.json').read_text())['hotkey_modifiers'] == 'ctrl+alt+shift'
+                    assert restored['profiles'] == initial_profiles
+                    assert json.loads((data/'settings.json').read_text())['profiles'] == initial_profiles
                 finally:
                     reserved.stop()
                     reserved.join(timeout=2)
             profile_values = {**values, 'profiles': [
                 {'language': 'en', 'key': 'e', 'paste': False, 'model': ''},
-                {'language': 'pl', 'key': 'p', 'paste': True, 'model': 'small'}]}
+                {'language': 'pl', 'key': 'p', 'paste': True, 'model': 'small', 'modifiers': 'ctrl+alt'}]}
             if not restricted:
                 changed = request(endpoint, 'settings', values=profile_values)
                 assert [p['language'] for p in changed['profiles']] == ['en', 'pl']

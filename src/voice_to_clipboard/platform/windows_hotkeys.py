@@ -33,7 +33,8 @@ class NativeHotkeys(threading.Thread):
     def __init__(self, callbacks, modifiers='alt+shift', api_factory=user_api):
         super().__init__(daemon=True)
         self.callbacks = dict(callbacks)
-        self.modifiers = parse_modifiers(modifiers)
+        self.modifiers = {key: parse_modifiers(modifiers[key] if isinstance(modifiers, dict) else modifiers)
+                          for key in callbacks}
         self.label = modifiers
         self.api_factory = api_factory
         self.ready = threading.Event()
@@ -59,8 +60,9 @@ class NativeHotkeys(threading.Thread):
             api = self.api_factory()
             actions = {}
             for identifier, (key, callback) in enumerate(self.callbacks.items(), 1):
-                if not api.RegisterHotKey(None, identifier, self.modifiers | MOD_NOREPEAT, ord(key.upper())):
-                    raise RuntimeError(f'Cannot register {self.label}+{key.upper()}: shortcut unavailable. '
+                label = self.label[key] if isinstance(self.label, dict) else self.label
+                if not api.RegisterHotKey(None, identifier, self.modifiers[key] | MOD_NOREPEAT, ord(key.upper())):
+                    raise RuntimeError(f'Cannot register {label}+{key.upper()}: shortcut unavailable. '
                                        'Close the other hotkey host or choose --hotkey-modifiers ctrl+alt+shift.')
                 registered.append(identifier)
                 actions[identifier] = callback

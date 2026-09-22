@@ -72,12 +72,14 @@ def listener(callbacks, modifiers='alt+shift'):
         raise RuntimeError('Allow Input Monitoring for Python/terminal, then restart voice-hotkeys')
     masks = {'alt': q.kCGEventFlagMaskAlternate, 'shift': q.kCGEventFlagMaskShift,
              'ctrl': q.kCGEventFlagMaskControl, 'win': q.kCGEventFlagMaskCommand}
-    required = sum(masks[name] for name in modifiers.split('+'))
     all_modifiers = sum(masks.values())
     # Physical ANSI key positions, independent of the active input language.
     keycodes = dict(zip('abcdefghijklmnopqrstuvwxyz',
                         [0,11,8,2,14,3,5,4,34,38,40,37,46,45,31,35,12,15,1,17,32,9,13,7,16,6]))
     codes = {keycodes[key]: callback for key, callback in callbacks.items()}
+    required = {keycodes[key]: sum(masks[name] for name in
+                (modifiers[key] if isinstance(modifiers, dict) else modifiers).split('+'))
+                for key in callbacks}
     held = set()
     def intercept(kind, event):
         code = q.CGEventGetIntegerValueField(event, q.kCGKeyboardEventKeycode)
@@ -87,7 +89,7 @@ def listener(callbacks, modifiers='alt+shift'):
         if kind == q.kCGEventKeyDown and code in held:
             return None
         if (kind == q.kCGEventKeyDown and code in codes
-                and q.CGEventGetFlags(event) & all_modifiers == required):
+                and q.CGEventGetFlags(event) & all_modifiers == required[code]):
             held.add(code)
             codes[code]()
             return None
