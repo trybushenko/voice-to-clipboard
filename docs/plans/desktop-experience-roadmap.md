@@ -454,6 +454,17 @@ first-run flow залишаються відкритими; весь D.1 не п
 
 ## Windows feedback follow-up — profiles/settings lifecycle
 
+### Стани цієї поставки
+
+| Частина | Реалізовано | Автоматично перевірено | Прийнято користувачем | Змерджено в `main` |
+| --- | --- | --- | --- | --- |
+| Мовні профілі та міграція | `bc4b718` | CI 6 jobs, Windows/macOS/Linux | Ні, очікується повторне Windows-приймання | Ні |
+| Lifecycle/Windows fixes (Apply, Quit, Tk, paste diagnostics) | `c368776` | CI 6 jobs, Windows/macOS/Linux | Ні, очікується повторне Windows-приймання | Ні |
+| Focused review `main...9304704` | 2026-09-22: без доведеного дефекту, код не змінено | 34 релевантні unit-перевірки пройшли локально; один Unix-socket test не запускається в sandbox через `PermissionError`, не є дефектом програми | Не застосовується | Не застосовується |
+
+Реалізація, автоматична перевірка, ручне приймання і merge — окремі стани.
+Успішний CI не доводить причину відмови paste на конкретному Windows-комп’ютері.
+
 - [x] All 100 supported languages have full English names; alphabetical dropdown.
 - [x] Apply waits for acknowledgment before close, shows persistent saved/error status,
   and blocks repeated saves. Pending edits are not silently discarded on close.

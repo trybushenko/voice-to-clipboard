@@ -71,6 +71,84 @@ English runtime messages змерджені. У гілці профілів ре
 `main...HEAD`, усунути доведені дефекти та підготувати короткий manual protocol.
 Не починати великий packaging rewrite до стабілізації цієї поставки.
 
+## Завершення сфокусованого рев’ю 2026-09-22
+
+Рев’ю `main...9304704` перевірило тільки збереження профілів, Apply/close,
+належність Tk callbacks UI-потоку, Quit, реєстрацію/rollback hotkeys та remote
+paste guard. Доведеного дефекту не знайдено; функціональний код не змінювався.
+Профіль зберігається лише після успішної реєстрації, Close чекає Apply, worker
+передає тільки ID callback, Quit не перетворює закриття Settings на непередбачуване
+завершення, а child перевіряє paste token в оригінальному host і не захоплює нову
+ціль.
+
+Локально пройшли 34 релевантні unit-перевірки. Один тест round-trip
+`ControlServer` не зміг bind Unix socket в поточному sandbox (`PermissionError`),
+отже не є негативним результатом застосунку; його вже покриває попередній
+кросплатформний CI. Це не замінює Windows-приймання і не доводить причину
+конкретної відмови paste.
+
+### Короткий Windows-протокол повторного приймання
+
+У PowerShell відкрийте каталог репозиторію. Спочатку повністю закрийте старий
+host (не лише Settings):
+
+```powershell
+cd C:\path\to\voice-to-clipboard
+.\.venv\Scripts\voice-hotkeys.exe --quit
+```
+
+Дочекайтеся, поки tray icon зникне. Оновіть саме гілку профілів і перевстановіть
+пакет:
+
+```powershell
+git switch codex/language-profiles
+git pull --ff-only origin codex/language-profiles
+.\.venv\Scripts\python.exe -m pip install ".[whisper,hotkeys,desktop]"
+git rev-parse --short HEAD
+```
+
+Для приймання без змін у ваших settings/history запустіть ізольоване вікно
+застосунку (PowerShell залиште відкритим, доки не завершите тест):
+
+```powershell
+$vtcAcceptance = Join-Path $env:TEMP ("vtc-accept-" + [guid]::NewGuid())
+$env:VOICE_TO_CLIPBOARD_DATA_DIR = Join-Path $vtcAcceptance 'data'
+$env:VOICE_TO_CLIPBOARD_CACHE_DIR = Join-Path $vtcAcceptance 'cache'
+New-Item -ItemType Directory -Force -Path $env:VOICE_TO_CLIPBOARD_DATA_DIR, $env:VOICE_TO_CLIPBOARD_CACHE_DIR | Out-Null
+Start-Process -FilePath .\.venv\Scripts\python.exe -ArgumentList '-m','voice_to_clipboard.ui.desktop_app','--run'
+```
+
+Очікувано: з’являється tray icon і Settings; у чистому профілі є тільки English/E.
+Додайте `Polish (pl)`/`P` і `Indonesian (id)`/`I`, натисніть **Apply all settings
+and profiles** і дочекайтеся **Saved and active**. Закрийте/відкрийте Settings,
+потім зробіть tray **Quit (finish dictation first)** і запустіть ту саму ізольовану
+команду ще раз: обидва профілі та shortcuts мають зберегтися. Видаліть один
+профіль, Apply, Quit/relaunch: він не повертається і його letter більше не
+зареєстрований. Перевірте Apply і негайний Close; у разі registration failure
+старі shortcuts і збережені settings лишаються активними. Перевірте Quit у станах
+idle, recording і transcribing.
+
+Для paste: із закритим Settings поставте caret у звичайному не-pідвищеному
+редакторі, використайте профіль з **Paste with hotkey**, продиктуйте короткий
+нешкідливий тест. Без зміни фокусу очікується вставка; після навмисної зміни поля
+очікується відмова і текст тільки в clipboard. Не послаблюйте guard заради цього
+тесту. Після закриття ізольованого app за потреби виконайте automated smoke
+(вони використовують тестові дані; paste checks тимчасово замінюють clipboard):
+
+```powershell
+.\.venv\Scripts\python.exe scripts/check_settings_panel.py
+.\.venv\Scripts\python.exe scripts/check_desktop.py
+.\.venv\Scripts\python.exe scripts/check_paste.py --auto --overlay --remote-host
+.\.venv\Scripts\python.exe scripts/check_paste.py --auto --change-focus --remote-host
+```
+
+Якщо щось не спрацює, надішліть повний новий English-text помилки, short commit,
+Windows edition/build, `python --version`, редактор і чи він elevated, profile
+language/key/modifiers/delivery, точну послідовність фокусу й чи вставився текст
+у clipboard. Також надішліть технічний log з
+`$env:VOICE_TO_CLIPBOARD_DATA_DIR\logs\desktop.log` (без history/transcript).
+Не надсилайте transcript або audio.
+
 ## Докази перевірок
 
 - Local suite: 82 tests, OK, 4 platform skips.
