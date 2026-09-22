@@ -16,14 +16,18 @@ def endpoint():
     return cache_dir() / 'dictate-hotkey-control.sock'
 
 
-def stop_icon(icon):
+def dispatch_tray(callback):
     if sys.platform == 'darwin':
         from PyObjCTools import AppHelper
-        # pystray starts setup before NSApplication.run(). Queue shutdown on
-        # that loop so an immediate Quit cannot be lost before it starts.
-        AppHelper.callAfter(icon.stop)
+        # AppKit operations must not block pystray's setup thread while the
+        # main loop is stopping and joining that thread.
+        AppHelper.callAfter(callback)
     else:
-        icon.stop()
+        callback()
+
+
+def stop_icon(icon):
+    dispatch_tray(icon.stop)
 
 
 def show_error(message):
@@ -118,7 +122,7 @@ class Bridge:
                     from ..platform.launchers import enabled, set_enabled
                     set_enabled(not enabled())
                     self.logger.info('Autostart preference updated')
-                    self.icon.update_menu()
+                    dispatch_tray(self.icon.update_menu)
                 elif isinstance(operation, tuple):
                     request(endpoint(), 'start-profile', key=operation[1])
                 elif operation == 'log':
@@ -232,7 +236,7 @@ def run():
                 stop_icon(icon)
         def setup(icon):
             nonlocal host
-            icon.visible = True
+            dispatch_tray(lambda: setattr(icon, 'visible', True))
             host = threading.Thread(target=host_main, name='dictation-controller')
             host.start()
             threading.Thread(target=bridge.action_loop, daemon=True).start()
@@ -245,9 +249,13 @@ def run():
                 label = 'paused' if status.get('state') == 'paused' and phase == 'idle' else phase
                 current = (label, status.get('message'), repr(status.get('profiles')))
                 if current != previous:
-                    icon.icon = image_for(label)
-                    icon.title = ('Voice to Clipboard — ' + label + ': ' + status.get('message', ''))[:120]
-                    icon.update_menu()
+                    def refresh(label=label, message=status.get('message', '')):
+                        if bridge.done.is_set():
+                            return
+                        icon.icon = image_for(label)
+                        icon.title = ('Voice to Clipboard — ' + label + ': ' + message)[:120]
+                        icon.update_menu()
+                    dispatch_tray(refresh)
                     previous = current
         icon.run(setup=setup)  # macOS requires the native event loop on the main thread.
     except Exception as exc:

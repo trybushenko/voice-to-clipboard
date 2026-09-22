@@ -18,16 +18,20 @@ from voice_to_clipboard.ui import terminal
 
 class DesktopTests(unittest.TestCase):
     def test_macos_quit_is_queued_until_native_loop_dispatches(self):
-        from voice_to_clipboard.ui.desktop_app import stop_icon
+        from voice_to_clipboard.ui.desktop_app import stop_icon, dispatch_tray
         pending = []
         helper = SimpleNamespace(callAfter=pending.append)
         icon = Mock()
         with patch('sys.platform', 'darwin'), patch.dict('sys.modules', {
                 'PyObjCTools': SimpleNamespace(AppHelper=helper)}):
+            dispatch_tray(icon.update_menu)
             stop_icon(icon)
+        icon.update_menu.assert_not_called()
         icon.stop.assert_not_called()
-        self.assertEqual(len(pending), 1)
-        pending.pop()()
+        self.assertEqual(len(pending), 2)
+        pending.pop(0)()
+        icon.update_menu.assert_called_once()
+        pending.pop(0)()
         icon.stop.assert_called_once()
 
     def test_settings_reject_invalid_values(self):
