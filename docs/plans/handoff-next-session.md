@@ -3,18 +3,47 @@
 Оновлено: 2026-09-23. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
-## Поточна поставка: сумісність моделі й мови
+## Завершена поставка: сумісність моделі й мови
 
-Реалізована в `codex/model-language-compatibility` від оновленого `origin/main`.
-Settings має editable model lists і пояснення; спільний offline validator
-блокує відомі несумісні пари до recorder/model load. Custom models unverified;
-існуючі settings відкриваються для виправлення без автоматичного переписування.
-Local: 94 tests OK (4 skips), реальний Tk rejection/custom persistence smoke OK;
-native desktop lifecycle/restart/persistence smoke OK. База гілки: `668f297`.
-Review, поточний CI, Windows/macOS ручне приймання та merge — окремі відкриті gates.
-[Update/manual test/limits](../setup/model-compatibility.md).
-Наступна дія — review і приймання цієї поставки, потім залишок D.1 first-run.
-Історичний текст нижче про «наступну задачу» описує стан до цієї реалізації.
+Реалізація `00b5d6d`, база `668f297`; merge у `main`: `50af7cd`.
+Користувач 2026-09-23 підтвердив, що всі перелічені ручні сценарії працюють,
+і дозволив merge/push та видалення `codex/model-language-compatibility` на origin.
+Remote-гілка видалена після push main; для оновлення використовувати `main`.
+
+Результат: editable model lists і English пояснення у Settings; спільний
+offline validator блокує відомі несумісні пари до recorder/model load.
+Custom models позначені unverified; старі налаштування можна виправити без
+автоматичної заміни моделі, втрати overrides або modifiers.
+
+Докази:
+- 94 local tests OK (4 platform skips); Tk rejection/custom persistence,
+  Apply/Close/Quit та native desktop restart/persistence smoke OK.
+- [CI `00b5d6d`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35828213841):
+  усі 6 jobs Windows/macOS/Linux × Python 3.11/3.12 успішні.
+- Ручне приймання користувача: English-only rejection, сумісна модель після
+  restart, custom warning/save, відхилення несумісного inherited default.
+- Сфокусований перегляд перед merge: validation/read-repair, запуск recorder,
+  Settings Apply; блокувальних дефектів не виявлено. Функціональний код не змінено.
+
+Обмеження: offline metadata не перевіряє існування custom repo, backend format,
+download або inference. Реальний голос/GPU, фізичне macOS/M4-приймання та
+clean-machine installers цією поставкою не закриті. Приймання користувача
+не розширює hardware matrix. [Update/manual test](../setup/model-compatibility.md).
+
+## Наступна конкретна задача — D.1 first-run у наявній Settings
+
+Додати короткий English first-run сценарій у наявній панелі: вибір мови,
+shortcut, copy/paste та сумісної моделі; явна дія завершення налаштування.
+Зберігати завершення лише після успішного Apply; після Quit/relaunch завершений
+сценарій не відкривається автоматично. Перерваний сценарій можна продовжити.
+Критерії: чиста установка зберігає лише English preset до явного вибору іншої
+мови; користувач налаштовує профіль без JSON/термінала; existing settings/history
+не змінюються без Apply; failure не позначає onboarding завершеним.
+Без другого Settings/wizard, download progress, inference doctor, bundler чи
+installers. Реалізацію в цьому чаті не починали. E packaging spike — окремо після D.1.
+
+Нижче — історичні знімки попередніх поставок; їхні «наступні задачі» не
+перевизначають актуальну задачу вище.
 
 ## Завершена поставка: індивідуальні modifiers
 

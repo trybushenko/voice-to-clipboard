@@ -2,7 +2,8 @@
 
 Для нового чату: [handoff і порядок до релізу](handoff-next-session.md)
 (ревізія 2026-09-23). Мовні профілі та індивідуальні modifiers прийняті й
-змерджені (`c27e602`, `a91291b`). Сумісність мови й моделі реалізована в `codex/model-language-compatibility`; review та ручне приймання відкриті.
+змерджені (`c27e602`, `a91291b`). Сумісність мови й моделі прийнята користувачем і змерджена (`50af7cd`).
+Наступна задача — D.1 first-run у наявній Settings; межі наприкінці документа.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -275,7 +276,8 @@ Secure desktop/екран входу не підтримуються. UIPI не 
 | 6 | E installers та lifecycle | Windows installer, macOS ARM64 app/DMG, обраний Linux package; update/uninstall/autostart перевірено; runtime included; signing status чесно задокументовано |
 | 7 | F release acceptance | Clean Windows без Python/Git/CUDA, Ubuntu та фізичний M4; GUI/paste/permissions/login, NVIDIA окремо, довгі сесії; version/checksums/release notes і відомі обмеження |
 
-Наступна реалізація — **крок 2**, після завершення merge English-поставки. Для кроків 2–3 спочатку спроєктувати schema/migration та спільне model-language
+Історичний порядок: кроки 1–2 вже реалізовані та прийняті; актуальна наступна
+поставка — обмежений first-run сценарій кроку 3 (див. кінець документа). Для кроків 2–3 спочатку спроєктувати schema/migration та спільне model-language
 mapping; не зашивати нові мови в окремі копії U/E/L-команд. Кожну поставку вести
 в одній активній гілці від актуального main; завершені гілки прибирати після merge.
 F-тести додавати під час відповідної реалізації, фінальний gate — на release artifacts.
@@ -477,7 +479,7 @@ Onboarding, model download та installers не входять у цю пост�
 Schema v3 відхиляється старими версіями; downgrade потребує сумісної резервної
 копії settings. Фізичне macOS/M4-приймання залишається відкритим.
 
-Наступна конкретна задача D.1: зрозумілий вибір сумісної моделі у Settings —
+Межі поставки сумісності (тепер завершена, `50af7cd`): зрозумілий вибір моделі у Settings —
 валідація відомих model/language обмежень, English пояснення та збереження
 custom model overrides. Критерій завершення: відома несумісна пара відхиляється
 до запису/завантаження, сумісна зберігається після restart, існуючі профілі й
@@ -532,9 +534,30 @@ onboarding; невідома custom model позначається як непе
   rejection, custom warning/persistence, Apply/Close/reload та Quit.
 - [x] Local native desktop smoke: tray/controller, Pause/Resume, settings,
   singleton panel, restart/persistence та clean Quit; без mic/model load.
-- [ ] Поточний cross-platform CI, Windows/macOS manual acceptance, review і merge.
+- [x] [CI `00b5d6d`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35828213841):
+  усі 6 jobs Windows/macOS/Linux × Python 3.11/3.12 успішні.
+- [x] Користувач 2026-09-23 підтвердив усі перелічені ручні сценарії:
+  English-only rejection, compatible restart/persistence, custom warning/save,
+  incompatible inherited default без зміни saved settings; дозволив merge.
+- [x] Сфокусований перегляд validation/read-repair, recorder guard і Settings Apply
+  перед merge: блокувальних дефектів не виявлено, функціональний код не змінено.
+- [x] Змерджено в `main`: `50af7cd` (реалізація `00b5d6d`).
+  Завершена remote-гілка `codex/model-language-compatibility` видалена після push main.
+- [ ] Фізичне macOS/M4, реальний voice/GPU та clean-machine release gate залишаються відкритими.
 
 [Інструкція, межі й ручний протокол](../setup/model-compatibility.md).
 Без завантаження моделей, inference, wizard або installers. Перевірка мови
-не гарантує backend format/availability. Наступна дія: review і ручне приймання
-цієї гілки; після merge — залишок D.1 first-run, окремо E packaging spike.
+не гарантує backend format/availability або існування custom repo; підтверджені
+ручні сценарії не є новим доказом для всієї hardware matrix.
+
+### Наступна конкретна поставка: D.1 first-run у наявній Settings
+
+Короткий English сценарій вибору мови, shortcut, copy/paste та сумісної моделі
+з явним завершенням налаштування. Completion зберігається лише після успішного
+Apply; після restart завершений сценарій автоматично не відкривається,
+перерваний можна продовжити. Чиста установка має лише English preset до явного
+вибору; існуючі profiles/settings/history не змінюються без Apply; помилка Apply
+не встановлює completion. Перевірити clean/existing/failed Apply/restart сценарії.
+Межі: використовувати наявну Settings, без другого wizard, download progress,
+inference doctor, packaging чи installers. У цьому чаті не розпочато.
+E packaging spike залишається наступною окремою роботою після D.1.

@@ -35,8 +35,8 @@ Finish recording and quit the entire tray app before updating:
 ```powershell
 .\.venv\Scripts\voice-hotkeys.exe --quit
 git fetch origin
-git switch codex/model-language-compatibility
-git pull --ff-only origin codex/model-language-compatibility
+git switch main
+git pull --ff-only origin main
 .\.venv\Scripts\python.exe -m pip install ".[whisper,hotkeys,desktop]"
 .\.venv\Scripts\python.exe -m voice_to_clipboard.ui.desktop_app
 ```
