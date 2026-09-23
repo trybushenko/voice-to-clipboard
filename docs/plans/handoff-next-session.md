@@ -30,17 +30,25 @@ download або inference. Реальний голос/GPU, фізичне macOS
 clean-machine installers цією поставкою не закриті. Приймання користувача
 не розширює hardware matrix. [Update/manual test](../setup/model-compatibility.md).
 
-## Наступна конкретна задача — D.1 first-run у наявній Settings
+## Поточна поставка — D.1 first-run у Settings
 
-Додати короткий English first-run сценарій у наявній панелі: вибір мови,
-shortcut, copy/paste та сумісної моделі; явна дія завершення налаштування.
-Зберігати завершення лише після успішного Apply; після Quit/relaunch завершений
-сценарій не відкривається автоматично. Перерваний сценарій можна продовжити.
-Критерії: чиста установка зберігає лише English preset до явного вибору іншої
-мови; користувач налаштовує профіль без JSON/термінала; existing settings/history
-не змінюються без Apply; failure не позначає onboarding завершеним.
-Без другого Settings/wizard, download progress, inference doctor, bundler чи
-installers. Реалізацію в цьому чаті не починали. E packaging spike — окремо після D.1.
+Реалізовано у `codex/first-run-settings` від актуального `origin/main` `e9be15c`.
+English guidance та Finish setup and apply; optional `onboarding_complete` зберігається
+лише в успішній settings transaction. Наявні prefs/history не переписуються при старті;
+чиста установка запам'ятовує тільки English preset без completion. Перерваний setup
+відкривається знову, завершений — ні (виняток: GTK tray unavailable fallback).
+Несумісний старий host потребує Quit/relaunch, перш ніж панель дозволить Apply.
+
+Докази: 98 local tests OK (4 platform skips); real Tk interrupted/failed/resumed/
+completed setup; native Linux tray/controller, автоматичне відкриття до completion,
+відсутність після completion, persistence і 5 restart/Quit. Дані ізольовані,
+без mic/model load. CI після push ще потрібно перевірити; ручне Windows-приймання
+і merge не виконані. [Update/manual test](../setup/first-run.md).
+
+Наступна дія: переглянути CI та пройти короткий manual acceptance, після дозволу
+користувача merge. Наступна окрема реалізація — E packaging spike (frozen build,
+worker spawn/native dependencies, support matrix). Без другого wizard, downloads,
+inference doctor або installers у цій D.1-поставці.
 
 Нижче — історичні знімки попередніх поставок; їхні «наступні задачі» не
 перевизначають актуальну задачу вище.

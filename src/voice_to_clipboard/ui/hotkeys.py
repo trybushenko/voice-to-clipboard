@@ -48,7 +48,9 @@ def main(argv=None, desktop=None):
         return
     explicit = args.hotkey_modifiers is not None
     try:
-        args.profiles = load_desktop_settings()['profiles']
+        initial_settings = load_desktop_settings()
+        args.profiles = initial_settings['profiles']
+        onboarding_complete = initial_settings['onboarding_complete']
         args.hotkey_modifiers = args.hotkey_modifiers or read_modifiers()
         parse_modifiers(args.hotkey_modifiers)
         args.hotkey_modifiers = args.hotkey_modifiers.lower()
@@ -98,9 +100,12 @@ def main(argv=None, desktop=None):
                 'message': listener_error[0] or launcher.message,
                 'profiles': args.profiles,
                 'profile_modifiers': True,
+                'onboarding_supported': True,
+                'onboarding_complete': onboarding_complete,
                 'hotkey_modifiers': args.hotkey_modifiers,
                 'dictation_processes': sum(p.poll() is None for p in launcher.children)}
     def handle(payload):
+        nonlocal onboarding_complete
         operation = payload["op"]
         if operation == 'cancel':
             if quitting.is_set():
@@ -134,6 +139,7 @@ def main(argv=None, desktop=None):
                     if paused:
                         controller.pause()
                 save_settings(values)
+                onboarding_complete = values['onboarding_complete']
                 if wayland:
                     listener_error[0] = 'Wayland: use desktop shortcuts or tray recording; paste manually'
                 elif not controller.paused:
@@ -193,7 +199,13 @@ def main(argv=None, desktop=None):
         control = ControlServer(endpoint)
         if explicit:
             save_modifiers(args.hotkey_modifiers)
-        save_settings({'schema_version': 3, 'profiles': args.profiles})
+        from ..core.settings import read_settings
+        from ..platform.paths import data_dir
+        # Remember a new installation before its first recording creates history.
+        # Otherwise history-only legacy detection would introduce U/E/L on restart.
+        fresh_install = not read_settings() and not (data_dir() / 'history.json').exists()
+        if desktop is None or fresh_install:
+            save_settings({'schema_version': 3, 'profiles': args.profiles})
         print('Ready: ' + ' | '.join((p.get('modifiers') or args.hotkey_modifiers) + '+' + p['key'].upper() +
               ' ' + p['language'] + (' + paste' if p['paste'] else '') for p in args.profiles), flush=True)
         try:

@@ -102,7 +102,9 @@ paste. Native global shortcuts and automatic paste are not generally available.
 4. Wait for transcription to finish, then paste with **Ctrl+V** (Mac: **Cmd+V**).
 5. Add other languages in **Settings → Language profiles**. Choose the language,
    a shortcut letter, optional paste delivery and model override; click **Add**,
-   then **Apply all settings and profiles**. No other language is enabled automatically.
+   then **Finish setup and apply**. Wait for **Saved and active. Setup complete.**
+   Until this succeeds, Settings opens again on relaunch; saved profiles are retained.
+   See [first-run setup](first-run.md). No other language is enabled automatically.
 
 The tray's **Start recording (clipboard)** submenu lists only configured profiles.
 Menu-started sessions copy to clipboard; use your profile's hotkey for automatic paste.

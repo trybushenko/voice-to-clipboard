@@ -191,8 +191,8 @@ def run():
             logger.info('Legacy model is busy or unavailable; leaving it alone')
         from ..platform.launchers import enabled
         from ..core.profiles import label
-        from ..core.settings import read_settings
-        first_run = not read_settings()
+        from ..core.desktop_settings import load
+        first_run = not load()['onboarding_complete']
         item = pystray.MenuItem
         def action(operation):
             return lambda icon, entry: bridge.submit(operation)
