@@ -1,6 +1,6 @@
 # Language profiles
 
-Testing branch: `codex/profile-modifiers`. Quit the app, switch to this branch,
+Available on `main`. Quit the app, switch to this branch,
 repeat your platform's pip installation with speech/hotkeys/desktop extras, then
 launch the app normally. Do not delete your real settings/history to test defaults.
 

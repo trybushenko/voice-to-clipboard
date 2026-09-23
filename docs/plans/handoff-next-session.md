@@ -1,9 +1,13 @@
 # Передача контексту та робочий процес до першого релізу
 
-Оновлено: 2026-09-22. Це знімок для нового чату, а не заміна актуального git/CI.
+Оновлено: 2026-09-23. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
-## Поточна поставка: індивідуальні modifiers
+## Завершена поставка: індивідуальні modifiers
+
+Користувач повторно прийняв усі перелічені Windows-сценарії після виправлень
+2026-09-23. Merge у `main`: `a91291b`. Додатково успішний
+[CI head `fb8d7f5`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35724815235).
 
 Review follow-up: користувач прийняв роботу `1051bbe` на Windows. Review виявив
 втрату modifiers при downgrade і macOS 3.12 Quit timeout у CI `35715091939`.
@@ -19,7 +23,7 @@ Smoke readiness також виправлено: чекає відповідь I
 (bind може передувати listen). Фінальний код `50e53c0` пройшов
 [CI 35717812820](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35717812820):
 усі 6 jobs Windows/macOS/Linux × Python 3.11/3.12 успішні, включно з 5 швидкими
-restart/Quit на Windows/macOS. Таймаут Quit не збільшувався. Merge не виконано.
+restart/Quit на Windows/macOS. Таймаут Quit не збільшувався.
 
 Гілка `codex/profile-modifiers` створена від актуального `origin/main` `c27e602`.
 Реалізовано optional `modifiers` у профілі, редактор у Settings і native bindings
@@ -33,22 +37,31 @@ Apply/close/reload, OK; `check_desktop.py` з native registration, Pause/Resume,
 restart/persistence і Quit, OK. Усі дані ізольовані; без голосу/моделей.
 Windows CI smoke тепер перевіряє конфлікт індивідуального override та rollback.
 Windows-приймання базових modifiers отримано; виправлення review перевірено
-локально і кросплатформним CI. Merge відкритий.
+локально, кросплатформним CI та повторним Windows-прийманням. Merge завершено.
 Нижче збережені історичні докази попередньої прийнятої поставки.
 
 Оновлення Windows після повного Quit, у каталозі репозиторію:
 
 ```powershell
 git fetch origin
-git switch codex/profile-modifiers
-git pull --ff-only origin codex/profile-modifiers
+git switch main
+git pull --ff-only origin main
 .\.venv\Scripts\python.exe -m pip install ".[whisper,hotkeys,desktop]"
 .\.venv\Scripts\python.exe -m voice_to_clipboard.ui.desktop_app
 ```
 
 Ручний протокол: [Individual modifier acceptance](../setup/language-profiles.md#individual-modifier-acceptance).
-Наступна дія — приймання цієї гілки, потім merge/видалення за дозволом користувача.
-Повний onboarding, model wizard та installers лишаються відкритими.
+Наступна конкретна задача D.1 — вибір сумісної моделі у Settings: перевірки
+відомих model/language обмежень до запису/завантаження, English пояснення,
+збереження custom overrides і restart/persistence. Невідомі custom models
+позначати як неперевірені; існуючі налаштування не замінювати мовчки.
+Без download wizard, installers і нового onboarding у цій наступній поставці.
+У цьому чаті її реалізацію не починали.
+
+Обмеження завершеної поставки: унікальні A–Z літери, Wayland manual bindings,
+schema v3 потребує сумісного застосунку (downgrade — із резервною копією settings),
+фізичне macOS/M4-приймання ще відкрите. Особисті settings/history під час тестів
+не змінювалися.
 
 ## Мета продукту та незмінні вимоги
 

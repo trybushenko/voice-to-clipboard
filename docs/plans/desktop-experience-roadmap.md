@@ -1,8 +1,8 @@
 # План: надійне диктування без термінала на Windows, macOS і Linux
 
 Для нового чату: [handoff і порядок до релізу](handoff-next-session.md)
-(ревізія 2026-09-22). Мовні профілі прийняті й змерджені (`c27e602`).
-Найближча дія — приймання індивідуальних modifiers у `codex/profile-modifiers`.
+(ревізія 2026-09-23). Мовні профілі та індивідуальні modifiers прийняті й
+змерджені (`c27e602`, `a91291b`). Наступна задача — сумісність мови й моделі у Settings.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -462,16 +462,27 @@ first-run flow залишаються відкритими; весь D.1 не п
   окремий Quartz matching/repeat test; GUI/native smoke результати у handoff.
 - [x] [CI виправлень `50e53c0`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35717812820):
   усі 6 jobs Windows/macOS/Linux × Python 3.11/3.12 успішні.
-- [x] Прийнято користувачем: Windows-тест індивідуальних shortcuts (`1051bbe`).
+- [x] Прийнято користувачем: повторний Windows-тест усіх перелічених сценаріїв
+  після review fixes, 2026-09-23.
+- [x] [CI head `fb8d7f5`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35724815235): успішний.
 - [x] Review fixes: schema v3 захищає overrides від старого host при downgrade;
   macOS shutdown і tray updates ставляться в AppKit-чергу, щоб setup thread
   міг завершитися; smoke перевіряє 5 швидких restart/Quit.
   Smoke очікує IPC readiness замість наявності socket path. Локально 88 tests OK
   (4 skips), Tk/native smoke OK; повторний CI успішний. Quit timeout не збільшено.
-- [ ] Змерджено: лише після приймання.
+- [x] Змерджено в `main`: `a91291b`, 2026-09-23.
 
 Межі: літери профілів залишаються унікальними; Wayland — manual bindings.
 Onboarding, model download та installers не входять у цю поставку.
+Schema v3 відхиляється старими версіями; downgrade потребує сумісної резервної
+копії settings. Фізичне macOS/M4-приймання залишається відкритим.
+
+Наступна конкретна задача D.1: зрозумілий вибір сумісної моделі у Settings —
+валідація відомих model/language обмежень, English пояснення та збереження
+custom model overrides. Критерій завершення: відома несумісна пара відхиляється
+до запису/завантаження, сумісна зберігається після restart, існуючі профілі й
+моделі не замінюються мовчки. Межі: без download wizard, installers або нового
+onboarding; невідома custom model позначається як неперевірена.
 
 ## Windows feedback follow-up — profiles/settings lifecycle
 
