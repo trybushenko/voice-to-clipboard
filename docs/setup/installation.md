@@ -108,8 +108,9 @@ The tray's **Start recording (clipboard)** submenu lists only configured profile
 Menu-started sessions copy to clipboard; use your profile's hotkey for automatic paste.
 If focus cannot be verified, paste manually. **Copy last transcript** restores the last result.
 
-All profiles share the modifiers selected in Settings (e.g. `ctrl+alt` to avoid
-Windows layout-switch conflicts), with a separate A–Z key for each profile.
+Profiles inherit the default modifiers selected in Settings (e.g. `ctrl+alt` to
+avoid Windows layout-switch conflicts). Set **Profile modifiers** to override
+them for one profile; each profile still has a unique A–Z key.
 Existing users retain their previous U/E/L profiles; remove any you do not need.
 The default model is multilingual `large-v3-turbo`; no model downloads until dictation.
 An optional custom model must support the profile language and selected backend.

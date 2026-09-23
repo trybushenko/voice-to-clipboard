@@ -22,7 +22,7 @@ def main(argv=None, desktop=None):
     parser.add_argument('--no-overlay', action='store_true')
     parser.add_argument('--inference-device', choices=['auto', 'cpu', 'cuda', 'metal'], default='auto')
     parser.add_argument('--model', default=None)
-    parser.add_argument('--hotkey-modifiers', help='Shared modifiers for profile shortcuts, e.g. ctrl+alt; saved after successful registration')
+    parser.add_argument('--hotkey-modifiers', help='Default modifiers for profiles without an override, e.g. ctrl+alt; saved after successful registration')
     commands = parser.add_mutually_exclusive_group()
     commands.add_argument('--background', action='store_true', help='Start a console-independent host and return')
     for operation in ('pause', 'resume', 'status', 'stop-recording', 'quit'):
@@ -79,14 +79,15 @@ def main(argv=None, desktop=None):
             except queue.Full:
                 pass
     def create_listener(callbacks):
+        modifiers = {p['key']: p.get('modifiers') or args.hotkey_modifiers for p in args.profiles}
         if sys.platform == 'win32':
             from ..platform.windows_hotkeys import NativeHotkeys
-            return NativeHotkeys(callbacks, args.hotkey_modifiers)
+            return NativeHotkeys(callbacks, modifiers)
         if sys.platform == 'darwin':
             from ..platform.macos import listener as create
-            return create(callbacks, args.hotkey_modifiers)
+            return create(callbacks, modifiers)
         from ..platform.linux import NativeHotkeys
-        return NativeHotkeys(callbacks, args.hotkey_modifiers)
+        return NativeHotkeys(callbacks, modifiers)
     controller = ListenerController(create_listener, enqueue, lambda: args.profiles)
     control = None
     def status():
@@ -96,6 +97,7 @@ def main(argv=None, desktop=None):
                 'worker_pid': launcher.worker.pid if launcher.worker is not None and launcher.worker.poll() is None else None,
                 'message': listener_error[0] or launcher.message,
                 'profiles': args.profiles,
+                'profile_modifiers': True,
                 'hotkey_modifiers': args.hotkey_modifiers,
                 'dictation_processes': sum(p.poll() is None for p in launcher.children)}
     def handle(payload):
@@ -191,8 +193,8 @@ def main(argv=None, desktop=None):
         control = ControlServer(endpoint)
         if explicit:
             save_modifiers(args.hotkey_modifiers)
-        save_settings({'schema_version': 2, 'profiles': args.profiles})
-        print('Ready: ' + ' | '.join(args.hotkey_modifiers + '+' + p['key'].upper() +
+        save_settings({'schema_version': 3, 'profiles': args.profiles})
+        print('Ready: ' + ' | '.join((p.get('modifiers') or args.hotkey_modifiers) + '+' + p['key'].upper() +
               ' ' + p['language'] + (' + paste' if p['paste'] else '') for p in args.profiles), flush=True)
         try:
             while not quitting.is_set():

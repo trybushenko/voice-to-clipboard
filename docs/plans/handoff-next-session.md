@@ -3,6 +3,53 @@
 Оновлено: 2026-09-22. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
+## Поточна поставка: індивідуальні modifiers
+
+Review follow-up: користувач прийняв роботу `1051bbe` на Windows. Review виявив
+втрату modifiers при downgrade і macOS 3.12 Quit timeout у CI `35715091939`.
+Виправлення: schema v3 (читає v2, старий main відмовляється від v3 до запису),
+macOS stop та всі background tray updates поставлено у головну AppKit-чергу.
+Повторний CI `35717317966` показав, що лише перенесення stop недостатнє:
+pystray setup thread залишався живим після зупинки UI. Коміт `645255b`
+прибирає AppKit updates із setup thread; вони більше не блокують його завершення.
+Native smoke тепер повторює швидкий restart/Quit п’ять разів і друкує technical
+log при збої. Локально: 88 tests OK, 4 skips; Tk smoke і desktop smoke OK;
+валідатор попереднього main відхилив новий формат, bytes settings не змінилися.
+Smoke readiness також виправлено: чекає відповідь IPC, а не лише socket path
+(bind може передувати listen). Фінальний код `50e53c0` пройшов
+[CI 35717812820](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35717812820):
+усі 6 jobs Windows/macOS/Linux × Python 3.11/3.12 успішні, включно з 5 швидкими
+restart/Quit на Windows/macOS. Таймаут Quit не збільшувався. Merge не виконано.
+
+Гілка `codex/profile-modifiers` створена від актуального `origin/main` `c27e602`.
+Реалізовано optional `modifiers` у профілі, редактор у Settings і native bindings
+Windows/macOS/X11. Порожній override успадковує default; старі version 2 settings
+не змінюють shortcuts. A–Z ключі все ще унікальні. Новий panel перевіряє capability
+host, щоб старий resident-процес не втратив override під час Apply.
+
+Локальні докази: 85 regression tests, OK (4 platform skips); окремий Quartz
+matching/repeat test, OK; `check_settings_panel.py` з реальним введенням override,
+Apply/close/reload, OK; `check_desktop.py` з native registration, Pause/Resume,
+restart/persistence і Quit, OK. Усі дані ізольовані; без голосу/моделей.
+Windows CI smoke тепер перевіряє конфлікт індивідуального override та rollback.
+Windows-приймання базових modifiers отримано; виправлення review перевірено
+локально і кросплатформним CI. Merge відкритий.
+Нижче збережені історичні докази попередньої прийнятої поставки.
+
+Оновлення Windows після повного Quit, у каталозі репозиторію:
+
+```powershell
+git fetch origin
+git switch codex/profile-modifiers
+git pull --ff-only origin codex/profile-modifiers
+.\.venv\Scripts\python.exe -m pip install ".[whisper,hotkeys,desktop]"
+.\.venv\Scripts\python.exe -m voice_to_clipboard.ui.desktop_app
+```
+
+Ручний протокол: [Individual modifier acceptance](../setup/language-profiles.md#individual-modifier-acceptance).
+Наступна дія — приймання цієї гілки, потім merge/видалення за дозволом користувача.
+Повний onboarding, model wizard та installers лишаються відкритими.
+
 ## Мета продукту та незмінні вимоги
 
 Voice to Clipboard — локальний desktop-застосунок для диктування у clipboard або

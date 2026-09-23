@@ -25,7 +25,7 @@ def main():
                     return {'state': 'listening'}
             return {'state': 'stopping' if operation == 'quit' else 'listening',
                     'phase': 'idle', 'message': '', 'dictation_processes': 0,
-                    'profiles': load()['profiles']}
+                    'profiles': load()['profiles'], 'profile_modifiers': True}
         def descendants(widget):
             for child in widget.winfo_children():
                 yield child
@@ -42,6 +42,9 @@ def main():
                     combo.set('Polish (pl)')
                     key = next(w for w in widgets if isinstance(w, ttk.Entry) and str(w.cget('width')) == '4')
                     key.delete(0, 'end'); key.insert(0, 'p')
+                    modifier_choice = next(w for w in widgets if isinstance(w, ttk.Combobox)
+                                           and tuple(w.cget('values')) == ('', 'alt+shift', 'ctrl+alt', 'ctrl+alt+shift'))
+                    modifier_choice.set('ctrl+alt')
                     buttons['Add'].invoke()
                     buttons['Apply all settings and profiles'].invoke()
                     def close_after_apply():
@@ -72,6 +75,7 @@ def main():
                 import gc
                 gc.collect()  # Collect destroyed Tcl interpreters on their owning thread.
             assert [p['language'] for p in load()['profiles']] == ['en', 'pl'], load()
+            assert load()['profiles'][1]['modifiers'] == 'alt+ctrl', load()
             save_settings({'profiles': [{'language': 'en', 'key': 'e', 'paste': False, 'model': ''}]})
             malformed_reply[0] = True
             with patch.object(tk.Tk, 'mainloop', lambda root: drive(root, recover=True)):

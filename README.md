@@ -39,7 +39,8 @@ macOS, including native ARM64 Python for M4 Macs.
 New installations start with **Alt+Shift+E → English → clipboard**. Settings opens
 on first launch. Add only the languages you want in **Language profiles**, choose a
 letter and clipboard/paste, then **Apply all settings and profiles**. Modifiers are
-shared across profiles. Existing users keep their U/E/L profiles during migration;
+inherited from the default unless you set individual **Profile modifiers**.
+Existing users keep their U/E/L profiles during migration;
 remove unwanted profiles in Settings. No Ukrainian-specific model is selected for new users.
 
 Press the shortcut again to stop recording. Launch **Voice to Clipboard** from

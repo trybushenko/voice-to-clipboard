@@ -10,6 +10,17 @@ from voice_to_clipboard.core.host_control import request
 from voice_to_clipboard.platform.processes import spawn_background
 
 
+def wait_ready(endpoint, process):
+    deadline = time.monotonic() + 20
+    while time.monotonic() < deadline and process.poll() is None:
+        try:
+            return request(endpoint, 'status')
+        except (OSError, EOFError):
+            # A Unix socket path exists after bind(), before listen() is ready.
+            time.sleep(.01)
+    raise RuntimeError('Desktop did not become ready')
+
+
 def main():
     with tempfile.TemporaryDirectory(prefix='vtc-', dir=None if sys.platform == 'win32' else '/tmp') as folder:
         folder = Path(folder)
@@ -23,13 +34,7 @@ def main():
         app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
-            deadline = time.monotonic() + 20
-            while not endpoint.exists():
-                if app.poll() is not None or time.monotonic() > deadline:
-                    log = data / 'logs/desktop.log'
-                    raise RuntimeError(log.read_text() if log.exists() else 'Desktop did not start')
-                time.sleep(.1)
-            initial = request(endpoint, 'status')
+            initial = wait_ready(endpoint, app)
             assert initial['desktop'] is True, initial
             assert initial['dictation_processes'] == 0 and initial['worker_pid'] is None, initial
             restricted = sys.platform == 'darwin' and initial['state'] == 'paused'
@@ -61,19 +66,22 @@ def main():
                 try:
                     reserved.start()
                     try:
-                        request(endpoint, 'settings', values={**values, 'hotkey_modifiers': 'ctrl+alt+win'})
+                        request(endpoint, 'settings', values={**values, 'profiles': [
+                            {**initial_profiles[0], 'modifiers': 'ctrl+alt+win'}]})
                         raise AssertionError('Conflicting shortcut settings accepted')
                     except RuntimeError:
                         pass
                     restored = request(endpoint, 'status')
                     assert restored['state'] == 'listening' and restored['hotkey_modifiers'] == 'ctrl+alt+shift', restored
                     assert json.loads((data/'settings.json').read_text())['hotkey_modifiers'] == 'ctrl+alt+shift'
+                    assert restored['profiles'] == initial_profiles
+                    assert json.loads((data/'settings.json').read_text())['profiles'] == initial_profiles
                 finally:
                     reserved.stop()
                     reserved.join(timeout=2)
             profile_values = {**values, 'profiles': [
                 {'language': 'en', 'key': 'e', 'paste': False, 'model': ''},
-                {'language': 'pl', 'key': 'p', 'paste': True, 'model': 'small'}]}
+                {'language': 'pl', 'key': 'p', 'paste': True, 'model': 'small', 'modifiers': 'ctrl+alt'}]}
             if not restricted:
                 changed = request(endpoint, 'settings', values=profile_values)
                 assert [p['language'] for p in changed['profiles']] == ['en', 'pl']
@@ -96,17 +104,21 @@ def main():
             assert app.wait(timeout=12) == 0
             assert not endpoint.exists()
             assert not list((cache/'dictate-desktop').glob('host-*')), 'Private worker runtime remained'
-            app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
-                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            deadline = time.monotonic() + 20
-            while not endpoint.exists() and time.monotonic() < deadline:
-                time.sleep(.1)
-            restarted = request(endpoint, 'status')
-            assert restarted['profiles'] == expected_profiles, restarted
-            assert restarted['pid'] != initial['pid'], restarted
-            request(endpoint, 'quit')
-            assert app.wait(timeout=12) == 0
+            for _ in range(5):
+                app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                restarted = wait_ready(endpoint, app)
+                assert restarted['profiles'] == expected_profiles, restarted
+                assert restarted['pid'] != initial['pid'], restarted
+                request(endpoint, 'quit')
+                assert app.wait(timeout=12) == 0
+                assert not endpoint.exists()
             print('PASS: native tray/controller, pause/resume, settings, singleton panel and clean Quit; no microphone or model loaded')
+        except Exception:
+            log = data / 'logs/desktop.log'
+            if log.exists():
+                print(log.read_text(encoding='utf-8'), flush=True)
+            raise
         finally:
             if app.poll() is None:
                 try:
