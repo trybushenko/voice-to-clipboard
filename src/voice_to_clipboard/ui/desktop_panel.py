@@ -92,6 +92,19 @@ def main():
     row.pack(fill='x')
     from ..core.profiles import LANGUAGES, LANGUAGE_NAMES, label as profile_label, validate as validate_profiles, language_options, language_code, saved_profiles
     settings = load()
+    onboarding = [not settings['onboarding_complete']]
+    welcome = ttk.Label(frame, wraplength=680, text=(
+        'Welcome — set up dictation\n'
+        '1. Select a profile below, or choose a language and Add a new one.\n'
+        '2. Choose its A–Z key and modifiers. Leave Paste unchecked for clipboard only; '
+        'paste uses the original field when it can be verified.\n'
+        '3. Keep the default multilingual model or choose a compatible model. '
+        'Click Update selected after editing an existing profile.\n'
+        '4. Click Finish setup and apply. This saves and activates the listed profiles.\n'
+        'Closing before finishing lets you resume next launch; unsaved edits are discarded. '
+        'No microphone test or model download runs here.'))
+    if onboarding[0]:
+        welcome.pack(before=row, anchor='w', pady=(0, 12))
     profiles = [dict(p) for p in settings['profiles']]
     active_profiles = [dict(p) for p in profiles]
     selected_start = tk.StringVar()
@@ -204,6 +217,8 @@ def main():
     for text, mode in [('Add', 'add'), ('Update selected', 'update'), ('Remove selected', 'remove')]:
         ttk.Button(buttons, text=text, command=lambda mode=mode: edit_profile(mode)).pack(side='left')
     refresh_profiles()
+    profile_list.selection_set(0)
+    selected()
     compatible = [False]
     save_pending = [False]
     close_after_save = [False]
@@ -214,7 +229,12 @@ def main():
         profiles[:] = [dict(p) for p in active_profiles]
         refresh_profiles()
         refresh_start()
-        feedback.set('Saved and active. You can close Settings; shortcuts remain available.')
+        if value.get('onboarding_complete') is not True:
+            raise RuntimeError('Setup was not confirmed. Quit the tray app and relaunch the updated app, then try again.')
+        onboarding[0] = False
+        welcome.pack_forget()
+        apply_button.configure(text='Apply all settings and profiles')
+        feedback.set('Saved and active. Setup complete. You can close Settings; shortcuts remain available.')
         if close_after_save[0]:
             root.destroy()
     def save():
@@ -225,7 +245,8 @@ def main():
             return
         values = {'hotkey_modifiers': mods.get(), 'model': model.get().strip(),
                   'inference_device': device.get(), 'overlay': overlay.get(),
-                  'schema_version': 3, 'profiles': [dict(p) for p in profiles]}
+                  'schema_version': 3, 'profiles': [dict(p) for p in profiles],
+                  'onboarding_complete': True}
         from ..core.desktop_settings import validate as validate_settings
         try:
             values = validate_settings(values)
@@ -239,7 +260,7 @@ def main():
             save_pending[0] = False
             apply_button.configure(state='normal')
             feedback.set('Busy; settings were not submitted. Try Apply again.')
-    apply_button = ttk.Button(form, text='Apply all settings and profiles', command=save)
+    apply_button = ttk.Button(form, text='Finish setup and apply' if onboarding[0] else 'Apply all settings and profiles', command=save)
     apply_button.grid(row=4, columnspan=2, sticky='w', pady=8)
     def autostart():
         desired = auto.get()
@@ -290,6 +311,8 @@ def main():
         current_profiles = saved_profiles(value)
         if value.get('profile_modifiers') is not True:
             raise RuntimeError('Quit Voice to Clipboard from the tray and relaunch the updated app to edit profile modifiers.')
+        if value.get('onboarding_supported') is not True:
+            raise RuntimeError('Quit Voice to Clipboard from the tray and relaunch the updated app to finish setup.')
         compatible[0] = True
         if profiles == active_profiles and not save_pending[0] and current_profiles != active_profiles:
             active_profiles[:] = current_profiles
@@ -309,6 +332,7 @@ def main():
                 return
         root.destroy()
     root.protocol('WM_DELETE_WINDOW', close_window)
+    poll_timer = [None]
     def poll():
         control.dispatch(show)
         try:
@@ -347,11 +371,13 @@ def main():
             if not enqueue(lambda: request(endpoint(), 'status'), received):
                 poll_pending[0] = False
         if not closed[0]:
-            root.after(500, poll)
-    root.after(100, poll)
+            poll_timer[0] = root.after(500, poll)
+    poll_timer[0] = root.after(100, poll)
     try:
         root.mainloop()
     finally:
+        if poll_timer[0] is not None:
+            root.after_cancel(poll_timer[0])
         stopping.set()
         worker_thread.join(timeout=11)
         callbacks.clear()  # Release all Tk-owning callbacks on the UI thread.

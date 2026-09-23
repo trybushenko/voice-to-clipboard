@@ -37,10 +37,12 @@ Physical Mac M4, permissions and login startup still need device-specific testin
 macOS, including native ARM64 Python for M4 Macs.
 
 New installations start with **Alt+Shift+E → English → clipboard**. Settings opens
-on first launch. Add only the languages you want in **Language profiles**, choose a
-letter and clipboard/paste, then **Apply all settings and profiles**. Modifiers are
+until setup is finished. Add only the languages you want in **Language profiles**,
+choose a letter and clipboard/paste, click **Add** or **Update selected**, then
+**Finish setup and apply**. After successful setup, use the ordinary Apply button. Modifiers are
 inherited from the default unless you set individual **Profile modifiers**.
-Existing users keep their U/E/L profiles during migration;
+The [first-run guide](docs/setup/first-run.md) covers resuming setup and update tests.
+Existing users see setup once after upgrading and keep their profiles during migration;
 remove unwanted profiles in Settings. No Ukrainian-specific model is selected for new users.
 
 Press the shortcut again to stop recording. Launch **Voice to Clipboard** from

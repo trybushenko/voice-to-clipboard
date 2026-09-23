@@ -3,7 +3,8 @@
 Для нового чату: [handoff і порядок до релізу](handoff-next-session.md)
 (ревізія 2026-09-23). Мовні профілі та індивідуальні modifiers прийняті й
 змерджені (`c27e602`, `a91291b`). Сумісність мови й моделі прийнята користувачем і змерджена (`50af7cd`).
-Наступна задача — D.1 first-run у наявній Settings; межі наприкінці документа.
+D.1 first-run реалізовано в `codex/first-run-settings`; очікує ручного приймання
+та merge. Далі — E packaging spike; докази наприкінці документа.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -313,8 +314,10 @@ first-run flow залишаються відкритими; весь D.1 не п
   кілька профілів. English language names та зрозумілі обмеження backend.
 - [x] Міграція поточних U/E/L і preferences без зміни звичок існуючих користувачів;
   atomic save, validation, conflict detection та rollback реєстрації shortcuts.
-- [ ] Простий first-run вибір мови, shortcut і copy/paste; перевірка мікрофона,
-  permission hints, пояснення першого завантаження моделі та тестове диктування.
+- [x] Простий first-run вибір мови, shortcut, copy/paste та явне завершення
+  у Settings — `codex/first-run-settings` (докази нижче).
+- [ ] Розширений onboarding E: перевірка мікрофона, permission hints, пояснення
+  першого завантаження моделі та тестове диктування.
 - [ ] Зіставлення мови з сумісною моделлю: українську спеціалізовану модель не
   використовувати мовчки для польської; явні помилки для непідтримуваних мов.
 - [x] Регресії: міграція, конфлікти, restart/persistence, English diagnostics,
@@ -550,7 +553,7 @@ onboarding; невідома custom model позначається як непе
 не гарантує backend format/availability або існування custom repo; підтверджені
 ручні сценарії не є новим доказом для всієї hardware matrix.
 
-### Наступна конкретна поставка: D.1 first-run у наявній Settings
+### D.1 first-run у наявній Settings — поставка 2026-09-23
 
 Короткий English сценарій вибору мови, shortcut, copy/paste та сумісної моделі
 з явним завершенням налаштування. Completion зберігається лише після успішного
@@ -559,5 +562,28 @@ Apply; після restart завершений сценарій автомати
 вибору; існуючі profiles/settings/history не змінюються без Apply; помилка Apply
 не встановлює completion. Перевірити clean/existing/failed Apply/restart сценарії.
 Межі: використовувати наявну Settings, без другого wizard, download progress,
-inference doctor, packaging чи installers. У цьому чаті не розпочато.
+inference doctor, packaging чи installers.
 E packaging spike залишається наступною окремою роботою після D.1.
+
+
+- [x] Реалізовано у `codex/first-run-settings` від `origin/main` `e9be15c`:
+  English guidance, Finish setup and apply, completion у спільній atomic settings
+  transaction, capability check старого host, restart/resume.
+- [x] Наявні settings не перезаписуються при старті; clean English preset
+  запам'ятовується без completion, щоб перше диктування не запускало legacy migration.
+  Schema v2/v3, overrides, modifiers, unrelated fields та history збережено.
+- [x] Local suite: 98 tests OK (4 platform skips). Failure checks: validation,
+  registration conflict, persistence error; completion і saved bytes не змінюються.
+- [x] Real Tk smoke: interrupted/failed setup, resume, Finish/close, completed
+  reload, model rejection/custom warning, malformed response recovery та Quit.
+- [x] Native Linux desktop smoke: незавершений setup автоматично відкривається
+  після restart; завершений — ні; Pause/Resume, singleton, persistence і 5 Quit/restart.
+- [ ] CI цієї гілки: результат буде зафіксовано після push.
+- [ ] Ручне Windows-приймання користувачем; фізичне macOS/M4.
+- [ ] Merge в main (ця поставка лише commit/push окремої гілки).
+
+[Оновлення й ручний тест](../setup/first-run.md). Unsaved edits не відновлюються;
+відновлюється сценарій зі збережених профілів. Linux без GTK tray host може
+відкрити control panel незалежно від completion. Без voice/GPU/download tests.
+Наступна реалізація після приймання — **E packaging spike**; D.1 hardware/user
+acceptance і E/F release gates не оголошуються завершеними.

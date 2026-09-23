@@ -17,16 +17,21 @@ def main():
     original_loop = tk.Tk.mainloop
     with tempfile.TemporaryDirectory(prefix='vtc-panel-', dir=None if os.name == 'nt' else '/tmp') as folder, patch.dict(os.environ, VOICE_TO_CLIPBOARD_DATA_DIR=folder, VOICE_TO_CLIPBOARD_CACHE_DIR=folder):
         malformed_reply = [False]
+        fail_save = [False]
         def request(path, operation, **details):
             if operation == 'settings':
                 time.sleep(.3)  # Close immediately after Apply must wait for this acknowledgment.
+                if fail_save[0]:
+                    fail_save[0] = False
+                    raise RuntimeError('Simulated registration conflict')
                 save_settings(validate(details['values']))
                 if malformed_reply[0]:
                     malformed_reply[0] = False
                     return {'state': 'listening'}
             return {'state': 'stopping' if operation == 'quit' else 'listening',
                     'phase': 'idle', 'message': '', 'dictation_processes': 0,
-                    'profiles': load()['profiles'], 'profile_modifiers': True}
+                    'profiles': load()['profiles'], 'profile_modifiers': True,
+                    'onboarding_supported': True, 'onboarding_complete': load()['onboarding_complete']}
         def descendants(widget):
             for child in widget.winfo_children():
                 yield child
@@ -37,6 +42,8 @@ def main():
                     widgets = list(descendants(root))
                     buttons = {w.cget('text'): w for w in widgets if isinstance(w, ttk.Button)}
                     if quit_only:
+                        assert 'Finish setup and apply' not in buttons
+                        assert 'Apply all settings and profiles' in buttons
                         buttons['Quit app (finish recording)'].invoke()
                         return
                     combo = next(w for w in widgets if isinstance(w, ttk.Combobox) and 'Polish (pl)' in w.cget('values'))
@@ -59,10 +66,11 @@ def main():
                                and 'unverified custom model' in str(root.getvar(w.cget('textvariable')))
                                for w in widgets), 'Missing custom model warning'
                     buttons['Add'].invoke()
-                    buttons['Apply all settings and profiles'].invoke()
+                    apply = buttons.get('Finish setup and apply', buttons.get('Apply all settings and profiles'))
+                    apply.invoke()
                     def close_after_apply():
                         if recover:
-                            buttons['Apply all settings and profiles'].invoke()
+                            apply.invoke()
                         root.tk.call(root.protocol('WM_DELETE_WINDOW'))
                     if recover:
                         root.after(1200, close_after_apply)
@@ -82,16 +90,54 @@ def main():
                 root.after_cancel(timeout_id)
             except tk.TclError:
                 pass
+        def first_run(root, fail=False):
+            def action():
+                try:
+                    widgets = list(descendants(root))
+                    buttons = {w.cget('text'): w for w in widgets if isinstance(w, ttk.Button)}
+                    assert 'Finish setup and apply' in buttons
+                    assert [p['language'] for p in load()['profiles']] == ['en']
+                    assert not load()['onboarding_complete']
+                    if fail:
+                        fail_save[0] = True
+                        expected_errors.append('Simulated registration conflict')
+                        buttons['Finish setup and apply'].invoke()
+                        root.after(900, after_failure)
+                    else:
+                        root.tk.call(root.protocol('WM_DELETE_WINDOW'))
+                except Exception as exc:
+                    errors.append(str(exc))
+                    root.destroy()
+            def after_failure():
+                try:
+                    assert not expected_errors
+                    assert not load()['onboarding_complete']
+                    assert not (Path(folder) / 'settings.json').exists()
+                    root.tk.call(root.protocol('WM_DELETE_WINDOW'))
+                except Exception as exc:
+                    errors.append(str(exc))
+                    root.destroy()
+            root.after(1100, action)
+            timeout_id = root.after(6000, root.destroy)
+            original_loop(root)
+            root.after_cancel(timeout_id)
         def showerror(*args, **kwargs):
             if expected_errors and expected_errors[0] in str(args):
                 expected_errors.pop(0)
             else:
                 errors.append(str(args))
         with patch('voice_to_clipboard.core.host_control.request', side_effect=request), patch('voice_to_clipboard.platform.launchers.enabled', return_value=False), patch('tkinter.messagebox.showerror', side_effect=showerror):
+            for fail in (False, True):
+                with patch.object(tk.Tk, 'mainloop', lambda root: first_run(root, fail)):
+                    desktop_panel.main()
+                    import gc
+                    gc.collect()
+                assert not (Path(folder) / 'settings.json').exists()
             with patch.object(tk.Tk, 'mainloop', drive):
                 desktop_panel.main()
                 import gc
                 gc.collect()  # Collect destroyed Tcl interpreters on their owning thread.
+            assert load()['onboarding_complete'], load()
             assert [p['language'] for p in load()['profiles']] == ['en', 'pl'], load()
             assert load()['profiles'][1]['modifiers'] == 'alt+ctrl', load()
             assert load()['profiles'][1]['model'] == 'team/custom-model', load()
@@ -107,7 +153,7 @@ def main():
                 import gc
                 gc.collect()  # Collect destroyed Tcl interpreters on their owning thread.
         assert not errors, errors
-        print('PASS: real Tk Add, Apply followed immediately by close, saved profile reload, and Quit without extra clicks')
+        print('PASS: real Tk interrupted setup, failed Apply, resume, Finish/close, completed reload, Add, malformed reply recovery and Quit')
 
 
 if __name__ == '__main__':

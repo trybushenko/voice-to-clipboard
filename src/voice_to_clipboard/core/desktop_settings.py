@@ -3,7 +3,8 @@ from .settings import read_settings
 from . import profiles
 from ..platform.windows_hotkeys import parse_modifiers
 
-DEFAULTS = {'hotkey_modifiers': 'alt+shift', 'model': '', 'inference_device': 'auto', 'overlay': True}
+DEFAULTS = {'hotkey_modifiers': 'alt+shift', 'model': '', 'inference_device': 'auto', 'overlay': True,
+            'onboarding_complete': False}
 
 
 def validate(values, *, check_models=True):
@@ -20,6 +21,8 @@ def validate(values, *, check_models=True):
         raise ValueError('Choose auto, cpu, cuda or metal')
     if type(result['overlay']) is not bool:
         raise ValueError('Overlay must be enabled or disabled')
+    if type(result['onboarding_complete']) is not bool:
+        raise ValueError('Setup completion must be enabled or disabled')
     if values.get('schema_version', 2) not in (2, 3):
         raise ValueError('Unsupported settings version; upgrade the app before editing')
     result['profiles'] = profiles.validate(values.get('profiles', profiles.defaults()), check_models=False)

@@ -28,6 +28,7 @@ def main():
         data.mkdir(); cache.mkdir()
         (data / 'settings.json').write_text(json.dumps({'hotkey_modifiers': 'ctrl+alt+shift', 'schema_version': 2,
             'profiles': [{'language': 'en', 'key': 'e', 'paste': False, 'model': ''}]}))
+        original_settings = (data / 'settings.json').read_bytes()
         env = {**os.environ, 'VOICE_TO_CLIPBOARD_DATA_DIR': str(data), 'VOICE_TO_CLIPBOARD_CACHE_DIR': str(cache)}
         endpoint = cache / 'dictate-hotkey-control.sock'
         command = [sys.executable, '-m', 'voice_to_clipboard.ui.desktop_app', '--run']
@@ -36,7 +37,22 @@ def main():
         try:
             initial = wait_ready(endpoint, app)
             assert initial['desktop'] is True, initial
+            assert initial['onboarding_complete'] is False, initial
+            assert (data / 'settings.json').read_bytes() == original_settings
             assert initial['dictation_processes'] == 0 and initial['worker_pid'] is None, initial
+            # An unfinished setup opens automatically, including after a full restart.
+            for attempt in range(2):
+                deadline = time.monotonic() + 8
+                while not (cache / 'dictate-panel.sock').exists() and time.monotonic() < deadline:
+                    time.sleep(.1)
+                assert (cache / 'dictate-panel.sock').exists(), 'Unfinished setup did not open'
+                assert (data / 'settings.json').read_bytes() == original_settings
+                if attempt == 0:
+                    request(endpoint, 'quit')
+                    assert app.wait(timeout=12) == 0
+                    app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
+                                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    initial = wait_ready(endpoint, app)
             restricted = sys.platform == 'darwin' and initial['state'] == 'paused'
             if restricted:
                 assert 'Allow' in initial['message'] or 'Accessibility' in initial['message'], initial
@@ -91,6 +107,9 @@ def main():
             expected_profiles = initial_profiles
             if not restricted:
                 expected_profiles = request(endpoint, 'settings', values=profile_values)['profiles']
+            completed = request(endpoint, 'settings', values={'onboarding_complete': True})
+            assert completed['onboarding_complete'] is True
+            assert json.loads((data / 'settings.json').read_text())['onboarding_complete'] is True
             request(endpoint, 'show')
             deadline = time.monotonic() + 8
             while not (cache/'dictate-panel.sock').exists() and time.monotonic() < deadline:
@@ -104,10 +123,17 @@ def main():
             assert app.wait(timeout=12) == 0
             assert not endpoint.exists()
             assert not list((cache/'dictate-desktop').glob('host-*')), 'Private worker runtime remained'
-            for _ in range(5):
+            for attempt in range(5):
                 app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 restarted = wait_ready(endpoint, app)
+                assert restarted['onboarding_complete'] is True, restarted
+                if attempt == 0:
+                    time.sleep(3)
+                    log = data / 'logs/desktop.log'
+                    no_tray = log.exists() and 'No GTK tray host' in log.read_text(encoding='utf-8')
+                    if not no_tray:
+                        assert not (cache / 'dictate-panel.sock').exists(), 'Completed setup reopened'
                 assert restarted['profiles'] == expected_profiles, restarted
                 assert restarted['pid'] != initial['pid'], restarted
                 request(endpoint, 'quit')
