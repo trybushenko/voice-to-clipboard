@@ -83,6 +83,12 @@ def parse_args(argv=None):
     if (a.silence < 0 or a.partial_silence < 0 or a.max <= 0
             or a.max_lead <= 0 or a.beam < 1):
         p.error("time limits and beam must have valid positive values")
+    if not (a.model_status or a.unload_model or a.history or a.copy_last or a.list_devices or a.calibrate is not None):
+        from .core.model_compatibility import validate as validate_model
+        try:
+            validate_model(a.lang, a.model)
+        except ValueError as exc:
+            p.error(str(exc))
     return a
 
 

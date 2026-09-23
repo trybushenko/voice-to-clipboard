@@ -2,7 +2,7 @@
 
 Для нового чату: [handoff і порядок до релізу](handoff-next-session.md)
 (ревізія 2026-09-23). Мовні профілі та індивідуальні modifiers прийняті й
-змерджені (`c27e602`, `a91291b`). Наступна задача — сумісність мови й моделі у Settings.
+змерджені (`c27e602`, `a91291b`). Сумісність мови й моделі реалізована в `codex/model-language-compatibility`; review та ручне приймання відкриті.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -518,3 +518,23 @@ onboarding; невідома custom model позначається як непе
 - [x] [Repeat CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35637032624):
   all 6 jobs passed (Windows/macOS/Linux, Python 3.11/3.12), including actual Settings
   interactions and remote-guard native paste on Windows. Local suite: 82 tests, 4 skips.
+
+## Сумісність мови й моделі — поставка 2026-09-23
+
+- [x] Гілка `codex/model-language-compatibility` від актуального `origin/main` `668f297`.
+- [x] Editable model lists і English пояснення effective model у Settings.
+- [x] Спільна offline validation: English-only aliases, Cantonese token limit;
+  Add/Update, Apply у panel/host і запуск recorder блокують відомі несумісні пари.
+- [x] Custom IDs/paths — unverified, без вгадування за basename; overrides,
+  schema v2/v3, modifiers, unrelated settings зберігаються. Старі несумісні
+  налаштування можна відкрити й виправити без автоматичного перезапису.
+- [x] Local suite: 94 tests OK, 4 platform skips; реальний Tk smoke перевірив
+  rejection, custom warning/persistence, Apply/Close/reload та Quit.
+- [x] Local native desktop smoke: tray/controller, Pause/Resume, settings,
+  singleton panel, restart/persistence та clean Quit; без mic/model load.
+- [ ] Поточний cross-platform CI, Windows/macOS manual acceptance, review і merge.
+
+[Інструкція, межі й ручний протокол](../setup/model-compatibility.md).
+Без завантаження моделей, inference, wizard або installers. Перевірка мови
+не гарантує backend format/availability. Наступна дія: review і ручне приймання
+цієї гілки; після merge — залишок D.1 first-run, окремо E packaging spike.

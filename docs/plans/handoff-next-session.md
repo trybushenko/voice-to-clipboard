@@ -3,6 +3,19 @@
 Оновлено: 2026-09-23. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
+## Поточна поставка: сумісність моделі й мови
+
+Реалізована в `codex/model-language-compatibility` від оновленого `origin/main`.
+Settings має editable model lists і пояснення; спільний offline validator
+блокує відомі несумісні пари до recorder/model load. Custom models unverified;
+існуючі settings відкриваються для виправлення без автоматичного переписування.
+Local: 94 tests OK (4 skips), реальний Tk rejection/custom persistence smoke OK;
+native desktop lifecycle/restart/persistence smoke OK. База гілки: `668f297`.
+Review, поточний CI, Windows/macOS ручне приймання та merge — окремі відкриті gates.
+[Update/manual test/limits](../setup/model-compatibility.md).
+Наступна дія — review і приймання цієї поставки, потім залишок D.1 first-run.
+Історичний текст нижче про «наступну задачу» описує стан до цієї реалізації.
+
 ## Завершена поставка: індивідуальні modifiers
 
 Користувач повторно прийняв усі перелічені Windows-сценарії після виправлень

@@ -13,7 +13,7 @@ def defaults(legacy=False):
     return copy.deepcopy(LEGACY_PROFILES if legacy else NEW_PROFILES)
 
 
-def validate(profiles):
+def validate(profiles, *, check_models=True):
     if not isinstance(profiles, list) or not 1 <= len(profiles) <= 26:
         raise ValueError('Create between 1 and 26 language profiles')
     result, keys = [], set()
@@ -33,8 +33,9 @@ def validate(profiles):
         if type(paste) is not bool or not isinstance(model, str) or len(model) > 300:
             raise ValueError('Choose clipboard/paste and a valid model name')
         model = model.strip()
-        if lang != 'en' and model.endswith('.en'):
-            raise ValueError('English-only .en models cannot transcribe other languages')
+        if check_models:
+            from .model_compatibility import validate as validate_model
+            validate_model(lang, model)
         result.append(dict(language=lang, key=key, paste=paste, model=model))
         modifiers = profile.get('modifiers', '')
         if not isinstance(modifiers, str):
@@ -68,4 +69,4 @@ def language_code(text):
 def saved_profiles(response):
     if not isinstance(response, dict) or 'profiles' not in response:
         raise RuntimeError('The running host does not support language profiles. Quit Voice to Clipboard from the tray, then relaunch the updated app.')
-    return validate(response['profiles'])
+    return validate(response['profiles'], check_models=False)

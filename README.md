@@ -67,3 +67,5 @@ launchers. See [development and verification](docs/development.md).
 
 [Desktop experience roadmap](docs/plans/desktop-experience-roadmap.md) tracks
 remaining work and acceptance criteria.
+
+Model selection: [language compatibility, custom models and acceptance test](docs/setup/model-compatibility.md).
