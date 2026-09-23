@@ -3,6 +3,47 @@
 Оновлено: 2026-09-23. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
+## Остання завершена поставка — D.1 first-run у Settings
+
+Реалізація `8f192b1`, база `e9be15c`; merge у `main`: `1a6e23c`, 2026-09-23.
+Main запушено; remote-гілку `codex/first-run-settings` видалено після push.
+Для оновлення використовувати `main`: [команди й ручний тест](../setup/first-run.md).
+
+Результат: English guidance та Finish setup and apply; optional
+`onboarding_complete` зберігається лише в успішній settings transaction.
+Наявні prefs/history не переписуються при старті; чиста установка запам'ятовує
+тільки English preset без completion. Перерваний setup відкривається знову,
+завершений — ні. Старий host потребує Quit/relaunch перед Apply.
+
+Докази:
+- 98 local tests OK (4 platform skips), включно з validation/registration/write
+  failures, збереженням completion і bytes, schema v2/v3 та clean-history regression.
+- Real Tk: interrupted/failed/resumed/completed setup, Finish/close, model feedback,
+  malformed reply recovery та Quit. Native Linux: auto-open до completion,
+  відсутність після completion, persistence та 5 restart/Quit. Ізольовані дані.
+- [CI `8f192b1`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35830338650):
+  усі 6 jobs Windows/macOS/Linux × Python 3.11/3.12 успішні.
+- Користувач підтвердив перелічені ручні сценарії 2026-09-23 та дозволив merge,
+  push і видалення remote-гілки. Це не окремий протокол усієї hardware matrix.
+- Перед merge переглянуто completion, Apply/rollback, startup і сумісність settings;
+  блокувальних дефектів не виявлено. Функціональний код не змінено, тести повторно
+  без нових змін не запускали; наведені локальні результати — з реалізації поставки.
+
+Обмеження: unsaved edits не відновлюються; GTK без tray host відкриває control
+panel навіть після completion. Offline model check не гарантує custom repo,
+backend format або inference. Mic/model download/GPU, фізичний macOS/M4 та
+clean-machine release gates цією поставкою не закриті.
+
+## Наступна конкретна задача — E packaging spike
+
+В окремій поставці від актуального main перевірити пробні frozen builds Windows
+CPU та macOS ARM64: worker spawning, native UI/audio dependencies, запуск без
+source checkout. Результат — рішення щодо bundler, відтворювані команди збірки
+та support matrix, де явно розділені перевірені можливості й відкриті обмеження.
+Не додавати installers, downloads wizard чи inference doctor до цього spike.
+Новий великий етап у поточному чаті не розпочато. Signing/notarization і фізичне
+hardware-приймання залишаються окремими залежностями наступних поставок E/F.
+
 ## Завершена поставка: сумісність моделі й мови
 
 Реалізація `00b5d6d`, база `668f297`; merge у `main`: `50af7cd`.
@@ -29,26 +70,6 @@ Custom models позначені unverified; старі налаштування
 download або inference. Реальний голос/GPU, фізичне macOS/M4-приймання та
 clean-machine installers цією поставкою не закриті. Приймання користувача
 не розширює hardware matrix. [Update/manual test](../setup/model-compatibility.md).
-
-## Поточна поставка — D.1 first-run у Settings
-
-Реалізовано у `codex/first-run-settings` від актуального `origin/main` `e9be15c`.
-English guidance та Finish setup and apply; optional `onboarding_complete` зберігається
-лише в успішній settings transaction. Наявні prefs/history не переписуються при старті;
-чиста установка запам'ятовує тільки English preset без completion. Перерваний setup
-відкривається знову, завершений — ні (виняток: GTK tray unavailable fallback).
-Несумісний старий host потребує Quit/relaunch, перш ніж панель дозволить Apply.
-
-Докази: 98 local tests OK (4 platform skips); real Tk interrupted/failed/resumed/
-completed setup; native Linux tray/controller, автоматичне відкриття до completion,
-відсутність після completion, persistence і 5 restart/Quit. Дані ізольовані,
-без mic/model load. CI після push ще потрібно перевірити; ручне Windows-приймання
-і merge не виконані. [Update/manual test](../setup/first-run.md).
-
-Наступна дія: переглянути CI та пройти короткий manual acceptance, після дозволу
-користувача merge. Наступна окрема реалізація — E packaging spike (frozen build,
-worker spawn/native dependencies, support matrix). Без другого wizard, downloads,
-inference doctor або installers у цій D.1-поставці.
 
 Нижче — історичні знімки попередніх поставок; їхні «наступні задачі» не
 перевизначають актуальну задачу вище.

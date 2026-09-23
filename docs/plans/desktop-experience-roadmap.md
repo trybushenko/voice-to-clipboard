@@ -3,8 +3,8 @@
 Для нового чату: [handoff і порядок до релізу](handoff-next-session.md)
 (ревізія 2026-09-23). Мовні профілі та індивідуальні modifiers прийняті й
 змерджені (`c27e602`, `a91291b`). Сумісність мови й моделі прийнята користувачем і змерджена (`50af7cd`).
-D.1 first-run реалізовано в `codex/first-run-settings`; очікує ручного приймання
-та merge. Далі — E packaging spike; докази наприкінці документа.
+D.1 first-run прийнято користувачем і змерджено: `1a6e23c` (код `8f192b1`).
+Наступна конкретна задача — E packaging spike; докази наприкінці документа.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -12,7 +12,7 @@ D.1 first-run реалізовано в `codex/first-run-settings`; очікує
 **Статус: A завершено; B/C прийняті користувачем на Windows 2026-09-17
 після focus/overlay виправлень і дозволені до merge в main. Фізична macOS
 матриця залишається відкритою. D прийнято користувачем на Windows 2026-09-18 і дозволено до merge в main.
-Наступний пріоритет — D.1 (international onboarding), потім E/F.**
+Обмежені D.1-поставки прийняті та змерджені; наступний пріоритет — E packaging spike, потім решта E/F.**
 
 Позначення: `[x]` — конкретна реалізація або перевірка, для якої є доказ;
 `[ ]` — відсутня реалізація чи непроведена перевірка. Код і ручне приймання
@@ -277,8 +277,8 @@ Secure desktop/екран входу не підтримуються. UIPI не 
 | 6 | E installers та lifecycle | Windows installer, macOS ARM64 app/DMG, обраний Linux package; update/uninstall/autostart перевірено; runtime included; signing status чесно задокументовано |
 | 7 | F release acceptance | Clean Windows без Python/Git/CUDA, Ubuntu та фізичний M4; GUI/paste/permissions/login, NVIDIA окремо, довгі сесії; version/checksums/release notes і відомі обмеження |
 
-Історичний порядок: кроки 1–2 вже реалізовані та прийняті; актуальна наступна
-поставка — обмежений first-run сценарій кроку 3 (див. кінець документа). Для кроків 2–3 спочатку спроєктувати schema/migration та спільне model-language
+Історичний порядок: кроки 1–3 реалізовані та прийняті в межах описаних поставок;
+актуальна наступна поставка — E packaging spike кроку 4 (див. кінець документа). Для кроків 2–3 спочатку спроєктувати schema/migration та спільне model-language
 mapping; не зашивати нові мови в окремі копії U/E/L-команд. Кожну поставку вести
 в одній активній гілці від актуального main; завершені гілки прибирати після merge.
 F-тести додавати під час відповідної реалізації, фінальний gate — на release artifacts.
@@ -560,7 +560,7 @@ onboarding; невідома custom model позначається як непе
 Apply; після restart завершений сценарій автоматично не відкривається,
 перерваний можна продовжити. Чиста установка має лише English preset до явного
 вибору; існуючі profiles/settings/history не змінюються без Apply; помилка Apply
-не встановлює completion. Перевірити clean/existing/failed Apply/restart сценарії.
+не встановлює completion. Clean/existing/failed Apply/restart сценарії перевірено.
 Межі: використовувати наявну Settings, без другого wizard, download progress,
 inference doctor, packaging чи installers.
 E packaging spike залишається наступною окремою роботою після D.1.
@@ -578,12 +578,22 @@ E packaging spike залишається наступною окремою ро�
   reload, model rejection/custom warning, malformed response recovery та Quit.
 - [x] Native Linux desktop smoke: незавершений setup автоматично відкривається
   після restart; завершений — ні; Pause/Resume, singleton, persistence і 5 Quit/restart.
-- [ ] CI цієї гілки: результат буде зафіксовано після push.
-- [ ] Ручне Windows-приймання користувачем; фізичне macOS/M4.
-- [ ] Merge в main (ця поставка лише commit/push окремої гілки).
+- [x] [CI `8f192b1`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/35830338650):
+  усі 6 jobs Windows/macOS/Linux × Python 3.11/3.12 успішні.
+- [x] Користувач 2026-09-23 підтвердив перелічені ручні сценарії та дозволив
+  merge/push і видалення завершеної remote-гілки. Окремої hardware matrix не надано.
+- [x] Сфокусований перегляд completion, Apply/rollback, startup та сумісності
+  налаштувань перед merge: блокувальних дефектів не виявлено; код не змінювався.
+- [x] Змерджено і запушено в `main`: `1a6e23c` (реалізація `8f192b1`).
+  Remote-гілку `codex/first-run-settings` видалено після push main.
+- [ ] Фізичне macOS/M4, реальний voice/GPU/download та clean-machine release gate.
 
 [Оновлення й ручний тест](../setup/first-run.md). Unsaved edits не відновлюються;
 відновлюється сценарій зі збережених профілів. Linux без GTK tray host може
 відкрити control panel незалежно від completion. Без voice/GPU/download tests.
-Наступна реалізація після приймання — **E packaging spike**; D.1 hardware/user
-acceptance і E/F release gates не оголошуються завершеними.
+Наступна конкретна задача — **E packaging spike**: пробні frozen builds для
+Windows CPU та macOS ARM64, перевірка worker spawning і native dependencies;
+зафіксувати bundler decision, відтворювані команди збірки та support matrix з
+перевіреними й неперевіреними обмеженнями. Без installers, download wizard чи
+inference doctor у цьому spike. Новий етап у цьому чаті не розпочато;
+фізична hardware matrix та E/F release gates залишаються відкритими.

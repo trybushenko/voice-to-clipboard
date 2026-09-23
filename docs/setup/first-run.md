@@ -37,8 +37,8 @@ whole tray app and wait for its icon to disappear before installing:
 ```powershell
 .\.venv\Scripts\voice-hotkeys.exe --quit
 git fetch origin
-git switch codex/first-run-settings
-git pull --ff-only origin codex/first-run-settings
+git switch main
+git pull --ff-only origin main
 .\.venv\Scripts\python.exe -m pip install ".[whisper,hotkeys,desktop]"
 .\.venv\Scripts\python.exe -m voice_to_clipboard.ui.desktop_app
 ```
@@ -48,14 +48,14 @@ Linux equivalent (source installation with `venv`):
 ```sh
 venv/bin/voice-hotkeys --quit
 git fetch origin
-git switch codex/first-run-settings
-git pull --ff-only origin codex/first-run-settings
+git switch main
+git pull --ff-only origin main
 venv/bin/python -m pip install '.[whisper,hotkeys,desktop]'
 venv/bin/python -m voice_to_clipboard.ui.desktop_app
 ```
 
 On Apple Silicon use your native ARM64 Python environment and
-`.[mac,hotkeys,desktop]`. This branch is not yet merged into main.
+`.[mac,hotkeys,desktop]`. This delivery is accepted and merged into main (`1a6e23c`, implementation `8f192b1`).
 
 ## Short manual acceptance
 
