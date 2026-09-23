@@ -13,6 +13,7 @@ from voice_to_clipboard.ui import desktop_panel
 
 def main():
     errors = []
+    expected_errors = []
     original_loop = tk.Tk.mainloop
     with tempfile.TemporaryDirectory(prefix='vtc-panel-', dir=None if os.name == 'nt' else '/tmp') as folder, patch.dict(os.environ, VOICE_TO_CLIPBOARD_DATA_DIR=folder, VOICE_TO_CLIPBOARD_CACHE_DIR=folder):
         malformed_reply = [False]
@@ -45,6 +46,18 @@ def main():
                     modifier_choice = next(w for w in widgets if isinstance(w, ttk.Combobox)
                                            and tuple(w.cget('values')) == ('', 'alt+shift', 'ctrl+alt', 'ctrl+alt+shift'))
                     modifier_choice.set('ctrl+alt')
+                    model_choice = next(w for w in widgets if isinstance(w, ttk.Combobox)
+                                        and 'large-v3-turbo' in w.cget('values')
+                                        and w.master.winfo_class() == 'TLabelframe'
+                                        and 'Language profiles' in w.master.cget('text'))
+                    model_choice.set('distil-large-v3')
+                    expected_errors.append('English-only')
+                    buttons['Add'].invoke()
+                    assert not expected_errors, 'Incompatible model was not rejected'
+                    model_choice.set('team/custom-model')
+                    assert any(isinstance(w, ttk.Label) and w.cget('textvariable')
+                               and 'unverified custom model' in str(root.getvar(w.cget('textvariable')))
+                               for w in widgets), 'Missing custom model warning'
                     buttons['Add'].invoke()
                     buttons['Apply all settings and profiles'].invoke()
                     def close_after_apply():
@@ -69,13 +82,19 @@ def main():
                 root.after_cancel(timeout_id)
             except tk.TclError:
                 pass
-        with patch('voice_to_clipboard.core.host_control.request', side_effect=request), patch('voice_to_clipboard.platform.launchers.enabled', return_value=False), patch('tkinter.messagebox.showerror', side_effect=lambda *args, **kwargs: errors.append(str(args))):
+        def showerror(*args, **kwargs):
+            if expected_errors and expected_errors[0] in str(args):
+                expected_errors.pop(0)
+            else:
+                errors.append(str(args))
+        with patch('voice_to_clipboard.core.host_control.request', side_effect=request), patch('voice_to_clipboard.platform.launchers.enabled', return_value=False), patch('tkinter.messagebox.showerror', side_effect=showerror):
             with patch.object(tk.Tk, 'mainloop', drive):
                 desktop_panel.main()
                 import gc
                 gc.collect()  # Collect destroyed Tcl interpreters on their owning thread.
             assert [p['language'] for p in load()['profiles']] == ['en', 'pl'], load()
             assert load()['profiles'][1]['modifiers'] == 'alt+ctrl', load()
+            assert load()['profiles'][1]['model'] == 'team/custom-model', load()
             save_settings({'profiles': [{'language': 'en', 'key': 'e', 'paste': False, 'model': ''}]})
             malformed_reply[0] = True
             with patch.object(tk.Tk, 'mainloop', lambda root: drive(root, recover=True)):

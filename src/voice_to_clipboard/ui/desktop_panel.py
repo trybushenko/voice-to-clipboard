@@ -119,12 +119,13 @@ def main():
     device = tk.StringVar(value=settings['inference_device'])
     overlay = tk.BooleanVar(value=settings['overlay'])
     auto = tk.BooleanVar(value=enabled())
+    from ..core.model_compatibility import CHOICES, describe, validate as validate_model
     form = ttk.LabelFrame(frame, text='Dictation settings', padding=12)
     form.pack(fill='x', pady=10)
     for number, (label, variable, values) in enumerate([
             ('Default shortcut modifiers', mods, ['alt+shift', 'ctrl+alt', 'ctrl+alt+shift']),
             ('Inference device', device, ['auto', 'cpu', 'cuda', 'metal']),
-            ('Default model (empty = multilingual turbo)', model, None)]):
+            ('Default model (empty = multilingual turbo)', model, CHOICES)]):
         ttk.Label(form, text=label).grid(row=number, column=0, sticky='w', padx=5, pady=5)
         entry = ttk.Combobox(form, textvariable=variable, values=values) if values else ttk.Entry(form, textvariable=variable)
         entry.grid(row=number, column=1, sticky='ew', padx=5)
@@ -150,7 +151,15 @@ def main():
     ttk.Combobox(profile_frame, textvariable=profile_modifiers,
                  values=['', 'alt+shift', 'ctrl+alt', 'ctrl+alt+shift']).pack(fill='x')
     ttk.Label(profile_frame, text='Model override (empty = default model; custom models must support the language)').pack(anchor='w')
-    ttk.Entry(profile_frame, textvariable=profile_model).pack(fill='x')
+    ttk.Combobox(profile_frame, textvariable=profile_model, values=CHOICES).pack(fill='x')
+    model_feedback = tk.StringVar()
+    ttk.Label(profile_frame, textvariable=model_feedback, wraplength=680).pack(anchor='w')
+    def update_model_feedback(*unused):
+        code = language_code(language.get())
+        model_feedback.set(describe(code, profile_model.get(), model.get())[1])
+    for variable in (language, profile_model, model):
+        variable.trace_add('write', update_model_feedback)
+    update_model_feedback()
     def refresh_profiles():
         profile_list.delete(0, 'end')
         for p in profiles:
@@ -183,7 +192,9 @@ def main():
                 candidate[selection[0]] = profile
             else:
                 del candidate[selection[0]]
-            profiles[:] = validate_profiles(candidate)
+            if mode != 'remove':
+                validate_model(profile['language'], profile['model'], model.get())
+            profiles[:] = validate_profiles(candidate, check_models=False)
             refresh_profiles()
             feedback.set('Profile changes are pending. Click Apply settings to activate them.')
         except ValueError as exc:
@@ -215,6 +226,12 @@ def main():
         values = {'hotkey_modifiers': mods.get(), 'model': model.get().strip(),
                   'inference_device': device.get(), 'overlay': overlay.get(),
                   'schema_version': 3, 'profiles': [dict(p) for p in profiles]}
+        from ..core.desktop_settings import validate as validate_settings
+        try:
+            values = validate_settings(values)
+        except ValueError as exc:
+            feedback.set(str(exc))
+            return
         save_pending[0] = True
         apply_button.configure(state='disabled')
         feedback.set('Saving and registering shortcuts…')

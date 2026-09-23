@@ -132,6 +132,11 @@ class SessionLauncher:
         command = [sys.executable, '-m', 'voice_to_clipboard', '--lang', lang,
                    '--silence', '0', '--inference-device', self.args.inference_device]
         chosen_model = model or self.args.model or 'large-v3-turbo'
+        from .model_compatibility import validate as validate_model
+        try:
+            validate_model(lang, chosen_model)
+        except ValueError as exc:
+            raise RuntimeError(str(exc)) from exc
         command += ['--model', chosen_model]
         if lang == 'en':
             command += ['--beam', '5']
