@@ -1,3 +1,4 @@
+import io
 import sys
 import unittest
 from unittest.mock import patch
@@ -6,6 +7,15 @@ from voice_to_clipboard.platform import launchers
 
 
 class FrozenTests(unittest.TestCase):
+    def test_stream_restore_preserves_existing_pipes(self):
+        from voice_to_clipboard.platform.frozen import restore_standard_streams
+        stream = io.StringIO()
+        with patch.object(sys, 'stdin', stream), patch.object(sys, 'stdout', stream), patch.object(sys, 'stderr', stream):
+            restore_standard_streams()
+            self.assertIs(sys.stdin, stream)
+            self.assertIs(sys.stdout, stream)
+            self.assertIs(sys.stderr, stream)
+
     def test_source_and_frozen_commands_preserve_arguments(self):
         for frozen, flag in [(False, '-m'), (True, '--app-module')]:
             with patch.object(sys, 'frozen', frozen, create=True):

@@ -35,6 +35,21 @@ def main():
         window.shutdown()
         window.hide()
         qt_ready = time.perf_counter() - started
+        overlay_checked = False
+        if sys.platform in ('win32', 'darwin'):
+            from voice_to_clipboard.ui.overlay import Overlay
+            overlay = Overlay(lang='en')
+            try:
+                assert overlay.process is not None
+                overlay.update(elapsed=1, level=.1)
+                time.sleep(2)
+                assert overlay.process.poll() is None, 'Frozen overlay exited before EOF'
+                # EOF must close the actual native window, not merely kill the process.
+                overlay._enqueue(None)
+                assert overlay.process.wait(timeout=8) == 0
+                overlay_checked = True
+            finally:
+                overlay.close()
         child = spawn_background(module_command('voice_to_clipboard.worker.service'), no_console=True)
         path = Path(folder) / 'worker.sock'
         def request(op):
@@ -66,7 +81,7 @@ def main():
                       python=platform.python_version(), frozen=bool(getattr(sys, 'frozen', False)),
                       qt_import_render_seconds=qt_ready, probe_seconds=time.perf_counter()-started,
                       portaudio=sounddevice.get_portaudio_version(),
-                      ctranslate2=ctranslate2.__version__, worker_status_shutdown=True,
+                      ctranslate2=ctranslate2.__version__, worker_status_shutdown=True, overlay_pipe_eof=overlay_checked,
                       model_loaded=False, microphone_opened=False)
     report.write_text(json.dumps(result, indent=2), encoding='utf-8')
 
