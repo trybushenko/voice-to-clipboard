@@ -16,6 +16,12 @@ Research-гілку D.2a не переносили. PySide6 додається �
 renders, keyboard/accessibility names. Без voice/GPU/download. Фізичні
 Windows/macOS, screen reader та user acceptance відкриті; merge не виконано.
 
+Код: `dc1d720`; Linux Qt runtime follow-up: `b5aab52`.
+[CI `36128646652`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36128646652)
+успішний на всіх 6 jobs (Windows/macOS/Linux × Python 3.11/3.12), включно з
+native Qt/lifecycle, Windows paste і масштабуванням. Перший Ubuntu CI впав через
+відсутню libEGL; системні залежності додані до CI та інструкції встановлення.
+
 Наступна дія — ручне приймання D.2b і review перед merge. Після нього E packaging.
 [Точні команди оновлення та короткий тест](../setup/settings-redesign.md).
 Старі записи нижче — історія; нову реалізацію D.2b не починати повторно.

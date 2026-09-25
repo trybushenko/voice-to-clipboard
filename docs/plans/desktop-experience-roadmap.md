@@ -708,6 +708,11 @@ Production UI не замінено цією документаційною зм
 - [x] Native Linux Qt smoke і desktop lifecycle: singleton, pause/resume,
   5 restart/Quit, idle без microphone/model load. Headless scaling 100/150/200%,
   light/dark render, English accessible names; screenshots переглянуто.
+- [x] Реалізація `dc1d720`; CI/runtime follow-up `b5aab52`.
+  [CI `36128646652`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36128646652):
+  усі 6 jobs Windows/macOS/Linux × Python 3.11/3.12 успішні, включно з native
+  Qt/lifecycle, Windows remote-guard paste та offscreen scaling. Перший Ubuntu
+  CI виявив відсутню libEGL; runtime prerequisites додані до CI й setup docs.
 - [ ] Фізичне Windows/macOS, screen-reader, OS theme/display acceptance.
 - [ ] User acceptance English + неанглійська мова, справжнє диктування/copy/paste.
 - [ ] Review/merge у main. Автоматичні тести не замінюють ручного приймання.

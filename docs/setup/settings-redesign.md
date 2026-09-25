@@ -92,6 +92,14 @@ On Linux use temporary `VOICE_TO_CLIPBOARD_DATA_DIR` and
 
 ## Evidence and limits
 
+Implementation: `dc1d720`; Linux Qt runtime prerequisites: `b5aab52`.
+[CI for b5aab52](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36128646652)
+passed all six jobs: Windows/macOS/Linux, Python 3.11/3.12. This includes native
+Windows/macOS Settings/lifecycle, Windows remote-guard paste and Qt scaling.
+The initial Ubuntu run exposed missing libEGL; CI and setup prerequisites now
+include it. Local final suite: 99 tests passed, 4 platform skips.
+
+
 - Existing host regression tests cover schema v2/v3, unrelated fields/history,
   completion, registration/write failure rollback, guarded paste and lifecycle.
 - Qt smoke uses a simulated host and isolated settings: one Save, Cancel, duplicate
