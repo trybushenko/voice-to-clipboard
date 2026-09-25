@@ -74,7 +74,7 @@ Use your distribution's Python with matching GI/GTK bindings:
 
 ```sh
 sudo apt update
-sudo apt install python3-venv python3-pip python3-tk libportaudio2 libxcb-cursor0 libxkbcommon-x11-0 python3-gi gir1.2-gtk-3.0 gir1.2-atspi-2.0 gir1.2-ayatanaappindicator3-0.1 xclip xdotool wl-clipboard
+sudo apt install python3-venv python3-pip python3-tk libportaudio2 libegl1 libgl1 libxcb-cursor0 libxkbcommon-x11-0 python3-gi gir1.2-gtk-3.0 gir1.2-atspi-2.0 gir1.2-ayatanaappindicator3-0.1 xclip xdotool wl-clipboard
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install '.[whisper,hotkeys,desktop]'
@@ -146,7 +146,7 @@ launching it again opens its panel. **Pause shortcuts** disables hotkeys;
   not private transcript history. See [storage and usage](../usage.md).
 
 Settings requires the **desktop** extra, which installs PySide6. On Linux, a Qt
-`xcb` plugin error can indicate missing `libxcb-cursor0` or `libxkbcommon-x11-0`;
+`libEGL.so.1` import error needs `libegl1`; an `xcb` plugin error can indicate missing `libxcb-cursor0` or `libxkbcommon-x11-0`;
 install the prerequisites above. Tk is still used by overlay/paste tooling.
 
 ## Update or remove

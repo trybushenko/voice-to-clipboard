@@ -52,7 +52,7 @@ venv/bin/python -m voice_to_clipboard.ui.desktop_app
 ```
 
 On Apple Silicon use native ARM64 Python in your existing venv and replace
-`[whisper,hotkeys,desktop]` with `[mac,hotkeys,desktop]`. On Linux the Qt xcb
+`[whisper,hotkeys,desktop]` with `[mac,hotkeys,desktop]`. On Linux Qt needs `libegl1`/`libgl1`; its xcb
 plugin needs `libxcb-cursor0` and `libxkbcommon-x11-0`; see
 [installation prerequisites](installation.md). Do not delete settings/history.
 PySide6 is installed with the desktop extra. Tk is still needed for existing
