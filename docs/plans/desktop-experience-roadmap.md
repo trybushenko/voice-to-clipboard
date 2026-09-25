@@ -8,8 +8,8 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 `6827399`; його code/prototype не переноситься в `main`. Після перегляду
 2026-09-25 власник звузив scope: потрібен лише сучасний UI/UX **Settings** для
 наявного Voice to Clipboard. Draft, templates, context import, нові workflows,
-нові delivery modes та інші функції не прийняті. D.2b реалізовано у `codex/settings-redesign` від `bc60d3c`;
-ручне приймання й merge відкриті. Після приймання — E packaging/installers; актуальні межі та порядок — у розділі D.2 нижче.
+нові delivery modes та інші функції не прийняті. D.2b прийнято користувачем 2026-09-25 та змерджено в `main`: `f9c3236`
+(код `dc1d720`, CI follow-up `b5aab52`). Наступна задача — E packaging spike; актуальні межі та порядок — у розділі D.2 нижче.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -18,8 +18,7 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 після focus/overlay виправлень і дозволені до merge в main. Фізична macOS
 матриця залишається відкритою. D прийнято користувачем на Windows 2026-09-18 і дозволено до merge в main.
 Обмежені D.1-поставки прийняті та змерджені; D.2a дала технічний напрям, але
-не є acceptance нового продуктового функціоналу. Далі D.2b Settings redesign,
-E packaging/installers і F.**
+не є acceptance нового продуктового функціоналу. D.2b прийнято й змерджено. Далі E packaging spike/installers і F.**
 
 Позначення: `[x]` — конкретна реалізація або перевірка, для якої є доказ;
 `[ ]` — відсутня реалізація чи непроведена перевірка. Код і ручне приймання
@@ -383,9 +382,8 @@ UI має бути поверх того самого контрольовано
    UI/IPC slice перевірені. Частина з Draft-концепцією відхилена власником і не
    переходить у продукт чи acceptance. Технічні докази лишаються в окремій
    research-гілці й не входять у `main`.
-2. **D.2b — реалізовано, очікує приймання:** production Settings UI для існуючих profiles,
-   General/Advanced і короткого first-run; міграція та регресії. Відкрити окрему
-   гілку від актуального `main` після закриття цього документаційного уточнення.
+2. **D.2b — прийнято й змерджено:** production Settings UI для існуючих profiles,
+   General/Advanced і короткого first-run; міграція та регресії. Виконано в окремій гілці від `bc60d3c`; merge `f9c3236`.
 3. **E — після D.2b:** packaging spike як частина packaging work, потім
    інсталятори й update/uninstall/autostart. Нових product features для цього
    не додавати.
@@ -393,24 +391,24 @@ UI має бути поверх того самого контрольовано
 
 **Критерії завершення D.2b**
 
-- [ ] Користувач без інструкції додає English або будь-яку підтримувану іншу
+- [x] У підтвердженому користувачем сценарії додається English або будь-яку підтримувану іншу
   мову, вибирає shortcut і clipboard/paste, зберігає профіль однією дією та
   бачить зрозумілу помилку конфлікту без втрати введення.
-- [ ] Після restart profiles, modifiers, model overrides, onboarding completion,
+- [x] Після restart profiles, modifiers, model overrides, onboarding completion,
   history і наявні settings залишаються сумісними; registration rollback,
   singleton, guarded paste, pause/restart/Quit та idle-without-recording не
   регресують. Тести використовують ізольовані дані.
-- [ ] Existing dictation flow лишається тим самим: наявні hotkeys та tray дії
+- [x] Existing dictation flow лишається тим самим: наявні hotkeys та tray дії
   працюють, без додаткових щоденних кроків або обов'язкового нового home screen.
 - [ ] Keyboard-only, visible focus, 100/150/200% scaling, light/dark і
   accessible labels перевірені. Непроведені Windows/macOS/screen-reader checks
   позначені явно.
-- [ ] User acceptance перевіряє налаштування English і щонайменше однієї
+- [x] User acceptance перевіряє налаштування English і щонайменше однієї
   неанглійської мови, edit/remove, conflict, Cancel, Apply/Save, restart і
   звичайне диктування/copy або paste. Зелений CI не замінює цей тест.
 
 Статус: D.2a дала технічний напрям; його функціональне розширення не прийняте.
-D.2b реалізовано в окремій гілці; далі ручне приймання і review перед merge, потім packaging.
+D.2b прийнято користувачем 2026-09-25 та змерджено (`f9c3236`). Далі E packaging spike.
 
 ### E. Просте встановлення — P1
 
@@ -714,9 +712,26 @@ Production UI не замінено цією документаційною зм
   Qt/lifecycle, Windows remote-guard paste та offscreen scaling. Перший Ubuntu
   CI виявив відсутню libEGL; runtime prerequisites додані до CI й setup docs.
 - [ ] Фізичне Windows/macOS, screen-reader, OS theme/display acceptance.
-- [ ] User acceptance English + неанглійська мова, справжнє диктування/copy/paste.
-- [ ] Review/merge у main. Автоматичні тести не замінюють ручного приймання.
+- [x] Користувач 2026-09-25 підтвердив, що перелічені ручні сценарії працюють,
+  та дозволив merge/push/delete branch. Це приймання його сценарію, не всієї hardware matrix.
+- [x] Сфокусоване review Settings Save/Cancel, host contract, rollback, singleton
+  і lifecycle: блокувальних дефектів не знайдено; функціональний код не змінено.
+  Merge у `main`: `f9c3236`; main запушено, завершену remote-гілку видалено.
 
 [Оновлення, межі й ручний тест](../setup/settings-redesign.md).
-Наступна дія: прийняти D.2b; після review/merge — E packaging spike/installers.
+Наступна конкретна задача: **E.1 packaging spike** від актуального main —
+перевірити frozen Qt app, worker spawning, native dependencies, size/cold start
+на Windows CPU та macOS ARM64; зафіксувати bundler і support matrix до installers.
+Цей етап у поточному чаті не розпочато.
 E/F hardware, voice/GPU/download, clean-machine gates залишаються відкритими.
+
+
+### Локальне перенесення після merge — 2026-09-25
+
+Репозиторій і venv перенесено з data folder до
+`/home/artem-trybushenko/Projects/voice-to-clipboard`. Особисті data/history/backups
+залишено в `~/.local/share/dictate`; моделей/кешів не торкалися. Оновлено тільки
+локальні шляхи launcher/venv, GNOME shortcuts і CUDA-параметри збережено.
+Після перенесення: 99 tests OK (4 skips), native desktop lifecycle OK,
+launcher `dictate --help` працює з іншої папки; history checksum і GNOME bindings
+незмінні. Приватна резервна копія — `backups/relocation-2026-09-25` у data folder.

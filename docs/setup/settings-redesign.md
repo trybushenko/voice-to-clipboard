@@ -1,6 +1,7 @@
 # Settings redesign — D.2b
 
-Branch: `codex/settings-redesign`, based on current `origin/main` `bc60d3c`.
+Accepted by the user on 2026-09-25 and merged into `main` as `f9c3236`.
+The completed remote branch `codex/settings-redesign` was deleted. Base: `bc60d3c`.
 This replaces the Tk Settings panel with Qt/PySide6. The existing tray, shortcuts,
 dictation, guarded paste and host settings transaction are unchanged. No new
 storage format, workflow, delivery mode, model download or audio feature is added.
@@ -27,15 +28,15 @@ storage format, workflow, delivery mode, model download or audio feature is adde
 
 Finish any recording, quit the **whole tray app**, and wait for its icon to
 vanish. Run these commands from the existing repository with a clean worktree.
-The delivery is a review branch; it has not been merged into main.
+The delivery is available on main.
 
 Windows PowerShell:
 
 ```powershell
 .\.venv\Scripts\voice-hotkeys.exe --quit
 git fetch origin
-git switch codex/settings-redesign
-git pull --ff-only origin codex/settings-redesign
+git switch main
+git pull --ff-only origin main
 .\.venv\Scripts\python.exe -m pip install ".[whisper,hotkeys,desktop]"
 .\.venv\Scripts\python.exe -m voice_to_clipboard.ui.desktop_app
 ```
@@ -45,8 +46,8 @@ Linux (existing `venv`):
 ```sh
 venv/bin/voice-hotkeys --quit
 git fetch origin
-git switch codex/settings-redesign
-git pull --ff-only origin codex/settings-redesign
+git switch main
+git pull --ff-only origin main
 venv/bin/python -m pip install '.[whisper,hotkeys,desktop]'
 venv/bin/python -m voice_to_clipboard.ui.desktop_app
 ```
@@ -112,8 +113,29 @@ include it. Local final suite: 99 tests passed, 4 platform skips.
 - `python -m unittest discover -s tests -v` includes the Qt smoke when the desktop
   extra is installed. CI also runs native Windows/macOS smoke and offscreen scaling.
 - Physical Windows/macOS, screen readers, real voice/GPU/download and installer
-  acceptance remain open. OS theme integration varies by desktop; no new theme
+  acceptance remain open. The user confirmed the listed manual scenarios on
+  2026-09-25; no separate hardware/OS matrix was supplied. OS theme integration varies by desktop; no new theme
   preference is stored. Custom model backend availability is not checked.
 
 Qt references: [search completion](https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QCompleter.html)
 and [application palette events](https://doc.qt.io/qtforpython-6/PySide6/QtGui/QGuiApplication.html).
+
+
+## Local repository relocation (2026-09-25)
+
+The local checkout and its existing venv now live at
+`/home/artem-trybushenko/Projects/voice-to-clipboard`. The standard Linux data
+folder remains `~/.local/share/dictate`: history, settings and backups belong
+there and are unchanged. Models/caches and GNOME U/E/L bindings are unchanged.
+The `~/.local/bin/dictate` launcher and venv launch scripts use the new paths,
+including the existing NVIDIA library paths. The package was reinstalled from
+its new location without changing speech/CUDA dependencies.
+
+A private backup of data, the old launcher and GNOME bindings is in
+`~/.local/share/dictate/backups/relocation-2026-09-25`. Checksum comparison verified
+that personal data was preserved. Open the new Projects folder for development;
+the old data directory is no longer a Git checkout.
+
+Post-move verification: 99 tests OK (4 platform skips), native desktop lifecycle
+smoke OK, `~/.local/bin/dictate --help` from `/tmp` OK. History checksum and GNOME
+bindings were checked again after reinstall/tests and remained unchanged.

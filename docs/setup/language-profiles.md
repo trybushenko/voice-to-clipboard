@@ -1,6 +1,6 @@
 # Language profiles
 
-Profiles are available on `main`; the Qt Settings UI is in `codex/settings-redesign`.
+Profiles and the accepted Qt Settings UI are available on `main`.
 See [update commands and acceptance](settings-redesign.md). Quit the app, switch to the desired branch,
 repeat your platform's pip installation with speech/hotkeys/desktop extras, then
 launch the app normally. Do not delete your real settings/history to test defaults.

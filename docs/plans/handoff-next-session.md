@@ -3,7 +3,7 @@
 Оновлено: 2026-09-25. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
-## Поточна поставка — D.2b Settings redesign
+## Остання прийнята поставка — D.2b Settings redesign
 
 Реалізовано в `codex/settings-redesign` від актуального `origin/main` `bc60d3c`.
 Qt Settings замінює Tk panel: Languages, пошук, один Save/Cancel, inline errors,
@@ -14,7 +14,9 @@ Research-гілку D.2a не переносили. PySide6 додається �
 Локально: 99 tests OK (4 platform skips), Qt native Linux smoke, tray/host lifecycle
 з singleton, pause/resume і 5 restart/Quit; offscreen scale 100/150/200%, light/dark
 renders, keyboard/accessibility names. Без voice/GPU/download. Фізичні
-Windows/macOS, screen reader та user acceptance відкриті; merge не виконано.
+hardware matrix та screen reader відкриті. Користувач 2026-09-25 підтвердив
+перелічені сценарії та дозволив merge/push/delete branch; ОС цього повтору
+окремо не зазначена, повну hardware matrix це не закриває.
 
 Код: `dc1d720`; Linux Qt runtime follow-up: `b5aab52`.
 [CI `36128646652`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36128646652)
@@ -22,7 +24,25 @@ Windows/macOS, screen reader та user acceptance відкриті; merge не �
 native Qt/lifecycle, Windows paste і масштабуванням. Перший Ubuntu CI впав через
 відсутню libEGL; системні залежності додані до CI та інструкції встановлення.
 
-Наступна дія — ручне приймання D.2b і review перед merge. Після нього E packaging.
+Сфокусоване pre-merge review не виявило блокувальних дефектів; код не змінювався.
+Merge: `f9c3236`, main запушено, `origin/codex/settings-redesign` видалено.
+
+Наступна конкретна задача — **E.1 packaging spike** в окремій гілці від main:
+frozen Qt app, worker spawning і native dependencies на Windows CPU та Mac ARM64;
+size/cold start, вибір bundler та support matrix перед installers. Нових features
+не додавати. У цьому чаті етап E не розпочинався.
+
+## Локальне розташування після перенесення
+
+- Репозиторій і наявний venv: `/home/artem-trybushenko/Projects/voice-to-clipboard`.
+- Особисті data/history/settings/backups: `~/.local/share/dictate` (чинний data path).
+- `~/.local/bin/dictate` посилається на новий код і CUDA libraries; GNOME bindings
+  U/E/L не змінені. Кеші/моделі не переносились і не видалялись.
+- Резервна копія даних/launcher/bindings: `~/.local/share/dictate/backups/relocation-2026-09-25`.
+- Дані перевірено побайтово до/після перенесення. Python package перевстановлено
+  з нового шляху без зміни speech/CUDA dependencies; launch/isolated regression
+  перевірки наведені в delivery guide.
+
 [Точні команди оновлення та короткий тест](../setup/settings-redesign.md).
 Старі записи нижче — історія; нову реалізацію D.2b не починати повторно.
 
@@ -196,7 +216,7 @@ shortcuts, тимчасовий overlay, автозапуск. Windows, Linux т
 ## Репозиторій і стан
 
 - GitHub: https://github.com/trybushenko/voice-to-clipboard (public).
-- Локальний checkout: `/home/artem-trybushenko/.local/share/dictate`.
+- Локальний checkout: `/home/artem-trybushenko/Projects/voice-to-clipboard`.
 - Python package: `src/voice_to_clipboard`; tests: `tests`; helpers: `scripts`.
 - Linux development venv: `venv/bin/python`; Windows приклади: `.venv\Scripts\python.exe`.
 - Main містить прийняті A/B/C/D, актуальний source onboarding і English messaging.

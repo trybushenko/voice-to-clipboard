@@ -28,5 +28,5 @@ optional `onboarding_complete` field is unchanged. Arbitrary custom model suppor
 remains unverified.
 
 The original D.1 implementation was accepted and merged as `1a6e23c`. The current
-Qt UI is the D.2b delivery in `codex/settings-redesign`, pending user acceptance.
+Qt UI is the accepted D.2b delivery, merged into main as `f9c3236`.
 See [exact update commands and manual checks](settings-redesign.md).
