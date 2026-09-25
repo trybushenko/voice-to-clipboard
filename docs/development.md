@@ -76,3 +76,26 @@ This detects imports accidentally resolved from the checkout or old flat modules
 `check_paste.py` opens an isolated test field and verifies exact Unicode insertion
 using the platform clipboard/input APIs; it puts synthetic text in the clipboard.
 Use `--auto` for an unattended GUI check on an interactive desktop.
+
+
+## Qt Settings checks
+
+Install `.[desktop]` for PySide6. The ordinary unittest suite runs isolated Qt
+interactions offscreen; without the desktop extra this one test is explicitly
+skipped. Native interactive smoke and scaling checks:
+
+```sh
+python scripts/check_settings_panel.py
+QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=1.5 python scripts/check_settings_panel.py
+QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2 python scripts/check_settings_panel.py
+python scripts/check_desktop.py
+```
+
+`--screenshots /tmp/vtc-settings-render` captures light/dark screenshots without
+personal data. The Settings client in `ui/settings_window.py` submits partial
+updates through existing host IPC; only the host performs settings writes and
+registration rollback. Qt widgets/callbacks stay on the GUI thread; a bounded
+queue of executor futures handles blocking operations. The main thread releases
+callbacks after worker shutdown. `desktop_panel.py` retains the singleton lock
+and show/quit endpoint. The core suite covers persistence/rollback; the UI smoke
+uses a simulated host and does not prove real speech or native registration.

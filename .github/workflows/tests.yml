@@ -15,6 +15,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+      - name: Install Qt runtime libraries (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxcb-cursor0 libxkbcommon-x11-0
       - run: python -m pip install .
       - name: Install platform speech backend
         shell: bash
@@ -43,7 +46,14 @@ jobs:
         timeout-minutes: 3
         run: python scripts/check_desktop.py
 
-      - name: Settings panel interaction smoke
+      - name: Settings panel interaction smoke (native Qt)
         if: runner.os == 'Windows' || runner.os == 'macOS'
         timeout-minutes: 2
         run: python scripts/check_settings_panel.py
+
+      - name: Settings scaling smoke (offscreen Qt)
+        shell: bash
+        run: |
+          for scale in 1.5 2; do
+            QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=$scale python scripts/check_settings_panel.py || exit 1
+          done

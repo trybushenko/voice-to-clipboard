@@ -1,6 +1,7 @@
 # Language profiles
 
-Available on `main`. Quit the app, switch to this branch,
+Profiles are available on `main`; the Qt Settings UI is in `codex/settings-redesign`.
+See [update commands and acceptance](settings-redesign.md). Quit the app, switch to the desired branch,
 repeat your platform's pip installation with speech/hotkeys/desktop extras, then
 launch the app normally. Do not delete your real settings/history to test defaults.
 
@@ -10,7 +11,7 @@ A new installation has only English on Alt+Shift+E, clipboard delivery. Settings
 opens at first launch. Add a profile for any other language yourself; there are no
 Ukrainian presets on a clean install. English can also be edited or replaced.
 
-In Settings → Language profiles:
+In Settings → Languages → Add language or Edit:
 
 1. Choose a language by its full English name (e.g. `Polish (pl)`); the list is alphabetical.
 2. Choose a unique A–Z letter. Leave **Profile modifiers** empty to inherit
@@ -18,17 +19,18 @@ In Settings → Language profiles:
    `ctrl+alt`. Supported modifiers: `alt`, `ctrl`, `shift`, `win`, joined with `+`.
    Changing the default affects only profiles without an override.
    macOS uses physical ANSI key positions; Alt means Option and Win means Command.
-3. Enable Paste with hotkey if desired; otherwise the result goes to clipboard.
+3. Choose Paste into original field if desired; otherwise choose Clipboard.
 4. Leave model override empty for the shared default, or enter a compatible model.
    Empty shared default uses multilingual `large-v3-turbo`; a Ukrainian-specialized
    model is never selected automatically. Custom model language support is your choice;
    known English-only `.en` models are rejected for other languages.
-5. Click Add, or select a profile and Update selected. Remove selected deletes it.
-6. Click Apply all settings and profiles. Until Apply succeeds, running shortcuts
-   and tray actions still use the previous configuration. Registration failures roll back.
+5. Click **Save** (or **Save and finish setup** on first run). One action validates,
+   registers and persists the profile. Errors retain your input; Cancel discards it.
+6. Select a profile and **Remove**, then confirm, to delete its shortcut. At least
+   one profile must remain. Registration failures roll back the saved configuration.
 
 At least one profile is required. Pause shortcuts disables all shortcuts without
-removing profiles. Tray/Settings recording always copies; automatic paste uses a
+removing profiles. Tray recording always copies; automatic paste uses a
 hotkey so the original editor field can be captured before recording.
 
 ## Migration
@@ -43,7 +45,7 @@ your previous shortcuts manually; that installation cannot be identified reliabl
 
 - Fresh isolated user/data directory: only English/E in menu and Settings; no U/L
   registrations and no model download in idle.
-- Add Polish/P, apply: Alt+Shift+P records Polish. Try copy, then paste in an editor.
+- Add Polish/P, Save: Alt+Shift+P records Polish. Try copy, then paste in an editor.
 - Add/remove Ukrainian explicitly; removal frees its shortcut and removes its menu item.
 - Same language with two different keys/models: each selects the intended model.
 - Duplicate key, invalid language, non-English with `.en`, occupied native shortcut:
@@ -62,20 +64,20 @@ than silently deleting individual modifiers; downgrade requires a compatible
 settings backup. History is unchanged. The optional profile `modifiers` field
 is saved only for explicit overrides.
 A model download wizard and validation of arbitrary custom model repositories are
-not in the current roadmap; the next UX work is limited to Settings. Quit before
+not in the current roadmap; this Settings redesign adds no audio or model features. Quit before
 updating: an older running host cannot preserve individual modifiers, and the
 updated Settings panel requires a host restart.
 
 ## Individual modifier acceptance
 
 1. Keep English/E on the default modifiers. Add Polish/P with `ctrl+alt`.
-2. Apply, close Settings, and test both shortcuts. Each starts its own language;
+2. Save, close Settings, and test both shortcuts. Each starts its own language;
    pressing again stops recording. The default modifiers + P must not start Polish.
 3. Quit and relaunch. The override remains. Change default modifiers: English
    follows the new default; Polish remains on Ctrl+Alt+P.
-4. Clear Polish's Profile modifiers, click Update selected, then Apply. Polish
+4. Clear Polish's Profile modifiers, click Save. Polish
    now uses the default. Invalid modifiers or occupied native shortcuts must
-   reject Apply and preserve the previous saved and active configuration.
+   reject Save and preserve the previous saved and active configuration.
 5. Pause/Resume must restore both bindings. Paste-enabled profiles retain the
    existing original-field guard.
 
@@ -87,11 +89,11 @@ icon to disappear. Pull this branch, reinstall the package, then relaunch. A run
 host keeps its old code even after pip installation; incompatible hosts now produce
 an explicit restart instruction.
 
-- Add Polish/P and Indonesian/I, Apply, wait for **Saved and active**, close Settings,
+- Add Polish/P and Indonesian/I, Save, wait for **Saved and active**, close Settings,
   then reopen it. Both profiles must remain, and their hotkeys must work.
-- Repeat Apply followed immediately by closing Settings: the window waits for the
+- Repeat Save followed immediately by closing Settings: the window waits for the
   save acknowledgment. A failed save leaves it open with a reason.
-- Remove a profile, Apply, Quit the entire tray app, relaunch: it stays removed.
+- Remove and confirm a profile, Quit the entire tray app, relaunch: it stays removed.
 - Select Bulgarian, Indonesian and other previously unnamed languages by full name.
 - Quit app while idle: no Check system or other click is needed to close Settings.
 - Test paste from an editor with Settings closed. Genuine focus changes still block

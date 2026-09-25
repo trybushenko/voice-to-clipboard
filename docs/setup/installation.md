@@ -42,7 +42,7 @@ Windows' hidden tray icons. You can now close PowerShell.
 Allow desktop apps to access your microphone in Windows privacy settings.
 
 For a first setup without CUDA libraries, open **Settings / System check** from
-the tray, select inference device **CPU**, and Apply before recording. CPU needs
+the tray, open **Advanced**, select inference device **cpu**, and **Save Advanced** before recording. CPU needs
 no NVIDIA dependencies. GPU setup is optional; see troubleshooting below.
 
 ### macOS Apple Silicon (M1–M4)
@@ -74,7 +74,7 @@ Use your distribution's Python with matching GI/GTK bindings:
 
 ```sh
 sudo apt update
-sudo apt install python3-venv python3-pip python3-tk libportaudio2 python3-gi gir1.2-gtk-3.0 gir1.2-atspi-2.0 gir1.2-ayatanaappindicator3-0.1 xclip xdotool wl-clipboard
+sudo apt install python3-venv python3-pip python3-tk libportaudio2 libegl1 libgl1 libxcb-cursor0 libxkbcommon-x11-0 python3-gi gir1.2-gtk-3.0 gir1.2-atspi-2.0 gir1.2-ayatanaappindicator3-0.1 xclip xdotool wl-clipboard
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install '.[whisper,hotkeys,desktop]'
@@ -85,7 +85,7 @@ python3 -m venv .venv
 Subsequent launches use **Voice to Clipboard** in your application menu.
 Package names may differ on other distributions. GNOME needs tray/AppIndicator
 support for a visible icon; without a tray host the app opens its control panel.
-Select CPU in Settings for a first setup without NVIDIA runtime libraries.
+Select cpu in Settings → Advanced for a first setup without NVIDIA runtime libraries.
 
 On **X11**, the app provides native shortcuts. Do not also bind the same shortcuts
 in desktop settings. Guarded paste requires an accessibility-enabled target.
@@ -100,11 +100,12 @@ paste. Native global shortcuts and automatic paste are not generally available.
 3. Speak, then press the same shortcut again to stop. First use may take longer
    while downloading/loading the model; allow it to finish.
 4. Wait for transcription to finish, then paste with **Ctrl+V** (Mac: **Cmd+V**).
-5. Add other languages in **Settings → Language profiles**. Choose the language,
-   a shortcut letter, optional paste delivery and model override; click **Add**,
-   then **Finish setup and apply**. Wait for **Saved and active. Setup complete.**
-   Until this succeeds, Settings opens again on relaunch; saved profiles are retained.
-   See [first-run setup](first-run.md). No other language is enabled automatically.
+5. Add other languages in **Settings → Languages → Add language**. Choose the
+   language (type to search), a shortcut letter, clipboard/paste and optional
+   model override; click **Save and finish setup** (then **Save** for later edits).
+   Wait for **Saved and active**. Until this succeeds, Settings opens again on
+   relaunch; saved profiles are retained. See [Settings setup](settings-redesign.md).
+   No other language is enabled automatically.
 
 The tray's **Start recording (clipboard)** submenu lists only configured profiles.
 Menu-started sessions copy to clipboard; use your profile's hotkey for automatic paste.
@@ -143,6 +144,10 @@ launching it again opens its panel. **Pause shortcuts** disables hotkeys;
 - **Missing Tk on macOS:** install the `python-tk` formula matching your Python.
 - **More details:** use **Open log**. Share technical errors and reproduction steps,
   not private transcript history. See [storage and usage](../usage.md).
+
+Settings requires the **desktop** extra, which installs PySide6. On Linux, a Qt
+`libEGL.so.1` import error needs `libegl1`; an `xcb` plugin error can indicate missing `libxcb-cursor0` or `libxkbcommon-x11-0`;
+install the prerequisites above. Tk is still used by overlay/paste tooling.
 
 ## Update or remove
 

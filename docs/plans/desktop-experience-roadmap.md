@@ -8,8 +8,8 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 `6827399`; його code/prototype не переноситься в `main`. Після перегляду
 2026-09-25 власник звузив scope: потрібен лише сучасний UI/UX **Settings** для
 наявного Voice to Clipboard. Draft, templates, context import, нові workflows,
-нові delivery modes та інші функції не прийняті. Наступна реалізація — D.2b,
-потім E packaging/installers; актуальні межі та порядок — у розділі D.2 нижче.
+нові delivery modes та інші функції не прийняті. D.2b реалізовано у `codex/settings-redesign` від `bc60d3c`;
+ручне приймання й merge відкриті. Після приймання — E packaging/installers; актуальні межі та порядок — у розділі D.2 нижче.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -383,7 +383,7 @@ UI має бути поверх того самого контрольовано
    UI/IPC slice перевірені. Частина з Draft-концепцією відхилена власником і не
    переходить у продукт чи acceptance. Технічні докази лишаються в окремій
    research-гілці й не входять у `main`.
-2. **D.2b — наступна поставка:** production Settings UI для існуючих profiles,
+2. **D.2b — реалізовано, очікує приймання:** production Settings UI для існуючих profiles,
    General/Advanced і короткого first-run; міграція та регресії. Відкрити окрему
    гілку від актуального `main` після закриття цього документаційного уточнення.
 3. **E — після D.2b:** packaging spike як частина packaging work, потім
@@ -410,7 +410,7 @@ UI має бути поверх того самого контрольовано
   звичайне диктування/copy або paste. Зелений CI не замінює цей тест.
 
 Статус: D.2a дала технічний напрям; його функціональне розширення не прийняте.
-Наступна реалізація — обмежена D.2b Settings redesign, потім packaging.
+D.2b реалізовано в окремій гілці; далі ручне приймання і review перед merge, потім packaging.
 
 ### E. Просте встановлення — P1
 
@@ -689,3 +689,34 @@ Settings redesign наперед.
 Draft, templates, context import, словник, integrations, AI/LLM, нові workflows,
 нові delivery modes та нове зберігання вилучені з roadmap і acceptance criteria.
 Production UI не замінено цією документаційною зміною.
+
+
+### D.2b Settings redesign — поставка 2026-09-25
+
+Гілка `codex/settings-redesign` від актуального `origin/main` `bc60d3c`.
+
+- [x] Qt/PySide6 production Settings: Languages, пошук підтримуваної мови,
+  окремий profile editor, один Save, Cancel, inline validation/conflicts.
+  General/Advanced зберігають тільки власні поля; diagnostics — окрема вкладка.
+- [x] Наявний first-run в тому самому editor; completion лише після host Save.
+  Немає direct settings writes з UI, нової schema, model/audio чи product features.
+- [x] Незмінний host contract і atomic registration/persistence rollback;
+  v2/v3, overrides, modifiers, unrelated fields/history та старий host захищені.
+- [x] Локальні 99 tests: OK, 4 platform skips. Qt smoke включено у suite;
+  він перевіряє failure/retry, malformed replies, Cancel, edit/remove, partial saves,
+  completion, restart та keyboard focus на ізольованих даних.
+- [x] Native Linux Qt smoke і desktop lifecycle: singleton, pause/resume,
+  5 restart/Quit, idle без microphone/model load. Headless scaling 100/150/200%,
+  light/dark render, English accessible names; screenshots переглянуто.
+- [x] Реалізація `dc1d720`; CI/runtime follow-up `b5aab52`.
+  [CI `36128646652`](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36128646652):
+  усі 6 jobs Windows/macOS/Linux × Python 3.11/3.12 успішні, включно з native
+  Qt/lifecycle, Windows remote-guard paste та offscreen scaling. Перший Ubuntu
+  CI виявив відсутню libEGL; runtime prerequisites додані до CI й setup docs.
+- [ ] Фізичне Windows/macOS, screen-reader, OS theme/display acceptance.
+- [ ] User acceptance English + неанглійська мова, справжнє диктування/copy/paste.
+- [ ] Review/merge у main. Автоматичні тести не замінюють ручного приймання.
+
+[Оновлення, межі й ручний тест](../setup/settings-redesign.md).
+Наступна дія: прийняти D.2b; після review/merge — E packaging spike/installers.
+E/F hardware, voice/GPU/download, clean-machine gates залишаються відкритими.
