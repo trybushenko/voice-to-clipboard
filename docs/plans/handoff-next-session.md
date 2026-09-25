@@ -7,8 +7,14 @@
 
 Гілка `codex/packaging-spike`, база `27add90`. PyInstaller onedir, explicit child
 routing, ізольований frozen Qt/native imports/worker IPC probe, Windows/macOS ARM64
-workflow. Source suite: 103 tests OK, 4 skips. CI/frozen результати ще очікуються;
-не позначати installers, hardware acceptance чи merge завершеними.
+workflow. Код `70844b7`; Source suite: 104 tests OK, 4 skips; native Linux lifecycle OK.
+[Frozen CI 36168009284](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36168009284):
+Windows x64/macOS ARM64 успішні, включно з overlay pipe/EOF і frozen desktop lifecycle.
+[Regression CI 36168009450](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36168009450):
+усі 6 jobs успішні. Windows 376 MB, macOS 1.15 GB; подробиці таймінгів у звіті.
+Bundler: PyInstaller onedir. Приймання користувачем і merge ще відкриті;
+далі E installers/update/uninstall/autostart, не нові продуктові функції.
+Не позначати hardware/voice/clean-machine gates завершеними.
 [Звіт і команди](../setup/packaging-spike.md).
 
 ## Остання прийнята поставка — D.2b Settings redesign
@@ -35,10 +41,10 @@ native Qt/lifecycle, Windows paste і масштабуванням. Перший
 Сфокусоване pre-merge review не виявило блокувальних дефектів; код не змінювався.
 Merge: `f9c3236`, main запушено, `origin/codex/settings-redesign` видалено.
 
-Наступна конкретна задача — **E.1 packaging spike** в окремій гілці від main:
+Наступною після D.2b була **E.1 packaging spike**, тепер реалізована вище:
 frozen Qt app, worker spawning і native dependencies на Windows CPU та Mac ARM64;
 size/cold start, вибір bundler та support matrix перед installers. Нових features
-не додавати. У цьому чаті етап E не розпочинався.
+не додавати. Актуальний стан E.1 і наступна дія наведені на початку handoff.
 
 ## Локальне розташування після перенесення
 

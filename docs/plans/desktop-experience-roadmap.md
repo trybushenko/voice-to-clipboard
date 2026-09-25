@@ -9,7 +9,8 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 2026-09-25 власник звузив scope: потрібен лише сучасний UI/UX **Settings** для
 наявного Voice to Clipboard. Draft, templates, context import, нові workflows,
 нові delivery modes та інші функції не прийняті. D.2b прийнято користувачем 2026-09-25 та змерджено в `main`: `f9c3236`
-(код `dc1d720`, CI follow-up `b5aab52`). Наступна задача — E packaging spike; актуальні межі та порядок — у розділі D.2 нижче.
+(код `dc1d720`, CI follow-up `b5aab52`). E.1 packaging spike реалізовано й автоматично перевірено в `codex/packaging-spike`
+(код `70844b7`); приймання/merge відкриті. Далі E installers; звіт E.1 унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -417,9 +418,10 @@ D.2b прийнято користувачем 2026-09-25 та змерджен�
 - [ ] Windows: per-user installer з GUI executable і runtime; macOS ARM64: `.app` у DMG;
   Linux: обрати та перевірити основний пакет для Ubuntu/Pop!_OS (наприклад `.deb`) з
   desktop entry та системними залежностями. Інші дистрибутиви позначати окремо.
-- [ ] Порівняти збірку PyInstaller/інший bundler коротким spike: native dependencies,
+- [x] Порівняти збірку PyInstaller/інший bundler коротким spike: native dependencies,
   size, cold start, MLX, PortAudio, worker spawning у frozen executable.
-  Зафіксувати обраний варіант до написання всіх installers.
+  Обрано PyInstaller onedir; native CI/вимірювання E.1 наведено нижче.
+  Альтернативу Qt/Nuitka оцінено документально, не бенчмарковано.
 - [ ] Пакет використовує той самий Settings first-run та мовні профілі, що D.2b.
   Не додавати download wizard, doctor, нові audio/model controls або інший
   onboarding flow лише заради інсталятора.
@@ -741,10 +743,17 @@ launcher `dictate --help` працює з іншої папки; history checksu
 - [x] Окрема гілка `codex/packaging-spike` від `origin/main` `27add90`.
 - [x] PyInstaller onedir spec, explicit frozen child routing, Qt/PortAudio/backend
   probe та реальний worker status/shutdown IPC на ізольованих data/cache.
-- [x] Source regression: 103 tests OK, 4 platform skips; схема/settings/history
+- [x] Source regression: 104 tests OK, 4 platform skips; схема/settings/history
   та команди source-запуску не змінені.
 - [x] Native Windows x64/macOS ARM64 build workflow і збір вимірювань/залежностей.
-- [ ] Успішне виконання frozen CI та висновок за вимірюваннями.
+- [x] Код `70844b7`: [frozen CI 36168009284](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36168009284),
+  Windows Server 2025 x64 + macOS 14.8.9 ARM64: Qt/native imports, worker IPC,
+  overlay pipe/EOF, native tray/Settings/singleton/persistence і 5 Quit/restart.
+- [x] [Regression CI 36168009450](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36168009450):
+  6 jobs успішні. Local source suite: 104 tests OK, 4 skips; native Linux lifecycle OK.
+- [x] Розміри без моделей: Windows 376 MB, macOS 1.15 GB, Linux 551 MB.
+  Повний probe: 3.81/7.62/0.92 s відповідно; Win/Mac містять 2 s overlay wait,
+  це не reboot-cold benchmark. PyInstaller onedir залишено для installer work.
 - [ ] Фізичні Windows CPU/Mac M4, tray/overlay/permissions/voice та clean-machine gates.
 - [ ] Приймання користувачем і merge.
 
