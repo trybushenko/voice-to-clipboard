@@ -43,7 +43,14 @@ jobs:
         timeout-minutes: 3
         run: python scripts/check_desktop.py
 
-      - name: Settings panel interaction smoke
+      - name: Settings panel interaction smoke (native Qt)
         if: runner.os == 'Windows' || runner.os == 'macOS'
         timeout-minutes: 2
         run: python scripts/check_settings_panel.py
+
+      - name: Settings scaling smoke (offscreen Qt)
+        shell: bash
+        run: |
+          for scale in 1.5 2; do
+            QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=$scale python scripts/check_settings_panel.py || exit 1
+          done

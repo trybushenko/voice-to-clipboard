@@ -37,11 +37,12 @@ Physical Mac M4, permissions and login startup still need device-specific testin
 macOS, including native ARM64 Python for M4 Macs.
 
 New installations start with **Alt+Shift+E → English → clipboard**. Settings opens
-until setup is finished. Add only the languages you want in **Language profiles**,
-choose a letter and clipboard/paste, click **Add** or **Update selected**, then
-**Finish setup and apply**. After successful setup, use the ordinary Apply button. Modifiers are
-inherited from the default unless you set individual **Profile modifiers**.
-The [first-run guide](docs/setup/first-run.md) covers resuming setup and update tests.
+until setup is finished. In **Settings → Languages**, use **Add language** or
+**Edit**, choose a shortcut and clipboard/paste, then **Save and finish setup**.
+Later profile edits use a single **Save**. Errors keep the editor open; **Cancel**
+discards its draft. Empty profile modifiers/model inherit the defaults in **Advanced**.
+**General** contains overlay and login startup. Settings uses Qt/PySide6 (desktop extra).
+The [Settings guide](docs/setup/settings-redesign.md) covers updates and acceptance.
 Existing users see setup once after upgrading and keep their profiles during migration;
 remove unwanted profiles in Settings. No Ukrainian-specific model is selected for new users.
 

@@ -3,6 +3,23 @@
 Оновлено: 2026-09-25. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
+## Поточна поставка — D.2b Settings redesign
+
+Реалізовано в `codex/settings-redesign` від актуального `origin/main` `bc60d3c`.
+Qt Settings замінює Tk panel: Languages, пошук, один Save/Cancel, inline errors,
+General/Advanced з окремими partial saves та існуючий first-run. Host/core/schema,
+tray/hotkeys/guarded paste не переписані; production UI не зберігає settings напряму.
+Research-гілку D.2a не переносили. PySide6 додається тільки до desktop extra.
+
+Локально: 99 tests OK (4 platform skips), Qt native Linux smoke, tray/host lifecycle
+з singleton, pause/resume і 5 restart/Quit; offscreen scale 100/150/200%, light/dark
+renders, keyboard/accessibility names. Без voice/GPU/download. Фізичні
+Windows/macOS, screen reader та user acceptance відкриті; merge не виконано.
+
+Наступна дія — ручне приймання D.2b і review перед merge. Після нього E packaging.
+[Точні команди оновлення та короткий тест](../setup/settings-redesign.md).
+Старі записи нижче — історія; нову реалізацію D.2b не починати повторно.
+
 ## Остання завершена поставка — D.1 first-run у Settings
 
 Реалізація `8f192b1`, база `e9be15c`; merge у `main`: `1a6e23c`, 2026-09-23.
@@ -51,7 +68,7 @@ download/doctor-сценарії не є acceptance і не база для prod
 починається чистою гілкою від `main`; для нього повторно перевіряються keyboard
 accessibility, Windows/macOS manual і frozen packaging у відповідних поставках.
 
-**Наступна конкретна задача — D.2b Settings redesign.** Окрема гілка від
+**Історичне формулювання поставки (тепер реалізована вище) — D.2b Settings redesign.** Окрема гілка від
 актуального `main`: сучасний editor мовних profiles, один Save, inline conflicts,
 General/Advanced для вже наявних settings, короткий existing first-run та
 сумісність старих даних. Не додавати home screen, recording controls, download
