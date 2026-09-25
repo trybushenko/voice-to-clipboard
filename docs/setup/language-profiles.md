@@ -61,9 +61,10 @@ version 2 branch also survive migration. Older releases reject version 3 rather
 than silently deleting individual modifiers; downgrade requires a compatible
 settings backup. History is unchanged. The optional profile `modifiers` field
 is saved only for explicit overrides.
-A model download wizard and validation of arbitrary custom model repositories
-remain follow-up work. Quit before updating: an older running host cannot preserve
-individual modifiers, and the updated Settings panel requires a host restart.
+A model download wizard and validation of arbitrary custom model repositories are
+not in the current roadmap; the next UX work is limited to Settings. Quit before
+updating: an older running host cannot preserve individual modifiers, and the
+updated Settings panel requires a host restart.
 
 ## Individual modifier acceptance
 

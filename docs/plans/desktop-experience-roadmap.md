@@ -1,10 +1,15 @@
 # План: надійне диктування без термінала на Windows, macOS і Linux
 
 Для нового чату: [handoff і порядок до релізу](handoff-next-session.md)
-(ревізія 2026-09-23). Мовні профілі та індивідуальні modifiers прийняті й
+(ревізія 2026-09-25). Мовні профілі та індивідуальні modifiers прийняті й
 змерджені (`c27e602`, `a91291b`). Сумісність мови й моделі прийнята користувачем і змерджена (`50af7cd`).
 D.1 first-run прийнято користувачем і змерджено: `1a6e23c` (код `8f192b1`).
-Наступна конкретна задача — E packaging spike; докази наприкінці документа.
+D.2a реалізовано окремо в `codex/desktop-ux-prototype` від актуального main
+`6827399`; його code/prototype не переноситься в `main`. Після перегляду
+2026-09-25 власник звузив scope: потрібен лише сучасний UI/UX **Settings** для
+наявного Voice to Clipboard. Draft, templates, context import, нові workflows,
+нові delivery modes та інші функції не прийняті. Наступна реалізація — D.2b,
+потім E packaging/installers; актуальні межі та порядок — у розділі D.2 нижче.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -12,7 +17,9 @@ D.1 first-run прийнято користувачем і змерджено: `
 **Статус: A завершено; B/C прийняті користувачем на Windows 2026-09-17
 після focus/overlay виправлень і дозволені до merge в main. Фізична macOS
 матриця залишається відкритою. D прийнято користувачем на Windows 2026-09-18 і дозволено до merge в main.
-Обмежені D.1-поставки прийняті та змерджені; наступний пріоритет — E packaging spike, потім решта E/F.**
+Обмежені D.1-поставки прийняті та змерджені; D.2a дала технічний напрям, але
+не є acceptance нового продуктового функціоналу. Далі D.2b Settings redesign,
+E packaging/installers і F.**
 
 Позначення: `[x]` — конкретна реалізація або перевірка, для якої є доказ;
 `[ ]` — відсутня реалізація чи непроведена перевірка. Код і ручне приймання
@@ -265,20 +272,21 @@ Secure desktop/екран входу не підтримуються. UIPI не 
 - [x] Remote прибрано: merged B/C і D branches видалено. Залишені `main` та
   `codex/english-cli-messages` з незмердженою частиною D.1.
 
-**Наступні поставки — виконувати послідовно**
+**Послідовність поставок: 1–3 завершені, 4–6 актуальні**
 
 | № | Робота | Критерій завершення |
 | --- | --- | --- |
 | 1 | Завершити English-аудит у поточній `codex/english-cli-messages`: notifications, model/worker, clipboard, overlay, CLI та diagnostics | Усі власні user-facing рядки англійською, без перекладу transcript; тести, CI, перевірка помилок/індикатора; приймання → merge → видалення гілки |
 | 2 | D.1 profiles: versioned settings schema, migration U/E/L, language/model compatibility, повні shortcuts і delivery | Старі prefs збережено; Polish/English/Ukrainian профілі; duplicate/conflict validation, atomic save та rollback; pause/restart/paste без регресій |
 | 3 | D.1 first-run UI та редактор профілів | Новий користувач обирає мову, shortcut і copy/paste без редагування файлів; existing users не втрачають конфігурацію; польськомовний тестувальник проходить сценарій |
-| 4 | E packaging spike і рішення про bundler | Пробні frozen builds Windows CPU та macOS ARM64: worker spawn, audio, native UI/dependencies; зафіксовані support matrix, обмеження, спосіб збірки |
-| 5 | E doctor, downloads і розширення onboarding | Модель: progress/cancel/retry/offline; перевірка backend реальною inference; зрозуміле відновлення без CUDA/мікрофона/диска/мережі; використовує UI кроку 3, не створює другий wizard |
-| 6 | E installers та lifecycle | Windows installer, macOS ARM64 app/DMG, обраний Linux package; update/uninstall/autostart перевірено; runtime included; signing status чесно задокументовано |
-| 7 | F release acceptance | Clean Windows без Python/Git/CUDA, Ubuntu та фізичний M4; GUI/paste/permissions/login, NVIDIA окремо, довгі сесії; version/checksums/release notes і відомі обмеження |
+| 3a | D.2a UX-прототип і перевірка UI-технології | Виконано як дослідження; лише Settings-напрям і Qt decision переходять далі. Draft та інші розширення відхилені |
+| 4 | D.2b Сучасний Settings UX | Зручне налаштування мовних профілів, shortcut і clipboard/paste; наявні функції, дані та поведінка диктування збережені |
+| 5 | E packaging spike і installers | Пробні frozen builds, потім Windows installer, macOS ARM64 app/DMG та обраний Linux package; update/uninstall/autostart без втрати даних |
+| 6 | F release acceptance | Clean Windows без Python/Git/CUDA, Ubuntu та фізичний M4; GUI/paste/permissions/login, NVIDIA окремо, довгі сесії; version/checksums/release notes і відомі обмеження |
 
 Історичний порядок: кроки 1–3 реалізовані та прийняті в межах описаних поставок;
-актуальна наступна поставка — E packaging spike кроку 4 (див. кінець документа). Для кроків 2–3 спочатку спроєктувати schema/migration та спільне model-language
+D.2a реалізовано; 2026-09-25 scope звужено до Settings UX. Далі кроки 4–6.
+Для кроків 2–3 спочатку спроєктувати schema/migration та спільне model-language
 mapping; не зашивати нові мови в окремі копії U/E/L-команд. Кожну поставку вести
 в одній активній гілці від актуального main; завершені гілки прибирати після merge.
 F-тести додавати під час відповідної реалізації, фінальний gate — на release artifacts.
@@ -326,10 +334,85 @@ first-run flow залишаються відкритими; весь D.1 не п
   перевірена користувачем 2026-09-22; Language Profiles і paste працюють.
   Це не є hardware acceptance для всього E/F.
 
-Після цього — E: installer/runtime, doctor та чисті машини; F: release gate.
-Не додавати LLM-переформатування промптів у цю поставку.
+Історичний текст вище передував UX-уточненню. Актуальний порядок після D.1:
+D.2b Settings redesign → E packaging/installers → F release gate. Не додавати
+LLM-переформатування промптів або новий product flow.
 
-### E. Просте встановлення та діагностика — P1
+### D.2. Сучасний Settings UX — P1
+
+Уточнено 2026-09-25 після перегляду D.2a: Voice to Clipboard лишається
+простим застосунком «shortcut → voice → clipboard або guarded paste». Потрібен
+лише сучасний і зрозумілий Settings UI, у якому користувач з будь-якою мовою
+може налаштувати language profile та щодня користуватися вже наявним flow.
+
+Поточний Tk/ttk panel об'єднує технічні settings, профілі й diagnostics в одну
+довгу форму; профіль потребує Add/Update та окремого Apply. Це і є проблема,
+яку вирішує D.2b. Диктування, tray, hotkeys, copy/paste, history, worker,
+моделі й delivery semantics не є предметом редизайну.
+
+**Цільовий Settings UX**
+
+- Languages — головна сторінка: компактний список «мова / shortcut /
+  clipboard або paste», пошук мови та окремий editor profile.
+- У profile editor один Save виконує чинні validation, registration та atomic
+  persistence; Cancel скасовує чернетку; помилка зберігає введене й показується
+  біля відповідного поля. Зберігаються A–Z, унікальність shortcut, profile
+  modifiers, модельні обмеження та guarded paste.
+- General і Advanced показують тільки існуючі налаштування зрозуміло й без
+  технічного шуму. Ефективні значення та успадкування visible; diagnostics
+  лишаються за потреби, а не основною частиною flow.
+- Existing first-run перетворюється на коротку форму налаштування мови,
+  shortcut і delivery. Він не завантажує модель, не перевіряє мікрофон і не
+  створює другого setup wizard.
+- Єдині spacing, typography, colors, visible focus, keyboard tab order,
+  accessible names, light/dark і scaling. UI англійський; мова UI не залежить
+  від мови диктування.
+
+**Явні межі**
+
+D.2b не додає Draft, templates, context import, новий workflow, нові типи
+delivery, AI/LLM rewriting, cloud, accounts, integrations, auto-send, новий
+history subsystem, doctor, download wizard, модельні або audio-функції. Не
+переписувати inference/core і не змінювати наявні особисті дані. Новий Settings
+UI має бути поверх того самого контрольованого host contract; production UI не
+пише `settings.json` напряму. Поточний UI лишається робочим до перевіреної заміни.
+
+**Поставки та порядок**
+
+1. **D.2a — завершене дослідження:** Qt/PySide6, design system і обмежений
+   UI/IPC slice перевірені. Частина з Draft-концепцією відхилена власником і не
+   переходить у продукт чи acceptance. Технічні докази лишаються в окремій
+   research-гілці й не входять у `main`.
+2. **D.2b — наступна поставка:** production Settings UI для існуючих profiles,
+   General/Advanced і короткого first-run; міграція та регресії. Відкрити окрему
+   гілку від актуального `main` після закриття цього документаційного уточнення.
+3. **E — після D.2b:** packaging spike як частина packaging work, потім
+   інсталятори й update/uninstall/autostart. Нових product features для цього
+   не додавати.
+4. **F:** clean-machine та hardware release acceptance.
+
+**Критерії завершення D.2b**
+
+- [ ] Користувач без інструкції додає English або будь-яку підтримувану іншу
+  мову, вибирає shortcut і clipboard/paste, зберігає профіль однією дією та
+  бачить зрозумілу помилку конфлікту без втрати введення.
+- [ ] Після restart profiles, modifiers, model overrides, onboarding completion,
+  history і наявні settings залишаються сумісними; registration rollback,
+  singleton, guarded paste, pause/restart/Quit та idle-without-recording не
+  регресують. Тести використовують ізольовані дані.
+- [ ] Existing dictation flow лишається тим самим: наявні hotkeys та tray дії
+  працюють, без додаткових щоденних кроків або обов'язкового нового home screen.
+- [ ] Keyboard-only, visible focus, 100/150/200% scaling, light/dark і
+  accessible labels перевірені. Непроведені Windows/macOS/screen-reader checks
+  позначені явно.
+- [ ] User acceptance перевіряє налаштування English і щонайменше однієї
+  неанглійської мови, edit/remove, conflict, Cancel, Apply/Save, restart і
+  звичайне диктування/copy або paste. Зелений CI не замінює цей тест.
+
+Статус: D.2a дала технічний напрям; його функціональне розширення не прийняте.
+Наступна реалізація — обмежена D.2b Settings redesign, потім packaging.
+
+### E. Просте встановлення — P1
 
 - [ ] Сценарій для користувача — завантаження артефакта з GitHub Releases,
   **без Git, gh, Python, venv і PowerShell як передумов**. Source/pip лишаються developer path.
@@ -339,12 +422,9 @@ first-run flow залишаються відкритими; весь D.1 не п
 - [ ] Порівняти збірку PyInstaller/інший bundler коротким spike: native dependencies,
   size, cold start, MLX, PortAudio, worker spawning у frozen executable.
   Зафіксувати обраний варіант до написання всіх installers.
-- [ ] Setup wizard: backend/профіль швидкості, модель і розмір завантаження, download
-  progress/cancel/retry, мікрофон і рівень, дозволи, hotkey conflict test, пробна вставка
-  в контрольоване поле, автозапуск. Незавершене налаштування можна продовжити.
-- [ ] Doctor у GUI та CLI: версії ОС/архітектури, аудіопристрій, права, clipboard,
-  shortcuts, writable data paths, місце на диску, модель, driver/runtime та пробна inference.
-  Кожна відома помилка містить наступну дію, а технічні деталі доступні окремо.
+- [ ] Пакет використовує той самий Settings first-run та мовні профілі, що D.2b.
+  Не додавати download wizard, doctor, нові audio/model controls або інший
+  onboarding flow лише заради інсталятора.
 - [ ] Linux/Windows: без NVIDIA — CPU INT8 профіль. NVIDIA перевіряти реальною пробою
   завантаження/inference, не лише `get_cuda_device_count()`.
 - [ ] Для `auto` при відсутніх CUDA libraries запропонувати/використати налаштований CPU
@@ -363,8 +443,8 @@ first-run flow залишаються відкритими; весь D.1 не п
 
 Приймання: чиста Windows VM без Git/Python/CUDA; чиста Ubuntu без Git; Mac M4.
 На CPU-профілі перше диктування можливе без CUDA. Для NVIDIA — окрема перевірка із
-правильною та відсутньою runtime. Offline після кешування моделі, збій мережі,
-відсутність диска/мікрофона/дозволу дають конкретні повідомлення, не traceback-only.
+правильною та відсутньою runtime. Відомі помилки інсталяції та дозволів мають
+вести до конкретної дії; новий doctor або wizard не є критерієм цієї поставки.
 
 ### F. Регресії та release gate — P1, обов'язково перед оголошенням готовності
 
@@ -387,7 +467,8 @@ first-run flow залишаються відкритими; весь D.1 не п
 2. **PR 2 — Windows worker/stop:** B; реальний Ctrl+C/PID/tail тест.
 3. **PR 3 — hotkeys і paste:** C; Windows desktop acceptance до переходу далі.
 4. **PR 4 — resident app:** D; tray, конфігурація, автозапуск, shutdown.
-5. **PR 5 — installers і doctor:** E; first-run wizard, hardware probes, інструкції.
+5. **PR 5 — installers:** E; frozen build, інсталятори, update/uninstall,
+   наявний Settings first-run та інструкції.
 6. **PR 6 — release:** F; артефакти, clean-machine прогони, результати acceptance.
 
 Результат кожної поставки: позначені checklist-пункти + коміт/PR + посилання на CI
@@ -563,7 +644,8 @@ Apply; після restart завершений сценарій автомати
 не встановлює completion. Clean/existing/failed Apply/restart сценарії перевірено.
 Межі: використовувати наявну Settings, без другого wizard, download progress,
 inference doctor, packaging чи installers.
-E packaging spike залишається наступною окремою роботою після D.1.
+Це була наступна робота після D.1 на момент поставки; актуальний пріоритет
+замінено на D.2b Settings redesign у розділі D.2.
 
 
 - [x] Реалізовано у `codex/first-run-settings` від `origin/main` `e9be15c`:
@@ -591,9 +673,19 @@ E packaging spike залишається наступною окремою ро�
 [Оновлення й ручний тест](../setup/first-run.md). Unsaved edits не відновлюються;
 відновлюється сценарій зі збережених профілів. Linux без GTK tray host може
 відкрити control panel незалежно від completion. Без voice/GPU/download tests.
-Наступна конкретна задача — **E packaging spike**: пробні frozen builds для
-Windows CPU та macOS ARM64, перевірка worker spawning і native dependencies;
-зафіксувати bundler decision, відтворювані команди збірки та support matrix з
-перевіреними й неперевіреними обмеженнями. Без installers, download wizard чи
-inference doctor у цьому spike. Новий етап у цьому чаті не розпочато;
-фізична hardware matrix та E/F release gates залишаються відкритими.
+Наступна задача на момент завершення D.1 була E packaging spike; цей запис
+історичний. Після уточнення D.2 2026-09-25 наступна задача — D.2b Settings
+redesign, а packaging/installers переходять після нього. Фізична hardware
+matrix та E/F release gates залишаються відкритими.
+
+### Уточнення D.2 після перегляду власником — 2026-09-25
+
+D.2a була технічною пробою, а не прийманням нового продуктового напряму.
+Власник залишає Voice to Clipboard простим: shortcut → voice → clipboard або
+guarded paste. Наступна реалізація — **D.2b сучасний Settings UX**, після неї
+**E packaging/installers**, потім F. Packaging spike входить в E та не блокує
+Settings redesign наперед.
+
+Draft, templates, context import, словник, integrations, AI/LLM, нові workflows,
+нові delivery modes та нове зберігання вилучені з roadmap і acceptance criteria.
+Production UI не замінено цією документаційною зміною.

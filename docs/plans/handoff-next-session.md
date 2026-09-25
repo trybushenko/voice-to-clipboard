@@ -1,6 +1,6 @@
 # Передача контексту та робочий процес до першого релізу
 
-Оновлено: 2026-09-23. Це знімок для нового чату, а не заміна актуального git/CI.
+Оновлено: 2026-09-25. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
 ## Остання завершена поставка — D.1 first-run у Settings
@@ -34,15 +34,35 @@ panel навіть після completion. Offline model check не гарант�
 backend format або inference. Mic/model download/GPU, фізичний macOS/M4 та
 clean-machine release gates цією поставкою не закриті.
 
-## Наступна конкретна задача — E packaging spike
+## Уточнений напрям після перегляду D.2a — 2026-09-25
 
-В окремій поставці від актуального main перевірити пробні frozen builds Windows
-CPU та macOS ARM64: worker spawning, native UI/audio dependencies, запуск без
-source checkout. Результат — рішення щодо bundler, відтворювані команди збірки
-та support matrix, де явно розділені перевірені можливості й відкриті обмеження.
-Не додавати installers, downloads wizard чи inference doctor до цього spike.
-Новий великий етап у поточному чаті не розпочато. Signing/notarization і фізичне
-hardware-приймання залишаються окремими залежностями наступних поставок E/F.
+Research-гілка `codex/desktop-ux-prototype` була створена від актуального
+`main` `6827399`, але не переноситься в `main`: вона містить прототип і
+відхилений product scope.
+
+Власник прийняв лише технічний напрям Qt/PySide6 і ціль зробити Settings
+сучасним. Він не прийняв розширення продукту: Draft, templates, context import,
+нові workflows, AI/LLM, integrations, нові delivery modes або нове сховище.
+Voice to Clipboard лишається наявним flow: shortcut → voice → clipboard або
+guarded paste. Ці обмеження є авторитетними для всіх наступних поставок.
+
+D.2a — ізольований технічний прототип. Його Draft tab і симульовані
+download/doctor-сценарії не є acceptance і не база для production UI. D.2b
+починається чистою гілкою від `main`; для нього повторно перевіряються keyboard
+accessibility, Windows/macOS manual і frozen packaging у відповідних поставках.
+
+**Наступна конкретна задача — D.2b Settings redesign.** Окрема гілка від
+актуального `main`: сучасний editor мовних profiles, один Save, inline conflicts,
+General/Advanced для вже наявних settings, короткий existing first-run та
+сумісність старих даних. Не додавати home screen, recording controls, download
+wizard, doctor чи нові product workflows.
+
+Після приймання D.2b — **E packaging/installers**: packaging spike з обраним
+Settings UI, Windows installer, macOS ARM64 app/DMG та обраний Linux package,
+з update/uninstall/autostart без втрати prefs/history. Потім F clean-machine та
+hardware acceptance. Packaging не є попередньою умовою для D.2b.
+
+Відхилені продуктові гіпотези не є backlog і не є джерелом наступних задач.
 
 ## Завершена поставка: сумісність моделі й мови
 
@@ -315,18 +335,17 @@ Paste tests замінюють clipboard тестовим текстом. Smoke 
 
 ## Порядок до завершеного продукту
 
-1. Стабілізувати/прийняти поточну D.1-поставку; review, targeted tests, Windows acceptance.
-   Після дозволу користувача: merge main, позначити факти у roadmap, прибрати remote-гілку.
-2. Закрити залишок D.1 окремими поставками: незалежні hotkey modifiers, простий first-run
-   сценарій, зрозумілий вибір сумісної моделі. Не робити два різних onboarding wizard.
-3. E packaging spike: перевірити bundler/native libraries/worker spawning у frozen build,
-   Windows CPU та Mac ARM64; записати рішення і support matrix до масових installers.
-4. E onboarding/doctor: real backend inference, модель/download progress/cancel/retry,
-   permissions/microphone, диск/мережа/offline, зрозуміла дія відновлення; GPU необов'язковий.
-5. E installers: Windows per-user runtime bundle, macOS ARM64 app/DMG, обраний Linux package;
-   update/uninstall/autostart без втрати prefs/history. Signing/notarization чесно позначити;
-   сертифікати є зовнішньою залежністю. Нині існує тільки source/pip installation.
-6. F release: clean Windows без Python/Git/CUDA, Ubuntu, фізичний M4; NVIDIA окремо;
+1. D.2b Settings redesign: сучасні Languages, один Save, inline conflicts,
+   General/Advanced для існуючих settings та короткий наявний first-run.
+   Не змінювати щоденний диктувальний flow і не додавати product features.
+2. Приймання D.2b: English і неанглійський profile, shortcut/delivery, conflict,
+   Cancel, restart, звичайне copy/paste; перевірки доступності та сумісності.
+3. E packaging spike: frozen build з прийнятим Settings UI, worker spawning і
+   native dependencies на Windows CPU та Mac ARM64; записати support matrix.
+4. E installers: Windows per-user runtime bundle, macOS ARM64 app/DMG, обраний Linux package;
+   update/uninstall/autostart без втрати prefs/history. Використати D.2b Settings,
+   не створювати download wizard або doctor. Signing/notarization чесно позначити.
+5. F release: clean Windows без Python/Git/CUDA, Ubuntu, фізичний M4; NVIDIA окремо;
    regressions і довгі сесії; artifacts/version/checksums/release notes/known limitations.
 
 ## Definition of done для першого публічного релізу
