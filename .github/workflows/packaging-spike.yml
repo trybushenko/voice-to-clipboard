@@ -35,8 +35,10 @@ jobs:
         run: |
           if [ "${{ runner.os }}" = "macOS" ]; then
             python scripts/check_frozen.py dist/VoiceToClipboard.app/Contents/MacOS/VoiceToClipboard
+            python scripts/check_desktop.py --executable dist/VoiceToClipboard.app/Contents/MacOS/VoiceToClipboard
           else
             python scripts/check_frozen.py dist/VoiceToClipboard/VoiceToClipboard.exe
+            python scripts/check_desktop.py --executable dist/VoiceToClipboard/VoiceToClipboard.exe
           fi
       - name: Archive bundle (preserve macOS symlinks)
         shell: bash
