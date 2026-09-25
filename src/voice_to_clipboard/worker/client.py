@@ -6,6 +6,7 @@ import time
 from types import SimpleNamespace
 import numpy as np
 from ..platform.processes import spawn_background
+from ..platform.frozen import module_command
 from .config import RUNTIME
 from .transport import connect
 from .protocol import receive, send
@@ -32,7 +33,7 @@ class RemoteModel:
                 break
             except (FileNotFoundError, ConnectionRefusedError, PermissionError, TimeoutError) as exc:
                 if not launched and not isinstance(exc, PermissionError):
-                    spawn_background([sys.executable, '-m', 'voice_to_clipboard.worker.service'],
+                    spawn_background(module_command('voice_to_clipboard.worker.service'),
                                      env={**os.environ, 'DICTATE_RUNTIME': str(self.runtime)},
                                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                      stderr=subprocess.DEVNULL, no_console=True)

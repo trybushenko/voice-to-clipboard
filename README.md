@@ -55,6 +55,8 @@ you do not need to keep a terminal open.
 no standalone installer yet. Follow the [step-by-step installation guide](docs/setup/installation.md)
 for prerequisites, setup without Git, your first recording and troubleshooting.
 Downloads are required for the first use of each model.
+The [E.1 packaging spike](docs/setup/packaging-spike.md) provides experimental
+standalone builds and verification commands; these are not release installers.
 
 Application messages are in English; errors from the OS or dependencies may use
 the system language. See [profile setup and testing](docs/setup/language-profiles.md).

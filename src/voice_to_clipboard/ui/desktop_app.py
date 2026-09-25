@@ -10,6 +10,7 @@ import time
 from ..core.host_control import request
 from ..platform.paths import cache_dir
 from ..platform.processes import spawn_background
+from ..platform.frozen import module_command
 
 
 def endpoint():
@@ -98,7 +99,7 @@ class Bridge:
             except (OSError, EOFError, RuntimeError):
                 pass
         self.panels[:] = [p for p in self.panels if p.poll() is None]
-        self.panel = spawn_background([sys.executable, '-m', 'voice_to_clipboard.ui.desktop_panel'],
+        self.panel = spawn_background(module_command('voice_to_clipboard.ui.desktop_panel'),
                                       no_console=True, stdin=subprocess.DEVNULL,
                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         self.panels.append(self.panel)
@@ -332,7 +333,7 @@ def main():
     if args.run:
         run()
         return
-    spawn_background([sys.executable, '-m', 'voice_to_clipboard.ui.desktop_app', '--run'],
+    spawn_background(module_command('voice_to_clipboard.ui.desktop_app', '--run'),
                      no_console=True, stdin=subprocess.DEVNULL,
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 

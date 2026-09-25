@@ -3,6 +3,14 @@
 Оновлено: 2026-09-25. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
+## Поточна поставка — E.1 packaging spike
+
+Гілка `codex/packaging-spike`, база `27add90`. PyInstaller onedir, explicit child
+routing, ізольований frozen Qt/native imports/worker IPC probe, Windows/macOS ARM64
+workflow. Source suite: 103 tests OK, 4 skips. CI/frozen результати ще очікуються;
+не позначати installers, hardware acceptance чи merge завершеними.
+[Звіт і команди](../setup/packaging-spike.md).
+
 ## Остання прийнята поставка — D.2b Settings redesign
 
 Реалізовано в `codex/settings-redesign` від актуального `origin/main` `bc60d3c`.

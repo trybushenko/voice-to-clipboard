@@ -8,6 +8,7 @@ import tempfile
 import time
 from pathlib import Path
 from ..platform.processes import spawn_background
+from ..platform.frozen import module_command
 from .session import try_stop_running
 
 
@@ -72,7 +73,7 @@ class SessionLauncher:
     def _ensure_worker(self):
         if self.worker is None or self.worker.poll() is not None:
             self.worker = spawn_background(
-                [sys.executable, '-m', 'voice_to_clipboard.worker.service'],
+                module_command('voice_to_clipboard.worker.service'),
                 no_console=True, env={**os.environ, 'DICTATE_RUNTIME': str(self.runtime), 'DICTATE_TECHNICAL_ONLY': '1'},
                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
             from .app_logging import collect_process
@@ -129,8 +130,8 @@ class SessionLauncher:
             return
         if self.runtime is None and try_stop_running():
             return
-        command = [sys.executable, '-m', 'voice_to_clipboard', '--lang', lang,
-                   '--silence', '0', '--inference-device', self.args.inference_device]
+        command = module_command('voice_to_clipboard', '--lang', lang,
+                   '--silence', '0', '--inference-device', self.args.inference_device)
         chosen_model = model or self.args.model or 'large-v3-turbo'
         from .model_compatibility import validate as validate_model
         try:

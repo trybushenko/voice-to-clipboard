@@ -25,3 +25,8 @@ Thumbs.db
 .agents/
 
 settings.json
+
+.packaging-venv/
+packaging-report.json
+packaging-dependencies.txt
+packaging-bundle.tar.gz

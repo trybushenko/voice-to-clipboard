@@ -722,7 +722,7 @@ Production UI не замінено цією документаційною зм
 Наступна конкретна задача: **E.1 packaging spike** від актуального main —
 перевірити frozen Qt app, worker spawning, native dependencies, size/cold start
 на Windows CPU та macOS ARM64; зафіксувати bundler і support matrix до installers.
-Цей етап у поточному чаті не розпочато.
+E.1 розпочато в `codex/packaging-spike` від `27add90`; див. звіт нижче.
 E/F hardware, voice/GPU/download, clean-machine gates залишаються відкритими.
 
 
@@ -735,3 +735,19 @@ E/F hardware, voice/GPU/download, clean-machine gates залишаються в�
 Після перенесення: 99 tests OK (4 skips), native desktop lifecycle OK,
 launcher `dictate --help` працює з іншої папки; history checksum і GNOME bindings
 незмінні. Приватна резервна копія — `backups/relocation-2026-09-25` у data folder.
+
+### E.1 packaging spike — поставка 2026-09-25
+
+- [x] Окрема гілка `codex/packaging-spike` від `origin/main` `27add90`.
+- [x] PyInstaller onedir spec, explicit frozen child routing, Qt/PortAudio/backend
+  probe та реальний worker status/shutdown IPC на ізольованих data/cache.
+- [x] Source regression: 103 tests OK, 4 platform skips; схема/settings/history
+  та команди source-запуску не змінені.
+- [x] Native Windows x64/macOS ARM64 build workflow і збір вимірювань/залежностей.
+- [ ] Успішне виконання frozen CI та висновок за вимірюваннями.
+- [ ] Фізичні Windows CPU/Mac M4, tray/overlay/permissions/voice та clean-machine gates.
+- [ ] Приймання користувачем і merge.
+
+[Межі, вибір bundler, support matrix, точні команди та ручний тест](../setup/packaging-spike.md).
+Інсталятори, підпис/нотаризація, update/uninstall/autostart та Linux package
+залишаються наступними E-поставками після підтвердження spike.

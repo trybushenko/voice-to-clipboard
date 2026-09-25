@@ -14,6 +14,9 @@ APP_NAME = 'Voice to Clipboard'
 
 
 def command():
+    if getattr(sys, "frozen", False):
+        from .frozen import module_command
+        return module_command("voice_to_clipboard.ui.desktop_app", "--run")
     python = Path(sys.executable).absolute()
     if sys.platform == 'win32':
         candidate = python.with_name('pythonw.exe')
@@ -60,6 +63,8 @@ def _write(path, content, mode=0o600):
 
 
 def install():
+    if getattr(sys, "frozen", False):
+        raise RuntimeError("Launcher installation is not supported by the packaging spike")
     path = launcher_path()
     argv = command()
     if sys.platform == 'win32':
@@ -110,6 +115,8 @@ def enabled():
 
 
 def set_enabled(value):
+    if getattr(sys, "frozen", False):
+        raise RuntimeError("Autostart changes are not supported by the packaging spike")
     if type(value) is not bool:
         raise ValueError('Autostart must be enabled or disabled')
     if value:
