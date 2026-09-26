@@ -1,6 +1,6 @@
 # Передача контексту та робочий процес до першого релізу
 
-Оновлено: 2026-09-25. Це знімок для нового чату, а не заміна актуального git/CI.
+Оновлено: 2026-09-26. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
 ## Поточна поставка — E.1 packaging spike
@@ -12,7 +12,12 @@ workflow. Код `70844b7`; Source suite: 104 tests OK, 4 skips; native Linux li
 Windows x64/macOS ARM64 успішні, включно з overlay pipe/EOF і frozen desktop lifecycle.
 [Regression CI 36168009450](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36168009450):
 усі 6 jobs успішні. Windows 376 MB, macOS 1.15 GB; подробиці таймінгів у звіті.
-Bundler: PyInstaller onedir. Приймання користувачем і merge ще відкриті;
+Bundler: PyInstaller onedir. Windows-приймання отримано 2026-09-26: користувач
+підтвердив усі ручні пункти; локальний probe на Windows 11 AMD64 build 26200
+успішний (worker/overlay OK, Qt 4.185 s, in-process probe 6.568 s).
+Наданий Windows Server JSON — CI artifact, не локальний результат.
+Окремого model/device протоколу optional voice test не надано.
+Наступна дія — review і merge E.1; merge ще не виконано;
 далі E installers/update/uninstall/autostart, не нові продуктові функції.
 Не позначати hardware/voice/clean-machine gates завершеними.
 [Звіт і команди](../setup/packaging-spike.md).

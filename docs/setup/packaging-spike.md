@@ -165,4 +165,24 @@ routing, Qt, native dependencies, overlay pipe lifetime and host shutdown are
 viable on both target runners. macOS bundle size (1.15 GB with MLX plus CPU
 fallback dependencies), dependency locking/licenses and clean-machine behavior
 remain work before release. No models or CUDA runtime were included; model
-inference is untested. Physical user acceptance and merge are pending.
+inference is not exercised by the probe. Windows user acceptance is recorded below;
+merge and the remaining release matrix are pending.
+
+## Windows user acceptance — 2026-09-26
+
+The owner reports that all listed manual checks passed on a separate Windows
+machine. The local report identifies Windows 11 build 26200, AMD64, bundled
+Python 3.12.10, CTranslate2 4.8.2 and PortAudio 19.7. Frozen worker status/shutdown
+and overlay pipe/EOF are true. Qt import/render: 4.185 s; in-process probe: 6.568 s
+(includes the overlay observation). This report has no external process-start
+measurement or bundle size; do not substitute the archived CI figures for them.
+The Windows Server 2025 JSON also supplied by the owner is the archived CI report,
+not a second measurement on the user's machine.
+
+Accepted manual scenario: tray/Settings startup, profile save and restart,
+completion persistence, singleton and Quit. The owner said all points passed;
+no separate model/device/transcript record was supplied for the optional voice
+check. The probe explicitly reports no model load or microphone open, so it alone
+cannot establish voice/inference acceptance. This closes Windows acceptance of
+the E.1 scenario, not physical Mac M4, GPU or the complete clean-machine matrix.
+No code changes or repeated tests were needed for this documentation update.

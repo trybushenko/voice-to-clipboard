@@ -10,7 +10,7 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 наявного Voice to Clipboard. Draft, templates, context import, нові workflows,
 нові delivery modes та інші функції не прийняті. D.2b прийнято користувачем 2026-09-25 та змерджено в `main`: `f9c3236`
 (код `dc1d720`, CI follow-up `b5aab52`). E.1 packaging spike реалізовано й автоматично перевірено в `codex/packaging-spike`
-(код `70844b7`); приймання/merge відкриті. Далі E installers; звіт E.1 унизу.
+(код `70844b7`); Windows-приймання отримано 2026-09-26, merge відкритий. Далі E installers; звіт E.1 унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -754,8 +754,13 @@ launcher `dictate --help` працює з іншої папки; history checksu
 - [x] Розміри без моделей: Windows 376 MB, macOS 1.15 GB, Linux 551 MB.
   Повний probe: 3.81/7.62/0.92 s відповідно; Win/Mac містять 2 s overlay wait,
   це не reboot-cold benchmark. PyInstaller onedir залишено для installer work.
-- [ ] Фізичні Windows CPU/Mac M4, tray/overlay/permissions/voice та clean-machine gates.
-- [ ] Приймання користувачем і merge.
+- [x] Користувач 2026-09-26 підтвердив усі перелічені ручні пункти на окремій
+  Windows 11 AMD64 (build 26200). Локальний frozen probe: worker status/shutdown
+  і overlay pipe/EOF OK; Qt 4.185 s, in-process probe 6.568 s.
+  Перший наданий JSON — звіт CI; другий — фактичний локальний результат.
+- [ ] Фізичний Mac M4, деталізовані voice/GPU/permissions та повна clean-machine matrix.
+  Окремого model/device протоколу для optional voice test не надано.
+- [ ] Review і merge.
 
 [Межі, вибір bundler, support matrix, точні команди та ручний тест](../setup/packaging-spike.md).
 Інсталятори, підпис/нотаризація, update/uninstall/autostart та Linux package
