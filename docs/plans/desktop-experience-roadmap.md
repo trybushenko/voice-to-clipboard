@@ -1,7 +1,7 @@
 # План: надійне диктування без термінала на Windows, macOS і Linux
 
 Для нового чату: [handoff і порядок до релізу](handoff-next-session.md)
-(ревізія 2026-09-25). Мовні профілі та індивідуальні modifiers прийняті й
+(ревізія 2026-09-26). Мовні профілі та індивідуальні modifiers прийняті й
 змерджені (`c27e602`, `a91291b`). Сумісність мови й моделі прийнята користувачем і змерджена (`50af7cd`).
 D.1 first-run прийнято користувачем і змерджено: `1a6e23c` (код `8f192b1`).
 D.2a реалізовано окремо в `codex/desktop-ux-prototype` від актуального main
@@ -10,7 +10,8 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 наявного Voice to Clipboard. Draft, templates, context import, нові workflows,
 нові delivery modes та інші функції не прийняті. D.2b прийнято користувачем 2026-09-25 та змерджено в `main`: `f9c3236`
 (код `dc1d720`, CI follow-up `b5aab52`). E.1 packaging spike реалізовано й автоматично перевірено в `codex/packaging-spike`
-(код `70844b7`); Windows-приймання отримано 2026-09-26, merge відкритий. Далі E installers; звіт E.1 унизу.
+(код `70844b7`); прийнято користувачем і змерджено 2026-09-26: `7ba73b2`.
+Main запушено, завершену remote-гілку видалено. Далі E.2 Windows per-user CPU installer; звіт E.1 унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -19,7 +20,7 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 після focus/overlay виправлень і дозволені до merge в main. Фізична macOS
 матриця залишається відкритою. D прийнято користувачем на Windows 2026-09-18 і дозволено до merge в main.
 Обмежені D.1-поставки прийняті та змерджені; D.2a дала технічний напрям, але
-не є acceptance нового продуктового функціоналу. D.2b прийнято й змерджено. Далі E packaging spike/installers і F.**
+не є acceptance нового продуктового функціоналу. D.2b прийнято й змерджено. E.1 прийнято й змерджено; далі E.2 Windows installer та решта E/F.**
 
 Позначення: `[x]` — конкретна реалізація або перевірка, для якої є доказ;
 `[ ]` — відсутня реалізація чи непроведена перевірка. Код і ручне приймання
@@ -760,8 +761,27 @@ launcher `dictate --help` працює з іншої папки; history checksu
   Перший наданий JSON — звіт CI; другий — фактичний локальний результат.
 - [ ] Фізичний Mac M4, деталізовані voice/GPU/permissions та повна clean-machine matrix.
   Окремого model/device протоколу для optional voice test не надано.
-- [ ] Review і merge.
+- [x] 2026-09-26: користувач повторно підтвердив сценарії й дозволив merge/push/delete.
+  Сфокусоване review frozen routing, Windows streams, launcher guards і перевірок:
+  блокувальних дефектів не виявлено; функціональний код не змінено.
+  Після `70844b7` були лише docs; тести повторно не запускали.
+- [x] Merge `7ba73b2` у `main`, main запушено; `origin/codex/packaging-spike` видалено.
 
 [Межі, вибір bundler, support matrix, точні команди та ручний тест](../setup/packaging-spike.md).
 Інсталятори, підпис/нотаризація, update/uninstall/autostart та Linux package
 залишаються наступними E-поставками після підтвердження spike.
+
+### Наступна конкретна поставка — E.2 Windows per-user CPU installer
+
+Почати в новій гілці від актуального main; у цьому чаті не розпочато.
+Межі: інсталятор на основі перевіреного PyInstaller onedir для Windows x64,
+без Git/Python/CUDA як передумов; Start Menu launcher, один керований автозапуск,
+upgrade/uninstall без втрати settings/profiles/history. Чинні Settings/first-run
+і source-install сумісність зберегти; без нових UI/workflows/download wizard.
+
+Критерії: install → launch → CPU dictation → Quit на чистій Windows VM;
+upgrade збережених профілів/історії; enable/disable автозапуск і вхід у систему;
+uninstall прибирає власні launchers/autostart, залишає дані; reinstall їх читає.
+Додати версію/checksum і чесний signing status та перевірки installer lifecycle.
+Вибір installer tooling виконати в E.2. macOS DMG/нотаризація, Linux package,
+NVIDIA runtime і повна hardware matrix — окремі наступні поставки.

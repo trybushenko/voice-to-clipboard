@@ -28,8 +28,8 @@ After Quit, from the repository (developer path; Python/Git required):
 
 ```powershell
 git fetch origin
-git switch codex/packaging-spike
-git pull --ff-only origin codex/packaging-spike
+git switch main
+git pull --ff-only origin main
 py -3.12 -m venv .packaging-venv
 .\.packaging-venv\Scripts\python.exe -m pip install -r packaging/requirements.txt ".[whisper,hotkeys,desktop]"
 .\.packaging-venv\Scripts\python.exe -m PyInstaller --clean --noconfirm packaging/desktop.spec
@@ -40,8 +40,8 @@ macOS ARM64, native Python 3.12:
 
 ```sh
 git fetch origin
-git switch codex/packaging-spike
-git pull --ff-only origin codex/packaging-spike
+git switch main
+git pull --ff-only origin main
 python3.12 -m venv .packaging-venv
 .packaging-venv/bin/python -m pip install -r packaging/requirements.txt '.[mac,whisper,hotkeys,desktop]'
 .packaging-venv/bin/python -m PyInstaller --clean --noconfirm packaging/desktop.spec
@@ -60,8 +60,8 @@ For the existing Linux source installation, after Quit:
 ```sh
 cd /home/artem-trybushenko/Projects/voice-to-clipboard
 git fetch origin
-git switch codex/packaging-spike
-git pull --ff-only origin codex/packaging-spike
+git switch main
+git pull --ff-only origin main
 venv/bin/python -m pip install '.[whisper,hotkeys,desktop]'
 venv/bin/python -m voice_to_clipboard.ui.desktop_app
 ```
@@ -166,7 +166,7 @@ viable on both target runners. macOS bundle size (1.15 GB with MLX plus CPU
 fallback dependencies), dependency locking/licenses and clean-machine behavior
 remain work before release. No models or CUDA runtime were included; model
 inference is not exercised by the probe. Windows user acceptance is recorded below;
-merge and the remaining release matrix are pending.
+merge `7ba73b2` is pushed to main; the remaining release matrix is pending.
 
 ## Windows user acceptance — 2026-09-26
 
@@ -186,3 +186,14 @@ check. The probe explicitly reports no model load or microphone open, so it alon
 cannot establish voice/inference acceptance. This closes Windows acceptance of
 the E.1 scenario, not physical Mac M4, GPU or the complete clean-machine matrix.
 No code changes or repeated tests were needed for this documentation update.
+
+## Merge — 2026-09-26
+
+The owner reconfirmed the listed scenarios and authorized merge/push/branch deletion.
+Focused review found no blocking defects; no functional code changed after the
+verified `70844b7`. Existing CI and local evidence above applies; tests were not
+rerun for documentation-only changes. Merge `7ba73b2` is pushed to `main` and
+`origin/codex/packaging-spike` is deleted. Update/build commands now use `main`.
+Next delivery: E.2 Windows per-user CPU installer, preserving settings/history
+through upgrade/uninstall/reinstall and managing one login-startup entry.
+No E.2 implementation was started in this session.

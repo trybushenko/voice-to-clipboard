@@ -3,7 +3,7 @@
 Оновлено: 2026-09-26. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
-## Поточна поставка — E.1 packaging spike
+## Остання прийнята й змерджена поставка — E.1 packaging spike
 
 Гілка `codex/packaging-spike`, база `27add90`. PyInstaller onedir, explicit child
 routing, ізольований frozen Qt/native imports/worker IPC probe, Windows/macOS ARM64
@@ -17,8 +17,19 @@ Bundler: PyInstaller onedir. Windows-приймання отримано 2026-09
 успішний (worker/overlay OK, Qt 4.185 s, in-process probe 6.568 s).
 Наданий Windows Server JSON — CI artifact, не локальний результат.
 Окремого model/device протоколу optional voice test не надано.
-Наступна дія — review і merge E.1; merge ще не виконано;
-далі E installers/update/uninstall/autostart, не нові продуктові функції.
+Користувач повторно прийняв сценарії й дозволив merge/push/delete 2026-09-26.
+Сфокусоване pre-merge review не знайшло блокувальних дефектів; код не змінено.
+Після перевіреного `70844b7` лише docs, повторних тестів не запускали.
+Merge `7ba73b2` у main запушено; `origin/codex/packaging-spike` видалено.
+
+Наступна конкретна задача — **E.2 Windows per-user CPU installer** від актуального
+main: встановлення без Python/Git/CUDA, Start Menu, один керований автозапуск,
+upgrade/uninstall/reinstall зі збереженням profiles/settings/history.
+Приймання: чиста Windows VM, launch/CPU dictation/Quit, upgrade, login startup,
+uninstall/reinstall; version/checksum і явний signing status. Чинні Settings та
+source path зберегти; нових продуктових функцій не додавати. Installer tooling
+обрати в E.2. macOS DMG, Linux package і NVIDIA runtime — окремі поставки.
+У цьому чаті E.2 не розпочато.
 Не позначати hardware/voice/clean-machine gates завершеними.
 [Звіт і команди](../setup/packaging-spike.md).
 
