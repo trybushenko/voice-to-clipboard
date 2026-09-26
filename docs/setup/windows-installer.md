@@ -10,7 +10,7 @@ target; Windows Server CI is automated evidence, not clean-machine acceptance.
 
 Quit Voice to Clipboard from the tray (finish dictation first). Download the
 `windows-x64-cpu-installer` artifact from the **Windows CPU installer** workflow
-for branch `codex/windows-cpu-installer`. Extract the artifact and run the setup.
+from the [verified E.2 run](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750191). Extract the artifact and run the setup.
 This preview is **unsigned**; Authenticode/SmartScreen trust is not established.
 The SHA256 detects corruption; it is not publisher authentication.
 
@@ -58,8 +58,8 @@ After Quit, from a clean source checkout on Windows:
 
 ```powershell
 git fetch origin
-git switch codex/windows-cpu-installer
-git pull --ff-only origin codex/windows-cpu-installer
+git switch main
+git pull --ff-only origin main
 .\.venv\Scripts\python.exe -m pip install '.[whisper,hotkeys,desktop]'
 .\.venv\Scripts\python.exe -m voice_to_clipboard.ui.desktop_app
 ```
@@ -105,8 +105,9 @@ Manual test on a clean Windows 10/11 x64 account without Git/Python/CUDA:
 4. Uninstall. Expect no app launcher/startup entry; data remain. Reinstall and
    launch. Expect saved profiles/history and completed first-run retained.
 
-Record Windows version, installer checksum, CPU/model and results. Physical
-clean-machine dictation/login acceptance remains open until actually performed.
+Record Windows version, installer checksum, CPU/model and results for the release
+matrix. The user accepted the listed delivery scenarios on 2026-09-26; detailed
+clean-machine/hardware coverage remains a separate release gate.
 
 ## Recorded evidence (2026-09-26)
 
@@ -119,4 +120,10 @@ runtime, real CPU tiny.en inference on synthetic silence passed. The earlier
 lifecycle failure assumed `unins000.exe` survived rapid reinstall; the test now
 reads Windows' registered UninstallString. No installer runtime change was needed
 for that failure. The checks are automated evidence, not physical clean-machine,
-real spoken dictation or login acceptance. Branch pushed; no merge performed.
+real spoken dictation or login acceptance. Separately, on 2026-09-26 the user
+confirmed the listed manual scenarios worked and authorized merge/push/branch
+removal; no separate OS/model/device report was supplied. Merge `31ccd64` is on
+`main`, pushed; the completed remote branch was deleted. Pre-merge review found
+no blocking defects; only documentation changed after tested code `3397697`,
+so tests were not rerun for acceptance/merge. Next delivery: E.3 macOS ARM64 app/DMG,
+not started in this session.

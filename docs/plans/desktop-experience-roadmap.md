@@ -11,9 +11,9 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 нові delivery modes та інші функції не прийняті. D.2b прийнято користувачем 2026-09-25 та змерджено в `main`: `f9c3236`
 (код `dc1d720`, CI follow-up `b5aab52`). E.1 packaging spike реалізовано й автоматично перевірено в `codex/packaging-spike`
 (код `70844b7`); прийнято користувачем і змерджено 2026-09-26: `7ba73b2`.
-Main запушено, завершену remote-гілку видалено. E.2 реалізовано й автоматично
-перевірено в `codex/windows-cpu-installer`; очікує ручного Windows-приймання.
-Звіти E.1/E.2 унизу.
+E.2 Windows CPU installer прийнято користувачем 2026-09-26 та змерджено: `31ccd64`
+(перевірений код `3397697`). Main запушено, `origin/codex/windows-cpu-installer`
+видалено. Далі **E.3 macOS ARM64 app/DMG**; у цьому чаті не розпочато. Звіти унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -22,7 +22,7 @@ Main запушено, завершену remote-гілку видалено. E.
 після focus/overlay виправлень і дозволені до merge в main. Фізична macOS
 матриця залишається відкритою. D прийнято користувачем на Windows 2026-09-18 і дозволено до merge в main.
 Обмежені D.1-поставки прийняті та змерджені; D.2a дала технічний напрям, але
-не є acceptance нового продуктового функціоналу. D.2b прийнято й змерджено. E.1 прийнято й змерджено; далі E.2 Windows installer та решта E/F.**
+не є acceptance нового продуктового функціоналу. D.2b прийнято й змерджено. E.1/E.2 прийнято й змерджено; далі E.3 macOS ARM64 app/DMG та решта E/F.**
 
 Позначення: `[x]` — конкретна реалізація або перевірка, для якої є доказ;
 `[ ]` — відсутня реалізація чи непроведена перевірка. Код і ручне приймання
@@ -418,14 +418,17 @@ D.2b прийнято користувачем 2026-09-25 та змерджен�
 
 - [ ] Сценарій для користувача — завантаження артефакта з GitHub Releases,
   **без Git, gh, Python, venv і PowerShell як передумов**. Source/pip лишаються developer path.
-- [ ] Windows: per-user installer з GUI executable і runtime; macOS ARM64: `.app` у DMG;
-  Linux: обрати та перевірити основний пакет для Ubuntu/Pop!_OS (наприклад `.deb`) з
+- [x] Windows: per-user CPU installer з GUI executable і runtime (E.2, `31ccd64`);
+  автоматичні докази та ручне приймання наведені у звіті E.2.
+- [ ] macOS ARM64: `.app` у DMG (наступна E.3).
+- [ ] Linux: обрати та перевірити основний пакет для Ubuntu/Pop!_OS (наприклад `.deb`) з
   desktop entry та системними залежностями. Інші дистрибутиви позначати окремо.
 - [x] Порівняти збірку PyInstaller/інший bundler коротким spike: native dependencies,
   size, cold start, MLX, PortAudio, worker spawning у frozen executable.
   Обрано PyInstaller onedir; native CI/вимірювання E.1 наведено нижче.
   Альтернативу Qt/Nuitka оцінено документально, не бенчмарковано.
-- [ ] Пакет використовує той самий Settings first-run та мовні профілі, що D.2b.
+- [x] Windows E.2 використовує той самий Settings first-run та мовні профілі, що D.2b.
+- [ ] Зберегти той самий Settings first-run у майбутніх macOS/Linux packages.
   Не додавати download wizard, doctor, нові audio/model controls або інший
   onboarding flow лише заради інсталятора.
 - [ ] Linux/Windows: без NVIDIA — CPU INT8 профіль. NVIDIA перевіряти реальною пробою
@@ -773,7 +776,7 @@ launcher `dictate --help` працює з іншої папки; history checksu
 Інсталятори, підпис/нотаризація, update/uninstall/autostart та Linux package
 залишаються наступними E-поставками після підтвердження spike.
 
-### Наступна конкретна поставка — E.2 Windows per-user CPU installer
+### Межі прийнятої поставки — E.2 Windows per-user CPU installer
 
 Реалізація E.2 у `codex/windows-cpu-installer` від актуального `origin/main` `60f8d91`.
 Межі: інсталятор на основі перевіреного PyInstaller onedir для Windows x64,
@@ -811,10 +814,37 @@ NVIDIA runtime і повна hardware matrix — окремі наступні �
   виправлено читання фактичного UninstallString, повторний повний CI успішний.
 - [x] Сфокусоване review: source auto/schema/settings paths незмінні; installer
   не пише data/history та не завершує примусово app; broad directory delete немає.
-- [ ] Clean Windows 10/11 без Python/Git/CUDA: реальна CPU dictation, login startup,
-  uninstall/reinstall та користувацьке приймання.
+- [x] 2026-09-26: користувач підтвердив, що перелічені сценарії поставки працюють:
+  CPU/auto dictation → clipboard, login startup enable/disable, upgrade із
+  збереженням даних, uninstall/reinstall; дозволив merge/push/delete branch.
+  Окремих Windows build/model/hardware даних у цьому підтвердженні немає.
+- [x] Pre-merge review installer/HKCU ownership/mutex/CPU routing/data preservation:
+  блокувальних дефектів не виявлено. Після `3397697` лише docs; тести не повторювали.
+  Merge `31ccd64` у main запушено; завершену remote-гілку видалено.
+- [ ] Повна clean-machine Windows 10/11 та hardware matrix з деталізованим
+  OS/model/device протоколом — окремий F release gate, не передумова повторного E.2.
 - [ ] Signing, physical Mac M4 та решта E/F gates не закриті.
 
 [Точні команди оновлення, межі та ручний тест](../setup/windows-installer.md).
-Наступна дія: завершити E.2 Windows приймання перед merge; macOS/Linux installers
-і NVIDIA runtime залишаються окремими поставками.
+Відомі обмеження: unsigned preview; моделі завантажуються окремо; explicit CUDA
+у CPU bundle не підтримується (source path збережено); obsolete dependency files
+можуть лишатися до uninstall/reinstall; той самий source Start Menu shortcut
+не відновлюється автоматично після видалення installer app. GitHub Releases,
+підпис, Linux package, NVIDIA runtime і повна E/F matrix ще відкриті.
+
+### Наступна конкретна поставка — E.3 macOS ARM64 app/DMG
+
+Почати в окремій гілці від актуального main. У цьому чаті не розпочато.
+Межі: на базі перевіреного E.1 PyInstaller bundle підготувати ARM64 `.app` у DMG
+для встановлення в Applications без Git/Python/Rosetta; адаптувати чинний один
+per-user автозапуск до frozen app, update/uninstall зі збереженням settings,
+profiles/history і caches. Зберегти Settings/first-run і source-install сумісність.
+Version/checksum, minimum macOS та signing/notarization status мають бути явними;
+за відсутності сертифікатів не видавати unsigned artifact за signed/notarized.
+Без нового UI, wizard, workflows, Linux package або NVIDIA runtime.
+
+Критерії: native ARM64 build/DMG та frozen lifecycle CI; install → launch →
+наявний first-run/permissions → MLX/Metal dictation → Quit на фізичному Mac M4;
+один login startup з enable/disable; update зберігає профілі/історію; видалення
+прибирає лише власний app/autostart, reinstall читає збережені дані. Автоматичні
+докази й фізичне приймання записувати окремо; не закривати M4 gate лише CI.

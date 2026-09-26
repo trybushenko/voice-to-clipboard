@@ -3,7 +3,49 @@
 Оновлено: 2026-09-26. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
-## Остання прийнята й змерджена поставка — E.1 packaging spike
+## Остання прийнята й змерджена поставка — E.2 Windows CPU installer
+
+Гілка `codex/windows-cpu-installer`, база `60f8d91`; перевірений код `3397697`,
+фінальна гілка до merge `064c6b2`. Merge `31ccd64` у main запушено,
+`origin/codex/windows-cpu-installer` видалено 2026-09-26.
+
+Результат: Inno Setup per-user Windows x64 CPU installer 0.1.1, Start Menu,
+чинний один HKCU Run автозапуск, mutex проти upgrade/uninstall запущеного app,
+збереження settings/profiles/history/cache, checksum і build metadata.
+Schema, Settings/first-run та source auto behavior не змінені.
+
+Докази: local suite 106 tests OK (4 platform skips);
+[regression CI 36235750202](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750202)
+— усі 6 Windows/macOS/Linux × Python 3.11/3.12 jobs успішні;
+[installer CI 36235750191](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750191)
+— install/upgrade/uninstall/reinstall, real HKCU enable/disable, source-startup
+ownership, running-upgrade refusal, data bytes, installed Qt/worker/overlay/desktop
+та tiny.en CPU synthetic inference на Windows Server 2025 AMD64.
+Користувач 2026-09-26 підтвердив перелічені ручні сценарії (dictation/clipboard,
+login startup, upgrade, uninstall/reinstall) і дозволив merge/push/delete.
+Окремий OS/model/device протокол не надано; це приймання поставки, не всієї F matrix.
+Pre-merge review не виявив блокувальних дефектів. Після `3397697` лише docs;
+повторних тестів не запускали; merge tree збігався з прийнятою гілкою.
+
+Обмеження: unsigned preview, окреме завантаження моделей, CPU bundle без CUDA,
+obsolete dependency files до uninstall/reinstall; source shortcut після uninstall
+автоматично не відновлюється. Signing, GitHub Releases, повна clean-machine/hardware
+matrix, фізичний M4, Linux package та NVIDIA runtime лишаються відкритими.
+[Інструкція, артефакт і ручний протокол E.2](../setup/windows-installer.md).
+
+Наступна конкретна задача — **E.3 macOS ARM64 app/DMG** від актуального main:
+перевірений E.1 bundle → `.app` у DMG/Applications без Git/Python/Rosetta,
+чинний один frozen-compatible автозапуск, update/uninstall без втрати даних,
+version/checksum/minimum macOS і чесний signing/notarization status.
+Зберегти наявні Settings/first-run; без нового UI/workflows/wizard, Linux/NVIDIA.
+Критерії: native ARM64 CI, frozen lifecycle; фізичний Mac M4 install/permissions/
+MLX dictation/Quit, login startup enable/disable, update і reinstall із retained data.
+Сертифікати — зовнішня залежність; CI не замінює фізичне приймання.
+**E.3 у цьому чаті не розпочато.** Не починати E.2 повторно.
+
+Нижче — історія попередніх поставок; актуальний пріоритет наведено вище.
+
+## Попередня прийнята й змерджена поставка — E.1 packaging spike
 
 Гілка `codex/packaging-spike`, база `27add90`. PyInstaller onedir, explicit child
 routing, ізольований frozen Qt/native imports/worker IPC probe, Windows/macOS ARM64
@@ -22,24 +64,8 @@ Bundler: PyInstaller onedir. Windows-приймання отримано 2026-09
 Після перевіреного `70844b7` лише docs, повторних тестів не запускали.
 Merge `7ba73b2` у main запушено; `origin/codex/packaging-spike` видалено.
 
-Наступна конкретна задача — **E.2 Windows per-user CPU installer** від актуального
-main: встановлення без Python/Git/CUDA, Start Menu, один керований автозапуск,
-upgrade/uninstall/reinstall зі збереженням profiles/settings/history.
-Приймання: чиста Windows VM, launch/CPU dictation/Quit, upgrade, login startup,
-uninstall/reinstall; version/checksum і явний signing status. Чинні Settings та
-source path зберегти; нових продуктових функцій не додавати. Installer tooling
-обрати в E.2. macOS DMG, Linux package і NVIDIA runtime — окремі поставки.
-E.2 реалізовано в `codex/windows-cpu-installer` від `60f8d91`: Inno per-user CPU
-installer, stable HKCU startup, mutex, data preservation, metadata/checksum.
-[Команди й ручне приймання E.2](../setup/windows-installer.md). Код `3397697`: [installer CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750191)
-і [6-job regression CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750202)
-успішні; локально 106 tests OK, 4 skips. Installer 0.1.1 unsigned, artifact містить
-checksum/build-info; lifecycle/data preservation і synthetic tiny.en CPU inference
-перевірено на Windows Server 2025 runner. Виправлено test-only uninstaller path
-після rapid reinstall. Наступна дія — чиста Windows 10/11 CPU voice/login/manual
-acceptance E.2; merge не виконано. Не починати E.2 повторно.
-Не позначати hardware/voice/clean-machine gates завершеними.
-[Звіт і команди](../setup/packaging-spike.md).
+Наступна після E.1 поставка E.2 уже прийнята й змерджена; актуальний стан вище.
+[Звіт E.1](../setup/packaging-spike.md).
 
 ## Остання прийнята поставка — D.2b Settings redesign
 
