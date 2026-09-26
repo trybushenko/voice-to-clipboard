@@ -26,10 +26,27 @@ def command():
     return [str(python), '-m', 'voice_to_clipboard.ui.desktop_app', '--run']
 
 
+def _frozen_macos_app():
+    app = Path(sys.executable).resolve().parent.parent.parent
+    if (app.suffix != '.app' or
+            app.parent not in (Path('/Applications'), Path.home() / 'Applications')):
+        raise RuntimeError('Move the app to /Applications or ~/Applications before enabling login startup')
+    info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
+    if info.get('CFBundleIdentifier') != APP_ID:
+        raise RuntimeError('Unexpected application bundle identifier')
+    return app
+
+
+def _macos_startup_arguments():
+    return [str(launcher_path() / 'Contents/MacOS/VoiceToClipboard')]
+
+
 def launcher_path():
     if sys.platform == 'win32':
         return Path(os.environ['APPDATA']) / 'Microsoft/Windows/Start Menu/Programs' / APP_NAME / (APP_NAME + '.lnk')
     if sys.platform == 'darwin':
+        if getattr(sys, 'frozen', False):
+            return _frozen_macos_app()
         return Path.home() / 'Applications' / (APP_NAME + '.app')
     return Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'applications/voice-to-clipboard.desktop'
 
@@ -63,8 +80,11 @@ def _write(path, content, mode=0o600):
 
 
 def install():
-    if getattr(sys, "frozen", False) and sys.platform != "win32":
-        raise RuntimeError("Frozen launcher installation is supported only on Windows")
+    if getattr(sys, "frozen", False):
+        if sys.platform == "darwin":
+            return _frozen_macos_app()
+        if sys.platform != "win32":
+            raise RuntimeError("Frozen launcher installation is unsupported on this platform")
     path = launcher_path()
     argv = command()
     if sys.platform == 'win32':
@@ -108,15 +128,17 @@ def enabled():
         return False
     if sys.platform == 'darwin':
         try:
-            return plistlib.loads(path.read_bytes()).get('Label') == APP_ID
-        except (ValueError, plistlib.InvalidFileException):
+            info = plistlib.loads(path.read_bytes())
+            return (info.get('Label') == APP_ID and
+                    info.get('ProgramArguments') == _macos_startup_arguments())
+        except (OSError, ValueError, RuntimeError, plistlib.InvalidFileException):
             return False
     return path.read_text(encoding='utf-8') == _desktop_entry()
 
 
 def set_enabled(value):
-    if getattr(sys, "frozen", False) and sys.platform != "win32":
-        raise RuntimeError("Frozen autostart is supported only on Windows")
+    if getattr(sys, "frozen", False) and sys.platform not in ("win32", "darwin"):
+        raise RuntimeError("Frozen autostart is unsupported on this platform")
     if type(value) is not bool:
         raise ValueError('Autostart must be enabled or disabled')
     if value:
@@ -137,14 +159,20 @@ def set_enabled(value):
             if sys.platform == 'darwin':
                 _write(path, plistlib.dumps({'Label': APP_ID, 'RunAtLoad': True,
                        'KeepAlive': False, 'ProcessType': 'Interactive',
-                       'ProgramArguments': [str(launcher_path() / 'Contents/MacOS/VoiceToClipboard')]}))
+                       'ProgramArguments': _macos_startup_arguments()}))
             else:
                 _write(path, _desktop_entry())
         else:
-            path.unlink(missing_ok=True)
+            if sys.platform != "darwin" or enabled():
+                path.unlink(missing_ok=True)
 
 
 def uninstall():
+    if sys.platform == 'darwin' and getattr(sys, 'frozen', False):
+        # The running executable cannot safely delete its own loaded bundle.
+        # Finder removes the app after Quit; only our matching agent is removed here.
+        set_enabled(False)
+        return
     set_enabled(False)
     path = launcher_path()
     if sys.platform == 'darwin' and path.exists():

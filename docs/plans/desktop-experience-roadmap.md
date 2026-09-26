@@ -13,7 +13,7 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 (код `70844b7`); прийнято користувачем і змерджено 2026-09-26: `7ba73b2`.
 E.2 Windows CPU installer прийнято користувачем 2026-09-26 та змерджено: `31ccd64`
 (перевірений код `3397697`). Main запушено, `origin/codex/windows-cpu-installer`
-видалено. Далі **E.3 macOS ARM64 app/DMG**; у цьому чаті не розпочато. Звіти унизу.
+видалено. E.3 реалізується в `codex/macos-arm64-dmg`; фізичне M4-приймання відкрите. Звіти унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -848,3 +848,25 @@ Version/checksum, minimum macOS та signing/notarization status мають бу
 один login startup з enable/disable; update зберігає профілі/історію; видалення
 прибирає лише власний app/autostart, reinstall читає збережені дані. Автоматичні
 докази й фізичне приймання записувати окремо; не закривати M4 gate лише CI.
+
+
+### E.3 macOS ARM64 app/DMG — реалізація 2026-09-26
+
+Гілка `codex/macos-arm64-dmg`, база актуального `origin/main` `dfae012`.
+- [x] Native app/DMG build, Applications link, version/SHA256/build metadata,
+  minimum macOS 14; явно ad-hoc без Developer ID/notarization.
+- [x] Frozen LaunchAgent використовує встановлений app; один чинний label,
+  ownership-aware disable/uninstall; schema/settings/history paths незмінні.
+- [x] Unit regression: startup ownership, повторне enable/disable, збереження
+  даних, відмова startup з DMG/translocation; source compatibility.
+- [x] Native CI workflow: DMG mount/install/full replacement/uninstall/reinstall,
+  frozen probe і desktop lifecycle; результат запуску фіксується окремо.
+- [ ] Фізичний Mac M4: permissions/мікрофон/MLX Metal, login enable/disable,
+  update/reinstall із профілями/історією. CI не закриває цей gate.
+- [ ] Developer ID / notarization, повна F hardware/clean-machine matrix.
+
+[Команди, ручний тест і обмеження](../setup/macos-dmg.md).
+Перед replace потрібен Quit; автоматичного updater/running-update blocker немає.
+Uninstall: disable startup → Quit → Trash app; дані та моделі залишаються.
+Наступна дія: перевірити E.3 CI та прийняти на фізичному M4 до merge;
+Linux package і решта E/F не входять до цієї гілки.

@@ -51,8 +51,8 @@ Start Menu (Windows), `~/Applications` (macOS), or your Linux application menu.
 Its tray/menu bar provides recording, settings, diagnostics and **Start at login**;
 you do not need to keep a terminal open.
 
-**Installation currently requires Python and a one-time terminal setup.** There is
-no standalone installer yet. Follow the [step-by-step installation guide](docs/setup/installation.md)
+**Source installation requires Python and a one-time terminal setup.** Standalone
+Windows CPU and macOS ARM64 previews are linked below. Follow the [step-by-step installation guide](docs/setup/installation.md)
 for prerequisites, setup without Git, your first recording and troubleshooting.
 Downloads are required for the first use of each model.
 The [E.1 packaging spike](docs/setup/packaging-spike.md) provides experimental
@@ -76,3 +76,5 @@ remaining work and acceptance criteria.
 Model selection: [language compatibility, custom models and acceptance test](docs/setup/model-compatibility.md).
 
 Windows CPU installer preview (E.2): [install/update, limitations and manual test](docs/setup/windows-installer.md).
+
+macOS ARM64 DMG preview (E.3): [install/update, limitations and manual test](docs/setup/macos-dmg.md).

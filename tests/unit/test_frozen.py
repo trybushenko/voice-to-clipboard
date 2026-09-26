@@ -40,8 +40,7 @@ class FrozenTests(unittest.TestCase):
             self.assertEqual(launchers.command(), module_command('voice_to_clipboard.ui.desktop_app', '--run'))
             with self.assertRaises(RuntimeError):
                 launchers.install()
-            with self.assertRaises(RuntimeError):
-                launchers.set_enabled(False)
+            launchers.set_enabled(False)
 
 
 if __name__ == '__main__':

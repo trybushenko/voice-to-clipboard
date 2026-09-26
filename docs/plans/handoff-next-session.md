@@ -41,7 +41,9 @@ version/checksum/minimum macOS і чесний signing/notarization status.
 Критерії: native ARM64 CI, frozen lifecycle; фізичний Mac M4 install/permissions/
 MLX dictation/Quit, login startup enable/disable, update і reinstall із retained data.
 Сертифікати — зовнішня залежність; CI не замінює фізичне приймання.
-**E.3 у цьому чаті не розпочато.** Не починати E.2 повторно.
+**E.3 реалізується у `codex/macos-arm64-dmg` від `dfae012`.**
+Див. [інструкцію E.3](../setup/macos-dmg.md) та звіт унизу roadmap.
+Фізичне M4-приймання, signing/notarization відкриті. Не починати E.2 повторно.
 
 Нижче — історія попередніх поставок; актуальний пріоритет наведено вище.
 
