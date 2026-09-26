@@ -41,7 +41,11 @@ version/checksum/minimum macOS і чесний signing/notarization status.
 Критерії: native ARM64 CI, frozen lifecycle; фізичний Mac M4 install/permissions/
 MLX dictation/Quit, login startup enable/disable, update і reinstall із retained data.
 Сертифікати — зовнішня залежність; CI не замінює фізичне приймання.
-**E.3 реалізується у `codex/macos-arm64-dmg` від `dfae012`.**
+**E.3 реалізовано й автоматично перевірено у `codex/macos-arm64-dmg` від `dfae012`.**
+Код `d47f24f`; regression CI `36262241791` (6 jobs) і DMG CI `36262241808`
+успішні. Local: 108 tests OK, 4 skips; фінальний targeted rerun: 23 OK, 1 skip.
+Артефакт `macos-arm64-dmg` містить DMG/checksum/metadata/reports; retention 14 днів.
+Гілка запушена, merge не виконано. Наступна дія — фізичне M4-приймання E.3.
 Див. [інструкцію E.3](../setup/macos-dmg.md) та звіт унизу roadmap.
 Фізичне M4-приймання, signing/notarization відкриті. Не починати E.2 повторно.
 

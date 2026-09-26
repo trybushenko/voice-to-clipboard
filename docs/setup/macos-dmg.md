@@ -20,8 +20,8 @@ verification reports. With GitHub CLI (optional, for downloading only):
 
 ```sh
 gh run list --repo trybushenko/voice-to-clipboard --workflow macos-dmg.yml --branch codex/macos-arm64-dmg
-# Substitute the successful run ID from the list:
-gh run download RUN_ID --repo trybushenko/voice-to-clipboard --name macos-arm64-dmg --dir macos-preview
+# Verified code d47f24f:
+gh run download 36262241808 --repo trybushenko/voice-to-clipboard --name macos-arm64-dmg --dir macos-preview
 cd macos-preview
 shasum -a 256 -c VoiceToClipboard-0.1.1-macos-arm64-preview.dmg.sha256
 open VoiceToClipboard-0.1.1-macos-arm64-preview.dmg
@@ -99,3 +99,24 @@ Unit checks cover ownership, unsupported install paths and retained data.
 Record these results separately from CI; E.3 physical acceptance remains open
 until they are supplied. Signing/notarization, Intel builds, Linux packages and
 NVIDIA runtime are outside this delivery.
+
+## Recorded verification — 2026-09-26
+
+Verified code: `d47f24f`. Local suite: 108 tests OK, 4 platform skips (IPC tests
+required execution outside the restrictive sandbox). Targeted rerun after path
+normalization: 23 tests OK, 1 Windows-only skip. Shell syntax and diff checks OK.
+
+- [Regression CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36262241791):
+  all six Linux/Windows/macOS × Python 3.11/3.12 jobs successful.
+- [DMG lifecycle CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36262241808):
+  native ARM64 build/mount/install, frozen probe, desktop lifecycle, actual frozen
+  startup cycle/uninstall, bundle replacement/reinstall successful.
+- [Verified artifact](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36262241808/artifacts/10912302792):
+  403 MB artifact archive; installed bundle 1.15 GB excluding models. Probe
+  process duration 8.48 s initially, 6.09 s after reinstall; includes testing and
+  overlay wait, not a reboot-cold launch benchmark. Artifact retention: 14 days.
+
+The initial Windows regression exposed a noncanonical temporary path in the new
+fixture; canonical Applications/home comparisons and the fixture were corrected.
+No remaining automated failures. Physical M4/TCC/microphone/Metal/login acceptance
+is still open. These results do not constitute release signing or manual acceptance.

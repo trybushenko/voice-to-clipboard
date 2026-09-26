@@ -13,7 +13,7 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 (код `70844b7`); прийнято користувачем і змерджено 2026-09-26: `7ba73b2`.
 E.2 Windows CPU installer прийнято користувачем 2026-09-26 та змерджено: `31ccd64`
 (перевірений код `3397697`). Main запушено, `origin/codex/windows-cpu-installer`
-видалено. E.3 реалізується в `codex/macos-arm64-dmg`; фізичне M4-приймання відкрите. Звіти унизу.
+видалено. E.3 реалізовано й автоматично перевірено в `codex/macos-arm64-dmg`; фізичне M4-приймання відкрите. Звіти унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -873,3 +873,13 @@ Linux package і решта E/F не входять до цієї гілки.
 
 Локальна перевірка E.3: 108 tests OK, 4 platform skips. Повтор поза sandbox
 був потрібний для локальних IPC sockets; ізольовані дані. `bash -n` і diff check OK.
+
+- [x] E.3 код `d47f24f`: [6-job regression CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36262241791)
+  і [ARM64 DMG lifecycle CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36262241808)
+  успішні. Artifact `macos-arm64-dmg` (14 днів), ad-hoc/non-notarized.
+  Frozen startup/uninstall перевірено через executable. Початкове Windows-падіння
+  нового path fixture виправлене нормалізацією шляхів; фінальна матриця зелена.
+- [x] Фінальне review: зміни обмежені packaging/autostart, видалення startup
+  перевіряє власника; bundle/data не видаляються через frozen `--uninstall`.
+  Формат settings і paths не змінені. Після коду — тільки документація.
+- [ ] Ручне приймання E.3 на Mac M4 і дозвіл на merge ще не отримані; main не змінено.
