@@ -10,7 +10,7 @@ from voice_to_clipboard.platform import launchers
 class MacBundleTests(unittest.TestCase):
     def test_frozen_agent_ownership_and_data_preservation(self):
         with tempfile.TemporaryDirectory() as folder:
-            home = Path(folder)
+            home = Path(folder).resolve()
             app = home / 'Applications/VoiceToClipboard.app'
             exe = app / 'Contents/MacOS/VoiceToClipboard'
             exe.parent.mkdir(parents=True)

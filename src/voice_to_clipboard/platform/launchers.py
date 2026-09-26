@@ -29,7 +29,7 @@ def command():
 def _frozen_macos_app():
     app = Path(sys.executable).resolve().parent.parent.parent
     if (app.suffix != '.app' or
-            app.parent not in (Path('/Applications'), Path.home() / 'Applications')):
+            app.parent not in (Path('/Applications').resolve(), (Path.home() / 'Applications').resolve())):
         raise RuntimeError('Move the app to /Applications or ~/Applications before enabling login startup')
     info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
     if info.get('CFBundleIdentifier') != APP_ID:
