@@ -32,11 +32,11 @@ def main():
             assert subprocess.check_output(['lipo', '-archs', str(exe)], text=True).strip() == 'arm64'
             run(sys.executable, 'scripts/check_frozen.py', exe, '--report', 'artifacts/packaging-report.json')
             run(sys.executable, 'scripts/check_desktop.py', '--executable', exe)
-            # Exercise native filesystem startup behavior using the installed executable path.
+            run(exe, '--packaging-probe', Path('artifacts/startup-report.json').resolve(), '--startup-cycle')
+            # Inspect native filesystem startup behavior using the installed executable path.
             from unittest.mock import patch
             from voice_to_clipboard.platform import launchers
             with patch.object(sys, 'frozen', True, create=True), patch.object(sys, 'executable', str(exe)):
-                launchers.set_enabled(True)
                 assert launchers.enabled()
                 saved = agent.read_bytes()
                 # Full bundle replacement; no merge retaining obsolete libraries.
@@ -46,7 +46,7 @@ def main():
                 launchers.set_enabled(False)
                 assert not agent.exists()
                 launchers.set_enabled(True)
-                launchers.uninstall()
+                run(exe, '--uninstall')
                 assert not agent.exists() and app.exists()
                 shutil.rmtree(app)
                 run('ditto', source, app)

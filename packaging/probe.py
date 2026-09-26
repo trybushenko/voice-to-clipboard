@@ -11,8 +11,8 @@ import time
 def main():
     report = Path(sys.argv[1]).resolve()
     if '--startup-cycle' in sys.argv:
-        if sys.platform != 'win32' or os.environ.get('GITHUB_ACTIONS') != 'true':
-            raise RuntimeError('Startup lifecycle probe is restricted to disposable Windows CI')
+        if sys.platform not in ('win32', 'darwin') or os.environ.get('GITHUB_ACTIONS') != 'true':
+            raise RuntimeError('Startup lifecycle probe is restricted to disposable Windows/macOS CI')
         from voice_to_clipboard.platform.launchers import set_enabled, enabled
         set_enabled(True)
         assert enabled()

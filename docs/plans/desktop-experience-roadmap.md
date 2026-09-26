@@ -834,7 +834,7 @@ NVIDIA runtime і повна hardware matrix — окремі наступні �
 
 ### Наступна конкретна поставка — E.3 macOS ARM64 app/DMG
 
-Почати в окремій гілці від актуального main. У цьому чаті не розпочато.
+Реалізація в окремій гілці від актуального main; звіт нижче.
 Межі: на базі перевіреного E.1 PyInstaller bundle підготувати ARM64 `.app` у DMG
 для встановлення в Applications без Git/Python/Rosetta; адаптувати чинний один
 per-user автозапуск до frozen app, update/uninstall зі збереженням settings,
@@ -870,3 +870,6 @@ Version/checksum, minimum macOS та signing/notarization status мають бу
 Uninstall: disable startup → Quit → Trash app; дані та моделі залишаються.
 Наступна дія: перевірити E.3 CI та прийняти на фізичному M4 до merge;
 Linux package і решта E/F не входять до цієї гілки.
+
+Локальна перевірка E.3: 108 tests OK, 4 platform skips. Повтор поза sandbox
+був потрібний для локальних IPC sockets; ізольовані дані. `bash -n` і diff check OK.
