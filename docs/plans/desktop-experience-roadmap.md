@@ -11,7 +11,9 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 нові delivery modes та інші функції не прийняті. D.2b прийнято користувачем 2026-09-25 та змерджено в `main`: `f9c3236`
 (код `dc1d720`, CI follow-up `b5aab52`). E.1 packaging spike реалізовано й автоматично перевірено в `codex/packaging-spike`
 (код `70844b7`); прийнято користувачем і змерджено 2026-09-26: `7ba73b2`.
-Main запушено, завершену remote-гілку видалено. Далі E.2 Windows per-user CPU installer; звіт E.1 унизу.
+Main запушено, завершену remote-гілку видалено. E.2 реалізовано й автоматично
+перевірено в `codex/windows-cpu-installer`; очікує ручного Windows-приймання.
+Звіти E.1/E.2 унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -796,7 +798,19 @@ NVIDIA runtime і повна hardware matrix — окремі наступні �
 - [x] Mutex усіх frozen processes блокує upgrade/uninstall до Quit.
   CPU bundle auto обирає CPU; explicit CUDA не переписується, source auto незмінний.
 - [x] Додано unit regression і disposable Windows installer lifecycle workflow.
-- [ ] Windows installer CI: очікує запуску; не плутати наявність тесту з результатом.
+- [x] Local suite: 106 tests OK, 4 platform skips. Sandbox IPC restrictions
+  вимагали запуску поза sandbox; особисті дані не використовувалися.
+- [x] Код `3397697`: [regression CI 36235750202](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750202)
+  — усі 6 Windows/macOS/Linux × Python 3.11/3.12 jobs успішні.
+- [x] [Windows installer CI 36235750191](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750191):
+  build/install/upgrade/uninstall/reinstall, enabled/disabled HKCU startup,
+  збереження пізнішого source startup, відмова running upgrade, data bytes,
+  installed Qt/worker/overlay/desktop smoke та tiny.en CPU synthetic inference.
+  Artifact `windows-x64-cpu-installer`, version 0.1.1, unsigned, SHA256 і metadata.
+- [x] Перший CI виявив припущення тесту про `unins000.exe` після reinstall;
+  виправлено читання фактичного UninstallString, повторний повний CI успішний.
+- [x] Сфокусоване review: source auto/schema/settings paths незмінні; installer
+  не пише data/history та не завершує примусово app; broad directory delete немає.
 - [ ] Clean Windows 10/11 без Python/Git/CUDA: реальна CPU dictation, login startup,
   uninstall/reinstall та користувацьке приймання.
 - [ ] Signing, physical Mac M4 та решта E/F gates не закриті.

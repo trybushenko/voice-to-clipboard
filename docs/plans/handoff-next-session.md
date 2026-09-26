@@ -29,10 +29,15 @@ upgrade/uninstall/reinstall зі збереженням profiles/settings/histor
 uninstall/reinstall; version/checksum і явний signing status. Чинні Settings та
 source path зберегти; нових продуктових функцій не додавати. Installer tooling
 обрати в E.2. macOS DMG, Linux package і NVIDIA runtime — окремі поставки.
-E.2 реалізується в `codex/windows-cpu-installer` від `60f8d91`: Inno per-user CPU
+E.2 реалізовано в `codex/windows-cpu-installer` від `60f8d91`: Inno per-user CPU
 installer, stable HKCU startup, mutex, data preservation, metadata/checksum.
-[Команди й ручне приймання E.2](../setup/windows-installer.md). CI та фізичне
-приймання відмічати окремо; наступна дія — приймання E.2, без merge наперед.
+[Команди й ручне приймання E.2](../setup/windows-installer.md). Код `3397697`: [installer CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750191)
+і [6-job regression CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750202)
+успішні; локально 106 tests OK, 4 skips. Installer 0.1.1 unsigned, artifact містить
+checksum/build-info; lifecycle/data preservation і synthetic tiny.en CPU inference
+перевірено на Windows Server 2025 runner. Виправлено test-only uninstaller path
+після rapid reinstall. Наступна дія — чиста Windows 10/11 CPU voice/login/manual
+acceptance E.2; merge не виконано. Не починати E.2 повторно.
 Не позначати hardware/voice/clean-machine gates завершеними.
 [Звіт і команди](../setup/packaging-spike.md).
 

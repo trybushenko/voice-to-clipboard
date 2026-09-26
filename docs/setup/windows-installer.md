@@ -107,3 +107,16 @@ Manual test on a clean Windows 10/11 x64 account without Git/Python/CUDA:
 
 Record Windows version, installer checksum, CPU/model and results. Physical
 clean-machine dictation/login acceptance remains open until actually performed.
+
+## Recorded evidence (2026-09-26)
+
+Implementation/test head `3397697`, branch `codex/windows-cpu-installer`, based on
+`origin/main` `60f8d91`. Local regression: 106 tests, 4 platform skips, passed.
+[Cross-platform regression](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750202):
+all six jobs passed. [Download installer artifact / successful lifecycle run](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750191):
+Windows Server 2025 AMD64, Python 3.12 build; installer lifecycle, frozen native
+runtime, real CPU tiny.en inference on synthetic silence passed. The earlier
+lifecycle failure assumed `unins000.exe` survived rapid reinstall; the test now
+reads Windows' registered UninstallString. No installer runtime change was needed
+for that failure. The checks are automated evidence, not physical clean-machine,
+real spoken dictation or login acceptance. Branch pushed; no merge performed.

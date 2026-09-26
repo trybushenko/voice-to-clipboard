@@ -171,4 +171,4 @@ project folder or environment.
 ## Windows CPU installer preview
 
 See [E.2 installer instructions](windows-installer.md) for the per-user standalone
-preview, checksum/update commands and acceptance gates. Source installation below/above remains supported.
+preview, checksum/update commands and acceptance gates. The documented source installation remains supported.
