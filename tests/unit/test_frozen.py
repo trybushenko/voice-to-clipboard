@@ -35,7 +35,7 @@ class FrozenTests(unittest.TestCase):
                     dispatch(args)
             run.assert_not_called()
 
-    def test_frozen_launcher_does_not_require_pythonw_or_overwrite_app(self):
+    def test_frozen_macos_launcher_remains_guarded(self):
         with patch.object(sys, 'frozen', True, create=True), patch.object(sys, 'platform', 'darwin'):
             self.assertEqual(launchers.command(), module_command('voice_to_clipboard.ui.desktop_app', '--run'))
             with self.assertRaises(RuntimeError):

@@ -33,8 +33,12 @@ Name: "{userprograms}\Voice to Clipboard\Voice to Clipboard"; Filename: "{app}\V
 Filename: "{app}\VoiceToClipboard.exe"; Description: "Launch Voice to Clipboard"; Parameters: "--app-module voice_to_clipboard.ui.desktop_app --run"; Flags: nowait postinstall skipifsilent
 [Code]
 function StartupCommand(): String;
+var ExePath: String;
 begin
-  Result := '"' + ExpandConstant('{app}\VoiceToClipboard.exe') + '" --app-module voice_to_clipboard.ui.desktop_app --run';
+  ExePath := ExpandConstant('{app}\VoiceToClipboard.exe');
+  { Match subprocess.list2cmdline used by the existing tray enabled() check. }
+  if Pos(' ', ExePath) > 0 then ExePath := '"' + ExePath + '"';
+  Result := ExePath + ' --app-module voice_to_clipboard.ui.desktop_app --run';
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

@@ -65,7 +65,7 @@ def main():
         subprocess.run([sys.executable, 'scripts/check_desktop.py', '--executable', str(exe)], check=True, timeout=180)
         preserved()
         # Exercise the actual frozen launcher code and HKCU, not a source mock.
-        subprocess.run([str(exe), '--packaging-probe', str(logs/'startup-probe.json'), '--startup-cycle'], check=True, timeout=90)
+        subprocess.run([str(exe), '--packaging-probe', str(logs/'startup-probe.json'), '--startup-cycle', '--cpu-inference'], check=True, timeout=300)
         assert str(exe) in startup()
         enabled_command = startup()
         install('upgrade-enabled')
@@ -97,12 +97,18 @@ def main():
             assert app.wait(timeout=20) == 0
         install('upgrade-disabled')
         assert startup() is None
-        uninstall('uninstall-disabled')
-        assert startup() is None
+        # A later source installation may take ownership of the shared Run value.
+        source_command = r'C:\source\pythonw.exe -m voice_to_clipboard.ui.desktop_app --run'
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, run_key) as key:
+            winreg.SetValueEx(key, app_id, 0, winreg.REG_SZ, source_command)
+        uninstall('uninstall-preserves-source-startup')
+        assert startup() == source_command
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, run_key) as key:
+            winreg.DeleteValue(key, app_id)
     Path('installer-report.json').write_text(json.dumps({
         'install_upgrade_uninstall_reinstall': True, 'retained_data_bytes': True,
         'enabled_disabled_autostart': True, 'running_upgrade_rejected': True,
-        'installed_frozen_and_desktop_smoke': True,
+        'installed_frozen_and_desktop_smoke': True, 'cpu_synthetic_inference': True,
         'real_login_microphone_cpu_dictation': 'NOT TESTED', 'signing': 'unsigned'}, indent=2))
 
 

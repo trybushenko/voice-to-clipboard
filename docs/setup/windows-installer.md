@@ -84,8 +84,9 @@ Automated workflow: build installer; silent install to a path containing spaces;
 installed Qt/native/worker/overlay probe; native tray/Settings/singleton and five
 Quit/restart cycles; real frozen autostart enable/disable; enabled/disabled upgrade;
 active-process upgrade refusal; uninstall and reinstall; retained settings/history
-bytes and profile/completion reload. The script refuses to run outside a disposable
-Windows GitHub Actions account. No real login, microphone or voice inference is
+bytes and profile/completion reload; native tiny.en CPU inference on synthetic silence
+(downloads a model; this is not a microphone/voice test). The script refuses to run outside a disposable
+Windows GitHub Actions account. No real login, microphone or spoken dictation is
 claimed by those checks. Same-version reinstall tests upgrade mechanics; future
 cross-version acceptance remains necessary.
 
