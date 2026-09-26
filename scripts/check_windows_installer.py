@@ -52,7 +52,11 @@ def main():
             assert (result.returncode == 0) == success, (label, result.returncode)
             preserved()
         def uninstall(label):
-            subprocess.run([str(target/'unins000.exe'), '/VERYSILENT', '/SUPPRESSMSGBOXES',
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                    'Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\' + app_id + '_is1') as key:
+                uninstaller = Path(winreg.QueryValueEx(key, 'UninstallString')[0].strip('"'))
+            assert uninstaller.parent == target
+            subprocess.run([str(uninstaller), '/VERYSILENT', '/SUPPRESSMSGBOXES',
                             '/NORESTART', '/LOG=' + str(logs / (label + '.log'))], check=True, timeout=120)
             deadline = time.monotonic() + 20
             while exe.exists() and time.monotonic() < deadline:
