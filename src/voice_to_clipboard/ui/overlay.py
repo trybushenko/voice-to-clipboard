@@ -17,8 +17,11 @@ class Overlay:
             python = '/usr/bin/python3' if sys.platform.startswith('linux') else sys.executable
             try:
                 from voice_to_clipboard.platform.processes import spawn_background
+                from voice_to_clipboard.platform.frozen import module_command
                 self.process = spawn_background(
-                    [python, str(Path(__file__).resolve()), lang],
+                    (module_command('voice_to_clipboard.ui.overlay', lang)
+                     if getattr(sys, 'frozen', False) else
+                     [python, str(Path(__file__).resolve()), lang]),
                     stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, no_console=True)
                 self.thread = threading.Thread(target=self._write, daemon=True)
                 self.thread.start()

@@ -5,6 +5,7 @@ import sys
 import time
 from .paths import data_dir
 from .processes import spawn_background
+from .frozen import module_command
 
 
 def start(arguments, endpoint):
@@ -23,7 +24,7 @@ def start(arguments, endpoint):
     with path.open('w', encoding='utf-8') as log:
         os.chmod(path, 0o600)
         process = spawn_background(
-            [sys.executable, '-m', 'voice_to_clipboard.ui.hotkeys', *arguments],
+            module_command('voice_to_clipboard.ui.hotkeys', *arguments),
             no_console=True, env=environment, stdin=subprocess.DEVNULL,
             stdout=log, stderr=log)
     deadline = time.monotonic() + 15

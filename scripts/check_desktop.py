@@ -1,4 +1,5 @@
 """Isolated real tray/controller/panel smoke. No microphone, model load or autostart changes."""
+import argparse
 import json
 import os
 from pathlib import Path
@@ -22,6 +23,9 @@ def wait_ready(endpoint, process):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--executable", type=Path, help="Test a frozen desktop bundle")
+    args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='vtc-', dir=None if sys.platform == 'win32' else '/tmp') as folder:
         folder = Path(folder)
         data, cache = folder / 'data', folder / 'cache'
@@ -31,7 +35,8 @@ def main():
         original_settings = (data / 'settings.json').read_bytes()
         env = {**os.environ, 'VOICE_TO_CLIPBOARD_DATA_DIR': str(data), 'VOICE_TO_CLIPBOARD_CACHE_DIR': str(cache)}
         endpoint = cache / 'dictate-hotkey-control.sock'
-        command = [sys.executable, '-m', 'voice_to_clipboard.ui.desktop_app', '--run']
+        command = ([str(args.executable.resolve()), '--run'] if args.executable else
+                   [sys.executable, '-m', 'voice_to_clipboard.ui.desktop_app', '--run'])
         app = spawn_background(command, env=env, no_console=True, stdin=subprocess.DEVNULL,
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:

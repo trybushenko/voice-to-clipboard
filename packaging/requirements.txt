@@ -1,0 +1,2 @@
+# Build tooling only; runtime dependencies are recorded with each CI artifact.
+PyInstaller==6.22.0
