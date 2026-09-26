@@ -10,6 +10,16 @@ import time
 
 def main():
     report = Path(sys.argv[1]).resolve()
+    if '--startup-cycle' in sys.argv:
+        if sys.platform != 'win32' or os.environ.get('GITHUB_ACTIONS') != 'true':
+            raise RuntimeError('Startup lifecycle probe is restricted to disposable Windows CI')
+        from voice_to_clipboard.platform.launchers import set_enabled, enabled
+        set_enabled(True)
+        assert enabled()
+        set_enabled(False)
+        assert not enabled()
+        set_enabled(True)
+        assert enabled()
     started = time.perf_counter()
     with tempfile.TemporaryDirectory(prefix='vtc-freeze-') as folder:
         os.environ.update(VOICE_TO_CLIPBOARD_DATA_DIR=folder,
@@ -77,12 +87,21 @@ def main():
                 child.wait(timeout=10)
         assert not (Path(folder) / 'settings.json').exists()
         assert not (Path(folder) / 'history.json').exists()
+        cpu_inference = '--cpu-inference' in sys.argv
+        if cpu_inference:
+            import numpy as np
+            from voice_to_clipboard.backends.faster_whisper import FasterModel
+            model = FasterModel('tiny.en', 'auto', 'auto')
+            assert model.model.model.device == 'cpu'
+            segments, info = model.transcribe(np.zeros(16000, dtype=np.float32), language='en', beam_size=1)
+            list(segments)  # Run the lazy native inference generator, not just model import.
+            model.unload()
         result = dict(platform=platform.platform(), machine=platform.machine(),
                       python=platform.python_version(), frozen=bool(getattr(sys, 'frozen', False)),
                       qt_import_render_seconds=qt_ready, probe_seconds=time.perf_counter()-started,
                       portaudio=sounddevice.get_portaudio_version(),
                       ctranslate2=ctranslate2.__version__, worker_status_shutdown=True, overlay_pipe_eof=overlay_checked,
-                      model_loaded=False, microphone_opened=False)
+                      model_loaded=cpu_inference, cpu_synthetic_inference=cpu_inference, microphone_opened=False)
     report.write_text(json.dumps(result, indent=2), encoding='utf-8')
 
 

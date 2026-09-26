@@ -63,8 +63,8 @@ def _write(path, content, mode=0o600):
 
 
 def install():
-    if getattr(sys, "frozen", False):
-        raise RuntimeError("Launcher installation is not supported by the packaging spike")
+    if getattr(sys, "frozen", False) and sys.platform != "win32":
+        raise RuntimeError("Frozen launcher installation is supported only on Windows")
     path = launcher_path()
     argv = command()
     if sys.platform == 'win32':
@@ -115,8 +115,8 @@ def enabled():
 
 
 def set_enabled(value):
-    if getattr(sys, "frozen", False):
-        raise RuntimeError("Autostart changes are not supported by the packaging spike")
+    if getattr(sys, "frozen", False) and sys.platform != "win32":
+        raise RuntimeError("Frozen autostart is supported only on Windows")
     if type(value) is not bool:
         raise ValueError('Autostart must be enabled or disabled')
     if value:

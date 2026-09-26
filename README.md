@@ -74,3 +74,5 @@ launchers. See [development and verification](docs/development.md).
 remaining work and acceptance criteria.
 
 Model selection: [language compatibility, custom models and acceptance test](docs/setup/model-compatibility.md).
+
+Windows CPU installer preview (E.2): [install/update, limitations and manual test](docs/setup/windows-installer.md).

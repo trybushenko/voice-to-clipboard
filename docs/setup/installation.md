@@ -167,3 +167,8 @@ settings, history and cached models. Remove startup/launchers before deleting th
 project folder or environment.
 
 [Detailed desktop test guide](desktop-stage-d-test.md) · [Back to overview](../../README.md)
+
+## Windows CPU installer preview
+
+See [E.2 installer instructions](windows-installer.md) for the per-user standalone
+preview, checksum/update commands and acceptance gates. The documented source installation remains supported.

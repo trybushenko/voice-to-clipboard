@@ -61,3 +61,22 @@ def restore_standard_streams():
                 else:
                     stream = os.fdopen(fd, mode, encoding='utf-8', buffering=1)
         setattr(sys, name, stream if stream is not None else open(os.devnull, mode))
+
+
+# Kept open until process exit, including worker/panel/overlay children. Inno
+# checks this mutex before upgrade/uninstall and never force-kills dictation.
+_install_mutex = None
+
+
+def hold_install_mutex():
+    global _install_mutex
+    if sys.platform != 'win32' or _install_mutex is not None:
+        return
+    import ctypes
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
+    kernel.CreateMutexW.restype = wintypes.HANDLE
+    _install_mutex = kernel.CreateMutexW(None, False, 'Local\\VoiceToClipboard.Desktop.Runtime')
+    if not _install_mutex:
+        raise ctypes.WinError(ctypes.get_last_error())

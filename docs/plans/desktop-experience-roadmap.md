@@ -11,7 +11,9 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 нові delivery modes та інші функції не прийняті. D.2b прийнято користувачем 2026-09-25 та змерджено в `main`: `f9c3236`
 (код `dc1d720`, CI follow-up `b5aab52`). E.1 packaging spike реалізовано й автоматично перевірено в `codex/packaging-spike`
 (код `70844b7`); прийнято користувачем і змерджено 2026-09-26: `7ba73b2`.
-Main запушено, завершену remote-гілку видалено. Далі E.2 Windows per-user CPU installer; звіт E.1 унизу.
+Main запушено, завершену remote-гілку видалено. E.2 реалізовано й автоматично
+перевірено в `codex/windows-cpu-installer`; очікує ручного Windows-приймання.
+Звіти E.1/E.2 унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -773,7 +775,7 @@ launcher `dictate --help` працює з іншої папки; history checksu
 
 ### Наступна конкретна поставка — E.2 Windows per-user CPU installer
 
-Почати в новій гілці від актуального main; у цьому чаті не розпочато.
+Реалізація E.2 у `codex/windows-cpu-installer` від актуального `origin/main` `60f8d91`.
 Межі: інсталятор на основі перевіреного PyInstaller onedir для Windows x64,
 без Git/Python/CUDA як передумов; Start Menu launcher, один керований автозапуск,
 upgrade/uninstall без втрати settings/profiles/history. Чинні Settings/first-run
@@ -785,3 +787,34 @@ uninstall прибирає власні launchers/autostart, залишає да
 Додати версію/checksum і чесний signing status та перевірки installer lifecycle.
 Вибір installer tooling виконати в E.2. macOS DMG/нотаризація, Linux package,
 NVIDIA runtime і повна hardware matrix — окремі наступні поставки.
+
+
+### E.2 Windows CPU installer — реалізація 2026-09-26
+
+- [x] Inno Setup per-user x64, PyInstaller runtime, Start Menu, version/checksum,
+  build metadata і явний unsigned status; без нового UI або схеми settings.
+- [x] Frozen Windows використовує чинний HKCU Run для Start at login; installer
+  зберігає enabled/disabled, uninstall залишає settings/profiles/history/cache.
+- [x] Mutex усіх frozen processes блокує upgrade/uninstall до Quit.
+  CPU bundle auto обирає CPU; explicit CUDA не переписується, source auto незмінний.
+- [x] Додано unit regression і disposable Windows installer lifecycle workflow.
+- [x] Local suite: 106 tests OK, 4 platform skips. Sandbox IPC restrictions
+  вимагали запуску поза sandbox; особисті дані не використовувалися.
+- [x] Код `3397697`: [regression CI 36235750202](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750202)
+  — усі 6 Windows/macOS/Linux × Python 3.11/3.12 jobs успішні.
+- [x] [Windows installer CI 36235750191](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36235750191):
+  build/install/upgrade/uninstall/reinstall, enabled/disabled HKCU startup,
+  збереження пізнішого source startup, відмова running upgrade, data bytes,
+  installed Qt/worker/overlay/desktop smoke та tiny.en CPU synthetic inference.
+  Artifact `windows-x64-cpu-installer`, version 0.1.1, unsigned, SHA256 і metadata.
+- [x] Перший CI виявив припущення тесту про `unins000.exe` після reinstall;
+  виправлено читання фактичного UninstallString, повторний повний CI успішний.
+- [x] Сфокусоване review: source auto/schema/settings paths незмінні; installer
+  не пише data/history та не завершує примусово app; broad directory delete немає.
+- [ ] Clean Windows 10/11 без Python/Git/CUDA: реальна CPU dictation, login startup,
+  uninstall/reinstall та користувацьке приймання.
+- [ ] Signing, physical Mac M4 та решта E/F gates не закриті.
+
+[Точні команди оновлення, межі та ручний тест](../setup/windows-installer.md).
+Наступна дія: завершити E.2 Windows приймання перед merge; macOS/Linux installers
+і NVIDIA runtime залишаються окремими поставками.

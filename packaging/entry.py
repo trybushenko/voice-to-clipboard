@@ -6,6 +6,8 @@ import runpy
 import sys
 
 if __name__ == '__main__':
+    from voice_to_clipboard.platform.frozen import hold_install_mutex
+    hold_install_mutex()
     multiprocessing.freeze_support()
     from voice_to_clipboard.platform.frozen import restore_standard_streams
     restore_standard_streams()

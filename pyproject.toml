@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "voice-to-clipboard"
-version = "0.1.0"
+version = "0.1.1"
 description = "Local voice dictation to your clipboard on Linux, Windows and Apple Silicon"
 readme = "README.md"
 requires-python = ">=3.10"
