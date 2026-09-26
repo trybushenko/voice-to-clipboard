@@ -14,7 +14,7 @@ for branch `codex/windows-cpu-installer`. Extract the artifact and run the setup
 This preview is **unsigned**; Authenticode/SmartScreen trust is not established.
 The SHA256 detects corruption; it is not publisher authentication.
 
-From the extracted artifact directory in PowerShell:
+From the extracted artifact’s `dist/installer` directory in PowerShell:
 
 ```powershell
 $setup = '.\VoiceToClipboard-0.1.1-windows-x64-cpu-setup.exe'
