@@ -10,6 +10,16 @@ import time
 
 def main():
     report = Path(sys.argv[1]).resolve()
+    if '--startup-cycle' in sys.argv:
+        if sys.platform != 'win32' or os.environ.get('GITHUB_ACTIONS') != 'true':
+            raise RuntimeError('Startup lifecycle probe is restricted to disposable Windows CI')
+        from voice_to_clipboard.platform.launchers import set_enabled, enabled
+        set_enabled(True)
+        assert enabled()
+        set_enabled(False)
+        assert not enabled()
+        set_enabled(True)
+        assert enabled()
     started = time.perf_counter()
     with tempfile.TemporaryDirectory(prefix='vtc-freeze-') as folder:
         os.environ.update(VOICE_TO_CLIPBOARD_DATA_DIR=folder,

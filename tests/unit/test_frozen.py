@@ -36,7 +36,7 @@ class FrozenTests(unittest.TestCase):
             run.assert_not_called()
 
     def test_frozen_launcher_does_not_require_pythonw_or_overwrite_app(self):
-        with patch.object(sys, 'frozen', True, create=True), patch.object(sys, 'platform', 'win32'):
+        with patch.object(sys, 'frozen', True, create=True), patch.object(sys, 'platform', 'darwin'):
             self.assertEqual(launchers.command(), module_command('voice_to_clipboard.ui.desktop_app', '--run'))
             with self.assertRaises(RuntimeError):
                 launchers.install()
@@ -46,3 +46,29 @@ class FrozenTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class CpuBundleTests(unittest.TestCase):
+    def test_cpu_bundle_auto_never_probes_cuda_and_explicit_cuda_explains(self):
+        from voice_to_clipboard.backends.faster_whisper import resolve_device
+        from unittest.mock import Mock
+        count = Mock(return_value=1)
+        with patch.object(sys, 'frozen', True, create=True), patch.object(sys, 'platform', 'win32'):
+            self.assertEqual(resolve_device('auto', count), 'cpu')
+            self.assertEqual(resolve_device('cpu', count), 'cpu')
+            with self.assertRaisesRegex(ValueError, 'CPU only'):
+                resolve_device('cuda', count)
+            count.assert_not_called()
+        with patch.object(sys, 'frozen', False, create=True):
+            self.assertEqual(resolve_device('auto', count), 'cuda')
+
+    def test_frozen_windows_autostart_can_be_enabled_and_disabled(self):
+        from unittest.mock import Mock
+        registry = Mock()
+        registry.CreateKey.return_value.__enter__ = Mock(return_value='key')
+        registry.CreateKey.return_value.__exit__ = Mock(return_value=False)
+        with patch.dict(sys.modules, winreg=registry), patch.object(sys, 'frozen', True, create=True), patch.object(sys, 'platform', 'win32'), patch.object(launchers, 'install'):
+            launchers.set_enabled(True)
+            self.assertIn('--app-module', registry.SetValueEx.call_args.args[-1])
+            launchers.set_enabled(False)
+            registry.DeleteValue.assert_called_once_with('key', launchers.APP_ID)

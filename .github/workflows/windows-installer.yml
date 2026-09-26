@@ -1,0 +1,36 @@
+name: Windows CPU installer
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/windows-cpu-installer]
+permissions:
+  contents: read
+jobs:
+  installer:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install -r packaging/requirements.txt '.[whisper,hotkeys,desktop]'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (!(Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup --no-progress -y }
+      - name: Build unsigned CPU installer
+        run: ./packaging/windows/build.ps1
+      - name: Installer lifecycle and installed runtime
+        run: python scripts/check_windows_installer.py (Get-Item dist/installer/*-setup.exe).FullName
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-x64-cpu-installer
+          path: |
+            dist/installer/*
+            installer-report.json
+            installer-logs/*
+            packaging-report.json
+            build/desktop/warn-desktop.txt
+          retention-days: 14

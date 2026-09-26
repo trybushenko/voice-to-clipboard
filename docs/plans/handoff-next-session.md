@@ -29,7 +29,10 @@ upgrade/uninstall/reinstall зі збереженням profiles/settings/histor
 uninstall/reinstall; version/checksum і явний signing status. Чинні Settings та
 source path зберегти; нових продуктових функцій не додавати. Installer tooling
 обрати в E.2. macOS DMG, Linux package і NVIDIA runtime — окремі поставки.
-У цьому чаті E.2 не розпочато.
+E.2 реалізується в `codex/windows-cpu-installer` від `60f8d91`: Inno per-user CPU
+installer, stable HKCU startup, mutex, data preservation, metadata/checksum.
+[Команди й ручне приймання E.2](../setup/windows-installer.md). CI та фізичне
+приймання відмічати окремо; наступна дія — приймання E.2, без merge наперед.
 Не позначати hardware/voice/clean-machine gates завершеними.
 [Звіт і команди](../setup/packaging-spike.md).
 
