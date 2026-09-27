@@ -886,8 +886,8 @@ Uninstall: disable startup → Quit → Trash app; дані та моделі з
   перевіряє власника; bundle/data не видаляються через frozen `--uninstall`.
   Формат settings і paths не змінені. Після коду — тільки документація.
 - [x] 2026-09-27 користувач явно дозволив merge/push/delete без ручного Mac-тесту.
-  Merge `b853b3c` у main; завершена remote-гілка `codex/macos-arm64-dmg` видаляється
-  після push main. Це дозвіл продовжити розробку, а не фізичне приймання.
+  Merge `b853b3c` у main запушено; завершену remote-гілку
+  `codex/macos-arm64-dmg` видалено. Це дозвіл продовжити розробку, а не фізичне приймання.
 - [x] Pre-merge review packaging/autostart/ownership: блокувальних дефектів немає;
   merge без конфліктів, tree збігається з гілкою. Функціональний код після `d47f24f`
   не змінювався, тести повторно не запускали; CI докази наведені вище.
