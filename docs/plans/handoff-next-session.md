@@ -1,9 +1,49 @@
 # Передача контексту та робочий процес до першого релізу
 
-Оновлено: 2026-09-26. Це знімок для нового чату, а не заміна актуального git/CI.
+Оновлено: 2026-09-27. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
-## Остання прийнята й змерджена поставка — E.2 Windows CPU installer
+## Остання реалізована поставка — E.3 macOS ARM64 app/DMG
+
+Merge `b853b3c` у main 2026-09-27; гілка `codex/macos-arm64-dmg`, база `dfae012`,
+перевірений код `d47f24f`, фінальна гілка `2d42753`.
+Користувач не має доступу до MacBook, явно дозволив merge/push/delete і продовження
+розробки. **Ручне тестування Mac/M4 та його рев’ю відкладені до пізнішого часу.**
+Це не підтвердження physical acceptance і не причина повторювати E.3 з нуля.
+
+Результат: ARM64 `.app`/DMG, version/SHA256/build metadata, чинний один LaunchAgent
+для frozen app, ownership-aware disable/uninstall; Settings/schema/data paths
+не змінені. Докладні [команди та ручний протокол E.3](../setup/macos-dmg.md).
+
+Докази: local 108 tests OK (4 skips), targeted 23 OK (1 skip);
+[regression CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36262241791)
+— усі 6 jobs; [DMG lifecycle CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36262241808)
+— ARM64 build/install, frozen Qt/worker/overlay/desktop, startup/uninstall через
+executable, replacement/reinstall. Artifact `macos-arm64-dmg`, retention 14 днів;
+після закінчення строку його потрібно зібрати з main через workflow_dispatch.
+Pre-merge review без блокувальних дефектів; merge tree збігається з гілкою.
+Після перевіреного коду тільки docs; тести повторно не запускали.
+
+Обмеження: macOS 14+, ARM64; ad-hoc без Developer ID/notarization; моделі окремо;
+перед replacement потрібен Quit, running-update blocker/updater немає.
+Uninstall: disable startup → Quit → Trash app, дані залишаються. Physical
+permissions/мікрофон/MLX Metal/login/update/reinstall і повна F matrix відкриті.
+
+### Наступна конкретна поставка — E.4 Linux package для Ubuntu/Pop!_OS
+
+Почати окрему гілку від актуального main. Обрати один основний формат пакета
+(кандидат `.deb`) і зафіксувати підтримувані версії Ubuntu/Pop!_OS та архітектуру.
+Межі: наявний desktop app/runtime, desktop entry, системні залежності, один
+per-user автозапуск, install/update/uninstall/reinstall без втрати settings,
+profiles/history/cache. Зберегти Settings/first-run і source-install сумісність.
+Без нового UI/workflows, NVIDIA runtime, інших дистрибутивів чи повної F matrix.
+Критерії: збірка пакета з version/checksum; встановлення на чистій підтримуваній
+системі без developer setup; CPU dictation → clipboard → Quit; автозапуск
+увімкнути/вимкнути; update/reinstall зберігають дані, uninstall прибирає лише
+власні launcher/autostart. X11/Wayland межі та автоматичні/ручні докази описати окремо.
+У цьому чаті E.4 не розпочато. Відкладене Mac-приймання не блокує цю розробку.
+
+## Попередня прийнята й змерджена поставка — E.2 Windows CPU installer
 
 Гілка `codex/windows-cpu-installer`, база `60f8d91`; перевірений код `3397697`,
 фінальна гілка до merge `064c6b2`. Merge `31ccd64` у main запушено,
@@ -32,22 +72,6 @@ obsolete dependency files до uninstall/reinstall; source shortcut після u
 автоматично не відновлюється. Signing, GitHub Releases, повна clean-machine/hardware
 matrix, фізичний M4, Linux package та NVIDIA runtime лишаються відкритими.
 [Інструкція, артефакт і ручний протокол E.2](../setup/windows-installer.md).
-
-Наступна конкретна задача — **E.3 macOS ARM64 app/DMG** від актуального main:
-перевірений E.1 bundle → `.app` у DMG/Applications без Git/Python/Rosetta,
-чинний один frozen-compatible автозапуск, update/uninstall без втрати даних,
-version/checksum/minimum macOS і чесний signing/notarization status.
-Зберегти наявні Settings/first-run; без нового UI/workflows/wizard, Linux/NVIDIA.
-Критерії: native ARM64 CI, frozen lifecycle; фізичний Mac M4 install/permissions/
-MLX dictation/Quit, login startup enable/disable, update і reinstall із retained data.
-Сертифікати — зовнішня залежність; CI не замінює фізичне приймання.
-**E.3 реалізовано й автоматично перевірено у `codex/macos-arm64-dmg` від `dfae012`.**
-Код `d47f24f`; regression CI `36262241791` (6 jobs) і DMG CI `36262241808`
-успішні. Local: 108 tests OK, 4 skips; фінальний targeted rerun: 23 OK, 1 skip.
-Артефакт `macos-arm64-dmg` містить DMG/checksum/metadata/reports; retention 14 днів.
-Гілка запушена, merge не виконано. Наступна дія — фізичне M4-приймання E.3.
-Див. [інструкцію E.3](../setup/macos-dmg.md) та звіт унизу roadmap.
-Фізичне M4-приймання, signing/notarization відкриті. Не починати E.2 повторно.
 
 Нижче — історія попередніх поставок; актуальний пріоритет наведено вище.
 

@@ -1,6 +1,7 @@
 # macOS ARM64 app / DMG preview (E.3)
 
-Branch: `codex/macos-arm64-dmg`, based on `origin/main` `dfae012`.
+Merged into `main` as `b853b3c` on 2026-09-27 (base `dfae012`).
+The user authorized merge with physical Mac testing and user review deferred.
 Native Apple Silicon only, macOS 14 or newer; no Python, Git or Rosetta needed
 on the target Mac. Models download separately on first use. Existing Settings,
 profiles, history and model/cache paths are unchanged. Existing explicit backend
@@ -15,11 +16,11 @@ Metal transcription and login startup still require manual acceptance.
 ## Download and install
 
 Download `macos-arm64-dmg` from the successful **macOS ARM64 DMG** Actions run
-for this branch. It contains the DMG, SHA256, build metadata, dependencies and
+for verified code `d47f24f`, or a subsequent successful manual run on `main`. It contains the DMG, SHA256, build metadata, dependencies and
 verification reports. With GitHub CLI (optional, for downloading only):
 
 ```sh
-gh run list --repo trybushenko/voice-to-clipboard --workflow macos-dmg.yml --branch codex/macos-arm64-dmg
+gh run list --repo trybushenko/voice-to-clipboard --workflow macos-dmg.yml
 # Verified code d47f24f:
 gh run download 36262241808 --repo trybushenko/voice-to-clipboard --name macos-arm64-dmg --dir macos-preview
 cd macos-preview
@@ -69,7 +70,7 @@ On native ARM64 macOS with Python 3.12:
 
 ```sh
 git fetch origin
-git switch codex/macos-arm64-dmg
+git switch main
 git pull --ff-only
 python -m pip install -r packaging/requirements.txt '.[mac,whisper,hotkeys,desktop]'
 bash packaging/macos/build.sh
