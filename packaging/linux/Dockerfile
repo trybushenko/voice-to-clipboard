@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.cache/pip python -m pip install --upgrade p
 WORKDIR /build
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
-COPY packaging ./packaging
-RUN --mount=type=cache,target=/root/.cache/pip python -m pip install -r packaging/requirements.txt '.[whisper,hotkeys,desktop]'
+COPY packaging/requirements.txt /build-requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip python -m pip install -r /build-requirements.txt '.[whisper,hotkeys,desktop]'
 COPY . .
 RUN bash packaging/linux/build.sh

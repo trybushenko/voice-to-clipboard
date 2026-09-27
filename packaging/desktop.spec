@@ -24,7 +24,7 @@ for package in packages:
 hidden += ['PySide6.QtWidgets', 'PySide6.QtGui', 'PySide6.QtCore', 'tkinter']
 if sys.platform.startswith('linux'):
     hidden += ['gi.repository.Gtk', 'gi.repository.Gdk', 'gi.repository.GLib',
-               'gi.repository.AyatanaAppIndicator3', 'gi.repository.Atspi']
+               'gi.repository.AyatanaAppIndicator3', 'gi.repository.Atspi', 'gi.repository.DBus']
 a = Analysis([str(root / 'packaging/entry.py')], pathex=[str(root / 'src')],
              binaries=binaries, datas=data, hiddenimports=hidden,
              excludes=['PyQt5', 'PyQt6', 'PySide2', 'matplotlib', 'IPython', 'pytest'])
