@@ -76,7 +76,7 @@ This packaging change adds no new workflow or shortcut registration mechanism.
 Build on Ubuntu 22.04 (or Pop!_OS 22.04), using distro Python 3.10 plus matching GI:
 
 ```sh
-sudo apt install build-essential python3-venv python3-dev python3-tk python3-gi gir1.2-gtk-3.0 gir1.2-atspi-2.0 gir1.2-ayatanaappindicator3-0.1 libportaudio2 libegl1 libgl1 libxcb-cursor0 libxkbcommon-x11-0 dpkg-dev
+sudo apt install build-essential python3-venv python3-dev python3-tk python3-gi python3-gi-cairo libglib2.0-bin libharfbuzz-gobject0 gir1.2-gtk-3.0 gir1.2-atspi-2.0 gir1.2-ayatanaappindicator3-0.1 libportaudio2 libegl1 libgl1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxkbcommon-x11-0 dpkg-dev
 python3 -m venv --system-site-packages .packaging-venv
 .packaging-venv/bin/python -m pip install --upgrade pip setuptools wheel
 .packaging-venv/bin/python -m pip install -r packaging/requirements.txt '.[whisper,hotkeys,desktop]'

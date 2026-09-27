@@ -42,7 +42,7 @@ Priority: optional
 Architecture: amd64
 Maintainer: Voice to Clipboard contributors <noreply@github.com>
 Installed-Size: {size}
-Depends: libc6 (>= 2.35), libstdc++6, libgcc-s1, libportaudio2, libasound2, libpulse0, libegl1, libgl1, libxcb-cursor0, libxkbcommon-x11-0, libgtk-3-0, libayatana-appindicator3-1, libatspi2.0-0, at-spi2-core, xclip, wl-clipboard, libnotify-bin
+Depends: libc6 (>= 2.35), libstdc++6, libgcc-s1, libportaudio2, libasound2, libpulse0, libegl1, libgl1, libxcb-cursor0, libxcb-icccm4, libxcb-keysyms1, libxcb-shape0, libxkbcommon-x11-0, libgtk-3-0, libayatana-appindicator3-1, libatspi2.0-0, at-spi2-core, xclip, wl-clipboard, libnotify-bin
 Suggests: gnome-shell-extension-appindicator
 Homepage: https://github.com/trybushenko/voice-to-clipboard
 Description: Local voice dictation with desktop controls (CPU preview)
