@@ -3,7 +3,36 @@
 Оновлено: 2026-09-27. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
-## Остання реалізована поставка — E.3 macOS ARM64 app/DMG
+## Остання прийнята поставка — E.4 Linux CPU .deb
+
+Гілка `codex/linux-deb-package` від актуального main `163f1b7`, окремий checkout.
+Реалізація: Ubuntu 22.04/24.04 + Pop!_OS 22.04 amd64 .deb, bundled CPU runtime,
+GTK/GI/Qt, launcher, ownership-aware один startup, frozen AT-SPI dispatcher.
+Source/CUDA settings і data/history/cache paths збережені. Bundle `08c9ad4`,
+останній code/test commit `09eeddd`. Користувач 2026-09-27 підтвердив перелічені
+сценарії та явно дозволив merge/push/delete remote-гілки. Merge-звіт нижче.
+Локально 113 tests OK (4 skips), native Pop!_OS lifecycle, Ubuntu 22.04 package
+lifecycle і Ubuntu 24.04 frozen CPU/clipboard probe. Фінальні CI докази наведені
+в roadmap: [package CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856471)
+і [6-job regression CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856403)
+успішні. Прийнято CPU/auto → clipboard, profiles/restart, startup login
+enable/disable та remove/reinstall зі збереженням даних. Окремі OS/session/model/
+device параметри не надані; повна hardware/Wayland матриця не закрита.
+[Команди, межі, ручний тест](../setup/linux-deb.md); фактичні перевірки — у звіті E.4
+в [roadmap](desktop-experience-roadmap.md). CI/ручне приймання/merge позначаються окремо.
+
+Перед remove: disable startup → Quit → frozen `--uninstall` → APT remove.
+APT не змінює homes; пропущений startup стає inert через TryExec, оживає на reinstall.
+Unsigned preview, моделі окремо, без CUDA/updater/running-update blocker.
+Наступна конкретна задача — **E.5: надійний CUDA/CPU вибір у source Linux/Windows**.
+Окрема гілка від актуального main: реальний CUDA load/inference preflight;
+пояснений CPU fallback для `auto` лише при проблемі CUDA runtime; explicit `cuda`
+повертає конкретну помилку без fallback. Зберегти settings/source compatibility і
+CPU-only bundles; задокументувати перевірену CTranslate2/CUDA/cuDNN комбінацію.
+Без нового UI, GPU installer чи автоматичної установки драйверів. Критерії й
+межі — у кінці roadmap. У цьому чаті E.5 не починали. Mac/M4 і F gates відкриті.
+
+## Попередня реалізована поставка — E.3 macOS ARM64 app/DMG
 
 Merge `b853b3c` у main 2026-09-27; гілка `codex/macos-arm64-dmg`, база `dfae012`,
 перевірений код `d47f24f`, фінальна гілка `2d42753`. Main запушено,
@@ -30,7 +59,7 @@ Pre-merge review без блокувальних дефектів; merge tree з
 Uninstall: disable startup → Quit → Trash app, дані залишаються. Physical
 permissions/мікрофон/MLX Metal/login/update/reinstall і повна F matrix відкриті.
 
-### Наступна конкретна поставка — E.4 Linux package для Ubuntu/Pop!_OS
+### Межі E.4 Linux package для Ubuntu/Pop!_OS (реалізовано, звіт вище)
 
 Почати окрему гілку від актуального main. Обрати один основний формат пакета
 (кандидат `.deb`) і зафіксувати підтримувані версії Ubuntu/Pop!_OS та архітектуру.
@@ -42,7 +71,7 @@ profiles/history/cache. Зберегти Settings/first-run і source-install с
 системі без developer setup; CPU dictation → clipboard → Quit; автозапуск
 увімкнути/вимкнути; update/reinstall зберігають дані, uninstall прибирає лише
 власні launcher/autostart. X11/Wayland межі та автоматичні/ручні докази описати окремо.
-У цьому чаті E.4 не розпочато. Відкладене Mac-приймання не блокує цю розробку.
+E.4 розпочато окремою гілкою; актуальний стан на початку цього handoff.
 
 ## Попередня прийнята й змерджена поставка — E.2 Windows CPU installer
 

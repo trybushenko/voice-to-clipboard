@@ -11,8 +11,8 @@ import time
 def main():
     report = Path(sys.argv[1]).resolve()
     if '--startup-cycle' in sys.argv:
-        if sys.platform not in ('win32', 'darwin') or os.environ.get('GITHUB_ACTIONS') != 'true':
-            raise RuntimeError('Startup lifecycle probe is restricted to disposable Windows/macOS CI')
+        if sys.platform not in ('win32', 'darwin', 'linux') or os.environ.get('GITHUB_ACTIONS') != 'true':
+            raise RuntimeError('Startup lifecycle probe is restricted to disposable CI')
         from voice_to_clipboard.platform.launchers import set_enabled, enabled
         set_enabled(True)
         assert enabled()
@@ -46,7 +46,7 @@ def main():
         window.hide()
         qt_ready = time.perf_counter() - started
         overlay_checked = False
-        if sys.platform in ('win32', 'darwin'):
+        if sys.platform in ('win32', 'darwin') or sys.platform.startswith('linux'):
             from voice_to_clipboard.ui.overlay import Overlay
             overlay = Overlay(lang='en')
             try:
@@ -60,6 +60,19 @@ def main():
                 overlay_checked = True
             finally:
                 overlay.close()
+        atspi_checked = False
+        if sys.platform.startswith('linux'):
+            import subprocess
+            from voice_to_clipboard.ui.desktop_app import linux_bindings
+            linux_bindings()
+            import pystray
+            assert pystray.Icon.HAS_MENU
+            probe = subprocess.run(module_command('voice_to_clipboard.platform.atspi_probe'),
+                                   input='', capture_output=True, text=True, timeout=10)
+            assert probe.stdout.strip(), (probe.returncode, probe.stderr)
+            reply = json.loads(probe.stdout)
+            assert ('ok' in reply or reply.get('error', '').startswith('Focused field not exposed')), reply
+            atspi_checked = True
         child = spawn_background(module_command('voice_to_clipboard.worker.service'), no_console=True)
         path = Path(folder) / 'worker.sock'
         def request(op):
@@ -96,11 +109,20 @@ def main():
             segments, info = model.transcribe(np.zeros(16000, dtype=np.float32), language='en', beam_size=1)
             list(segments)  # Run the lazy native inference generator, not just model import.
             model.unload()
-        result = dict(platform=platform.platform(), machine=platform.machine(),
+        clipboard_checked = '--clipboard-cycle' in sys.argv
+        if clipboard_checked:
+            if sys.platform != 'linux' or os.environ.get('GITHUB_ACTIONS') != 'true':
+                raise RuntimeError('Clipboard probe requires disposable Linux CI')
+            import subprocess
+            from voice_to_clipboard.platform.desktop import to_clipboard
+            sample = 'Voice to Clipboard — Україна 123'
+            assert to_clipboard(sample)
+            assert subprocess.check_output(['xclip', '-selection', 'clipboard', '-o']).decode('utf-8') == sample
+        result = dict(clipboard_roundtrip=clipboard_checked, platform=platform.platform(), machine=platform.machine(),
                       python=platform.python_version(), frozen=bool(getattr(sys, 'frozen', False)),
                       qt_import_render_seconds=qt_ready, probe_seconds=time.perf_counter()-started,
                       portaudio=sounddevice.get_portaudio_version(),
-                      ctranslate2=ctranslate2.__version__, worker_status_shutdown=True, overlay_pipe_eof=overlay_checked,
+                      ctranslate2=ctranslate2.__version__, worker_status_shutdown=True, overlay_pipe_eof=overlay_checked, atspi_dispatch=atspi_checked,
                       model_loaded=cpu_inference, cpu_synthetic_inference=cpu_inference, microphone_opened=False)
     report.write_text(json.dumps(result, indent=2), encoding='utf-8')
 

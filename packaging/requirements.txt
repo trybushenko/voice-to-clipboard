@@ -1,2 +1,3 @@
 # Build tooling only; runtime dependencies are recorded with each CI artifact.
 PyInstaller==6.22.0
+tomli>=2,<3; python_version < "3.11"

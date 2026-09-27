@@ -1,8 +1,10 @@
 """X11 integration. Wayland deliberately uses desktop bindings and manual paste."""
 import os
 import subprocess
+import sys
 import threading
 import time
+from .processes import external_environment
 
 
 def focus_probe():
@@ -14,7 +16,11 @@ def focus_probe():
     from Xlib.display import Display
     display = Display()
     try:
-        process = subprocess.Popen(['/usr/bin/python3', str(Path(__file__).with_name('atspi_probe.py'))],
+        from .frozen import module_command
+        argv = (module_command('voice_to_clipboard.platform.atspi_probe')
+                if getattr(sys, 'frozen', False) else
+                ['/usr/bin/python3', str(Path(__file__).with_name('atspi_probe.py'))])
+        process = subprocess.Popen(argv,
                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                text=True, start_new_session=True)
     except Exception:
@@ -76,7 +82,7 @@ def send_paste(expected, guard):
                 raise RuntimeError('Release modifiers and paste manually; text is in clipboard')
             time.sleep(.02)
         actual = subprocess.run(['xclip', '-selection', 'clipboard', '-o'], capture_output=True,
-                                timeout=2, check=True).stdout.decode('utf-8')
+                                timeout=2, check=True, env=external_environment()).stdout.decode('utf-8')
         if actual != expected:
             raise RuntimeError('Clipboard changed; restore text with dictate --copy-last')
         guard.check()
@@ -177,7 +183,7 @@ def wayland_hint():
                                  '--object-path', '/org/freedesktop/portal/desktop', '--method',
                                  'org.freedesktop.DBus.Properties.Get',
                                  'org.freedesktop.portal.GlobalShortcuts', 'version'],
-                                capture_output=True, text=True, timeout=2)
+                                capture_output=True, text=True, timeout=2, env=external_environment())
         available = result.returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         available = False

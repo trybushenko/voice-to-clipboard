@@ -1,0 +1,50 @@
+name: Linux CPU deb
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/linux-deb-package]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f packaging/linux/Dockerfile -t vtc-deb-builder .
+      - name: Extract package
+        run: |
+          id=$(docker create vtc-deb-builder)
+          docker cp "$id:/build/artifacts" artifacts
+          docker rm "$id"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-amd64-deb
+          path: artifacts/
+          retention-days: 14
+  lifecycle:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu: ['22.04', '24.04']
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-amd64-deb
+          path: artifacts
+      - name: Clean Ubuntu package lifecycle
+        run: |
+          mkdir reports
+          docker run --rm -e VTC_DISPOSABLE_CONTAINER=1 \
+            -v "$PWD:/work:ro" -v "$PWD/reports:/reports" \
+            ubuntu:${{ matrix.ubuntu }} bash /work/packaging/linux/check-container.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-lifecycle-${{ matrix.ubuntu }}
+          path: reports/
+          retention-days: 14

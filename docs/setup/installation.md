@@ -1,7 +1,9 @@
 # Install Voice to Clipboard
 
 This is a source installation of the desktop app on `main`. You need Python and
-one-time terminal commands; a standalone installer is not available yet. After setup,
+one-time terminal commands. Standalone previews are available for
+[Windows CPU](windows-installer.md), [macOS ARM64](macos-dmg.md) and
+[Linux CPU .deb](linux-deb.md). After source setup,
 launch the app from your application menu and use its tray icon without a terminal.
 Use Python 3.11 or 3.12. Internet is required for package installation and the first
 use of each speech model; cached models can subsequently run offline.

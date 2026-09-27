@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 from .paths import data_dir, cache_dir
+from .processes import external_environment
 from .windows import _windows_clipboard
 
 def configure_text_output():
@@ -52,7 +53,7 @@ def notify(text, urgency='low'):
             subprocess.run(['osascript', '-e', 'on run argv\ndisplay notification (item 1 of argv) with title "Voice to Clipboard"\nend run', text], timeout=3, check=False, capture_output=True)
         elif sys.platform != 'win32' and shutil.which('notify-send'):
             subprocess.run(['notify-send', '-u', urgency, '-t', '2000', '-h',
-                            'string:x-canonical-private-synchronous:dictate', 'Dictate', text], timeout=3, check=False)
+                            'string:x-canonical-private-synchronous:dictate', 'Dictate', text], timeout=3, check=False, env=external_environment())
         # Windows uses the overlay and terminal; no modal notification dialogs.
     except (OSError, subprocess.TimeoutExpired):
         pass
@@ -68,7 +69,7 @@ def to_clipboard(text):
     try:
         # Do not capture inherited pipes from a clipboard owner process.
         return subprocess.run(command, input=text.encode('utf-8'), stdout=subprocess.DEVNULL,
-                              stderr=subprocess.DEVNULL, timeout=5, check=False).returncode == 0
+                              stderr=subprocess.DEVNULL, timeout=5, check=False, env=external_environment()).returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         return False
 
