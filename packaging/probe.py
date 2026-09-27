@@ -69,6 +69,7 @@ def main():
             assert pystray.Icon.HAS_MENU
             probe = subprocess.run(module_command('voice_to_clipboard.platform.atspi_probe'),
                                    input='', capture_output=True, text=True, timeout=10)
+            assert probe.stdout.strip(), (probe.returncode, probe.stderr)
             reply = json.loads(probe.stdout)
             assert ('ok' in reply or reply.get('error', '').startswith('Focused field not exposed')), reply
             atspi_checked = True

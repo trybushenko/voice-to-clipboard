@@ -23,6 +23,15 @@ for package in packages:
 # runpy dispatch cannot be discovered by static analysis.
 hidden += ['PySide6.QtWidgets', 'PySide6.QtGui', 'PySide6.QtCore', 'tkinter']
 if sys.platform.startswith('linux'):
+    # PyInstaller has no built-in Atspi hook; a hidden import alone drops its typelib.
+    from PyInstaller.utils.hooks.gi import GiModuleInfo
+    atspi = GiModuleInfo('Atspi', '2.0')
+    if not atspi.available:
+        raise RuntimeError('Build requires gir1.2-atspi-2.0')
+    b, d, h = atspi.collect_typelib_data()
+    binaries += b
+    data += d
+    hidden += h
     hidden += ['gi.repository.Gtk', 'gi.repository.Gdk', 'gi.repository.GLib',
                'gi.repository.AyatanaAppIndicator3', 'gi.repository.Atspi', 'gi.repository.DBus']
 a = Analysis([str(root / 'packaging/entry.py')], pathex=[str(root / 'src')],
