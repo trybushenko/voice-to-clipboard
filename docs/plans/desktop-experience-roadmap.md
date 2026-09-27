@@ -14,8 +14,8 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 E.2 Windows CPU installer прийнято користувачем 2026-09-26 та змерджено: `31ccd64`
 (перевірений код `3397697`). Main запушено, `origin/codex/windows-cpu-installer`
 видалено. E.3 реалізовано, автоматично перевірено й змерджено 2026-09-27 (`b853b3c`).
-Ручне Mac-тестування та рев’ю користувач відклав. E.4 Linux package реалізовано
-в `codex/linux-deb-package` від актуального main `163f1b7`; звіт унизу.
+Ручне Mac-тестування та рев’ю користувач відклав. E.4 Linux package прийнято користувачем 2026-09-27;
+гілка `codex/linux-deb-package`, база `163f1b7`, докази й merge-звіт унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -24,7 +24,7 @@ E.2 Windows CPU installer прийнято користувачем 2026-09-26 �
 після focus/overlay виправлень і дозволені до merge в main. Фізична macOS
 матриця залишається відкритою. D прийнято користувачем на Windows 2026-09-18 і дозволено до merge в main.
 Обмежені D.1-поставки прийняті та змерджені; D.2a дала технічний напрям, але
-не є acceptance нового продуктового функціоналу. D.2b прийнято й змерджено. E.1/E.2 прийнято й змерджено; E.3 змерджено з відкладеним ручним прийманням; E.4 реалізовано з відкритим ручним Linux-прийманням; решта E/F відкрита.**
+не є acceptance нового продуктового функціоналу. D.2b прийнято й змерджено. E.1/E.2 прийнято й змерджено; E.3 змерджено з відкладеним ручним прийманням; E.4 прийнято користувачем; решта E/F відкрита.**
 
 Позначення: `[x]` — конкретна реалізація або перевірка, для якої є доказ;
 `[ ]` — відсутня реалізація чи непроведена перевірка. Код і ручне приймання
@@ -426,7 +426,8 @@ D.2b прийнято користувачем 2026-09-25 та змерджен�
 - [ ] Ручне Mac/M4-приймання E.3 та рев’ю користувача відкладені; не вважати їх виконаними.
 - [x] E.4 Linux: `.deb` для Ubuntu 22.04/24.04 і Pop!_OS 22.04 amd64,
   desktop entry та системні залежності. Автоматичні докази — у звіті E.4;
-  фізичне voice/login-приймання відкрите, інші дистрибутиви не заявлені.
+  користувач прийняв перелічені сценарії. Повна OS/session matrix відкрита,
+  інші дистрибутиви не заявлені.
 - [x] Порівняти збірку PyInstaller/інший bundler коротким spike: native dependencies,
   size, cold start, MLX, PortAudio, worker spawning у frozen executable.
   Обрано PyInstaller onedir; native CI/вимірювання E.1 наведено нижче.
@@ -948,9 +949,16 @@ startup. Нова UI/schema/workflows, NVIDIA, інші дистрибутиви
   збережено; package не пише homes; startup removal перевіряє власника;
   bundled dependencies перевірені clean-image тестами. Блокувальних дефектів
   у межах автоматично перевіреної поставки не залишилось.
-- [ ] Фізичні Ubuntu/Pop!_OS: microphone/voice, login enable/disable, tray,
-  X11 guarded paste та Wayland desktop binding/manual paste.
-- [ ] Рев’ю/ручне приймання користувачем і merge; повна F matrix не закрита.
+- [x] 2026-09-27 користувач підтвердив: поставку перевірено, перелічені сценарії
+  працюють; дозволив merge/push/delete remote-гілки. Це приймання наданого
+  протоколу: CPU/auto dictation → clipboard, profile persistence, login startup
+  enable/disable, remove/reinstall зі збереженням даних.
+- [ ] Повна Ubuntu/Pop!_OS × X11/Wayland hardware matrix, guarded paste та
+  детальний OS/session/model/device протокол. У повідомленні приймання ці
+  параметри не наведені; не приписувати йому перевірку кожної конфігурації.
+- [x] Pre-merge review: startup ownership, package files/dependencies, CPU routing,
+  frozen helper та source compatibility — блокувальних дефектів не знайдено.
+  Після `09eeddd` лише docs; тести повторно не запускали.
 
 [Точні команди, ручний тест та обмеження](../setup/linux-deb.md).
 Перед upgrade/remove потрібен Quit. Перед APT remove користувач вимикає startup
@@ -966,5 +974,20 @@ Wayland portal/automatic paste. Реалізація та фізичне при�
 усуває відсутність desktop-служби у Xvfb контейнері; product UI не змінено.
 PyInstaller symlinks збережені; .deb близько 191 MiB без моделей. Локально build
 `08c9ad4`, останній code/test commit `09eeddd`; після нього тільки звіт/docs.
-Наступна дія: user review і ручний Linux протокол, merge лише за окремим дозволом;
-далі окрема E-поставка NVIDIA/runtime/CPU fallback та решта F gates.
+Наступна конкретна задача — E.5, описана нижче. У цьому чаті не розпочиналася.
+
+### Наступна конкретна поставка — E.5 надійний CUDA/CPU вибір у source Linux/Windows
+
+Почати окрему гілку від актуального main. Межі: перевірка доступності CUDA runtime
+реальним load/inference, а не лише кількістю GPU; для `auto` — CPU fallback із
+видимим поясненням саме при відсутній/несумісній CUDA runtime; для явного `cuda` —
+конкретна помилка без мовчазного fallback. Зберегти настройки, профілі та CPU-only
+поведінку готових Windows/Linux bundles. Задокументувати одну перевірену комбінацію
+CTranslate2/CUDA/cuDNN і відділити driver/runtime від повного CUDA Toolkit.
+Без нового UI/wizard, автоматичного встановлення драйверів, GPU installer,
+нових моделей, signing чи повної F matrix.
+Критерії: source CPU-only запуск; реальний NVIDIA load/inference; контрольовано
+відсутня runtime → пояснений CPU fallback тільки в `auto`; explicit CUDA →
+дієва діагностика; помилки моделі/мережі не маскуються fallback; regression tests
+та точні команди налаштування. Недоступне hardware-приймання позначати окремо.
+E.5 у цьому чаті не розпочато. Mac/M4 acceptance, signing і решта F gates відкриті.

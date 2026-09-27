@@ -11,7 +11,7 @@ actionable error. Existing source installs keep their CUDA behavior and existing
 ## Install or update
 
 Download and extract artifact `linux-amd64-deb` from the **Linux CPU deb** workflow
-for `codex/linux-deb-package`. It contains an unsigned `.deb`, SHA256, dependency
+from the verified run linked below (original branch `codex/linux-deb-package`). It contains an unsigned `.deb`, SHA256, dependency
 list and build metadata. Separate `linux-lifecycle-22.04` and
 `linux-lifecycle-24.04` artifacts contain test reports. Artifacts expire after 14 days; rerun the workflow or use the build
 commands below if needed. This is a preview, not a signed APT repository.
@@ -19,7 +19,9 @@ commands below if needed. This is a preview, not a signed APT repository.
 Verified code/test harness: `09eeddd`. The [package lifecycle run](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856471)
 passed on clean Ubuntu 22.04 and 24.04; the [regression matrix](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856403)
 passed all six jobs. Local Pop!_OS 22.04 frozen desktop lifecycle also passed.
-Voice/microphone, real login and Wayland acceptance remain open.
+On 2026-09-27 the user accepted the listed dictation, persistence, login startup
+and remove/reinstall scenarios. No separate OS/session/model/device details were
+provided; the full hardware and Wayland matrix remains open.
 
 With GitHub CLI, download the verified artifact without changing a checkout:
 
