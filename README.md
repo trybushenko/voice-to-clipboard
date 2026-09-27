@@ -52,7 +52,7 @@ Its tray/menu bar provides recording, settings, diagnostics and **Start at login
 you do not need to keep a terminal open.
 
 **Source installation requires Python and a one-time terminal setup.** Standalone
-Windows CPU and macOS ARM64 previews are linked below. Follow the [step-by-step installation guide](docs/setup/installation.md)
+Windows CPU, macOS ARM64 and Linux CPU previews are linked below. Follow the [step-by-step installation guide](docs/setup/installation.md)
 for prerequisites, setup without Git, your first recording and troubleshooting.
 Downloads are required for the first use of each model.
 The [E.1 packaging spike](docs/setup/packaging-spike.md) provides experimental
@@ -78,3 +78,5 @@ Model selection: [language compatibility, custom models and acceptance test](doc
 Windows CPU installer preview (E.2): [install/update, limitations and manual test](docs/setup/windows-installer.md).
 
 macOS ARM64 DMG preview (E.3): [install/update, limitations and manual test](docs/setup/macos-dmg.md).
+
+Linux CPU .deb preview (E.4): [install/update, limitations and manual test](docs/setup/linux-deb.md).

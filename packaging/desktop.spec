@@ -1,6 +1,9 @@
 # Build on the target OS/architecture. No models, CUDA runtime or user data.
 import sys
-import tomllib
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
@@ -19,6 +22,9 @@ for package in packages:
     hidden += h
 # runpy dispatch cannot be discovered by static analysis.
 hidden += ['PySide6.QtWidgets', 'PySide6.QtGui', 'PySide6.QtCore', 'tkinter']
+if sys.platform.startswith('linux'):
+    hidden += ['gi.repository.Gtk', 'gi.repository.Gdk', 'gi.repository.GLib',
+               'gi.repository.AyatanaAppIndicator3', 'gi.repository.Atspi']
 a = Analysis([str(root / 'packaging/entry.py')], pathex=[str(root / 'src')],
              binaries=binaries, datas=data, hiddenimports=hidden,
              excludes=['PyQt5', 'PyQt6', 'PySide2', 'matplotlib', 'IPython', 'pytest'])

@@ -14,7 +14,8 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 E.2 Windows CPU installer прийнято користувачем 2026-09-26 та змерджено: `31ccd64`
 (перевірений код `3397697`). Main запушено, `origin/codex/windows-cpu-installer`
 видалено. E.3 реалізовано, автоматично перевірено й змерджено 2026-09-27 (`b853b3c`).
-Ручне Mac-тестування та рев’ю користувач відклав; далі E.4 Linux package. Звіти унизу.
+Ручне Mac-тестування та рев’ю користувач відклав. E.4 Linux package реалізується
+в `codex/linux-deb-package` від актуального main `163f1b7`; звіт унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
 після `1d545b0`, робоча гілка `codex/windows-hotkeys-paste`.
@@ -907,4 +908,33 @@ profiles/history/cache. Зберегти Settings/first-run і source-install с
 системі без developer setup; CPU dictation → clipboard → Quit; автозапуск
 увімкнути/вимкнути; update/reinstall зберігають дані, uninstall прибирає лише
 власні launcher/autostart. X11/Wayland межі та автоматичні/ручні докази описати окремо.
-У цьому чаті E.4 не розпочато. Відкладене Mac-приймання не блокує цю розробку.
+Відкладене Mac-приймання не блокує E.4. Поточна реалізація описана нижче.
+
+
+### E.4 Linux CPU .deb — поставка 2026-09-27
+
+Гілка `codex/linux-deb-package`, база актуального `origin/main` `163f1b7`.
+Межі: один .deb для Ubuntu 22.04/24.04 і Pop!_OS 22.04 amd64, існуючий
+PyInstaller desktop/runtime, CPU без CUDA, системний launcher та один per-user
+startup. Нова UI/schema/workflows, NVIDIA, інші дистрибутиви й F matrix виключені.
+
+- [x] Docker build на Ubuntu 22.04, bundled Python/GTK-GI/Qt/faster-whisper,
+  version/SHA256/build metadata і залежності APT; unsigned preview.
+- [x] Frozen Linux startup, перевірка встановленого executable, TryExec і
+  ownership-aware disable/uninstall. Пакет не обходить домашні каталоги.
+- [x] Frozen AT-SPI helper через dispatcher, GTK overlay, CPU auto без CUDA;
+  source CPU/GPU behavior, schema та data/cache paths збережені.
+- [x] Unit regressions та clean Ubuntu container lifecycle workflow: install,
+  вища Debian revision, remove/reinstall/purge, data bytes, startup ownership,
+  desktop/Qt/worker/overlay/clipboard і synthetic CPU inference.
+- [ ] Записати фактичні результати збірки, container tests та CI після виконання.
+- [ ] Фізичні Ubuntu/Pop!_OS: microphone/voice, login enable/disable, tray,
+  X11 guarded paste та Wayland desktop binding/manual paste.
+- [ ] Рев’ю/ручне приймання користувачем і merge; повна F matrix не закрита.
+
+[Точні команди, ручний тест та обмеження](../setup/linux-deb.md).
+Перед upgrade/remove потрібен Quit. Перед APT remove користувач вимикає startup
+або виконує frozen `--uninstall`; APT сам не видаляє файли з homes. Без цього
+startup лишається inert до reinstall. Пізніший source startup зберігається.
+Моделі завантажуються окремо; немає updater/running-update blocker, signing чи
+Wayland portal/automatic paste. Реалізація та фізичне приймання — різні статуси.

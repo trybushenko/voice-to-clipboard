@@ -3,7 +3,22 @@
 Оновлено: 2026-09-27. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
-## Остання реалізована поставка — E.3 macOS ARM64 app/DMG
+## Поточна поставка — E.4 Linux CPU .deb
+
+Гілка `codex/linux-deb-package` від актуального main `163f1b7`, окремий checkout.
+Реалізація: Ubuntu 22.04/24.04 + Pop!_OS 22.04 amd64 .deb, bundled CPU runtime,
+GTK/GI/Qt, launcher, ownership-aware один startup, frozen AT-SPI dispatcher.
+Source/CUDA settings і data/history/cache paths збережені.
+[Команди, межі, ручний тест](../setup/linux-deb.md); фактичні перевірки — у звіті E.4
+в [roadmap](desktop-experience-roadmap.md). CI/ручне приймання/merge позначаються окремо.
+
+Перед remove: disable startup → Quit → frozen `--uninstall` → APT remove.
+APT не змінює homes; пропущений startup стає inert через TryExec, оживає на reinstall.
+Unsigned preview, моделі окремо, без CUDA/updater/running-update blocker.
+Наступна дія: завершити автоматичну перевірку E.4, user review/physical Linux
+acceptance; потім решта E/F. Відкладені Mac/M4 gates не закриті.
+
+## Попередня реалізована поставка — E.3 macOS ARM64 app/DMG
 
 Merge `b853b3c` у main 2026-09-27; гілка `codex/macos-arm64-dmg`, база `dfae012`,
 перевірений код `d47f24f`, фінальна гілка `2d42753`. Main запушено,
@@ -42,7 +57,7 @@ profiles/history/cache. Зберегти Settings/first-run і source-install с
 системі без developer setup; CPU dictation → clipboard → Quit; автозапуск
 увімкнути/вимкнути; update/reinstall зберігають дані, uninstall прибирає лише
 власні launcher/autostart. X11/Wayland межі та автоматичні/ручні докази описати окремо.
-У цьому чаті E.4 не розпочато. Відкладене Mac-приймання не блокує цю розробку.
+E.4 розпочато окремою гілкою; актуальний стан на початку цього handoff.
 
 ## Попередня прийнята й змерджена поставка — E.2 Windows CPU installer
 

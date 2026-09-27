@@ -2,10 +2,10 @@ import sys
 
 
 def resolve_device(device, cuda_count):
-    """The Windows standalone distribution ships CPU dependencies only."""
-    if getattr(sys, "frozen", False) and sys.platform == "win32":
+    """Windows and Linux standalone distributions ship CPU dependencies only."""
+    if getattr(sys, "frozen", False) and (sys.platform == "win32" or sys.platform.startswith("linux")):
         if device == "cuda":
-            raise ValueError("This Windows bundle supports CPU only. Select CPU or auto in Settings; use a source installation for CUDA.")
+            raise ValueError("This bundle supports CPU only. Select CPU or auto in Settings; use a source installation for CUDA.")
         if device == "auto":
             return "cpu"
     return ("cuda" if cuda_count() else "cpu") if device == "auto" else device

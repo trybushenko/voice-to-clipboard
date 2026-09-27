@@ -1,4 +1,5 @@
 """Launch independent background processes without inheriting Ctrl+C."""
+import os
 import subprocess
 import sys
 
@@ -18,3 +19,15 @@ def spawn_background(command, no_console=False, **kwargs):
         options['start_new_session'] = True
     options.update(kwargs)
     return subprocess.Popen(command, **options)
+
+
+def external_environment():
+    """Use system libraries for OS utilities, while frozen children keep theirs."""
+    if not (getattr(sys, 'frozen', False) and sys.platform.startswith('linux')):
+        return None
+    env = os.environ.copy()
+    if 'LD_LIBRARY_PATH_ORIG' in env:
+        env['LD_LIBRARY_PATH'] = env['LD_LIBRARY_PATH_ORIG']
+    else:
+        env.pop('LD_LIBRARY_PATH', None)
+    return env

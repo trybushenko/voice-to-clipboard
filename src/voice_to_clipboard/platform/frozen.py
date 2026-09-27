@@ -6,6 +6,7 @@ MODULES = frozenset({
     'voice_to_clipboard', 'voice_to_clipboard.ui.desktop_app',
     'voice_to_clipboard.ui.desktop_panel', 'voice_to_clipboard.ui.hotkeys',
     'voice_to_clipboard.ui.overlay', 'voice_to_clipboard.worker.service',
+    'voice_to_clipboard.platform.atspi_probe',
 })
 
 

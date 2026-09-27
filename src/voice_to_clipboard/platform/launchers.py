@@ -11,6 +11,19 @@ import tempfile
 
 APP_ID = 'com.trybushenko.voicetoclipboard'
 APP_NAME = 'Voice to Clipboard'
+LINUX_EXECUTABLE = Path('/opt/voice-to-clipboard/VoiceToClipboard')
+LINUX_LAUNCHER = Path('/usr/share/applications/voice-to-clipboard.desktop')
+
+
+def _frozen_linux():
+    return getattr(sys, 'frozen', False) and sys.platform.startswith('linux')
+
+
+def _installed_linux_launcher():
+    if Path(sys.executable).resolve() != LINUX_EXECUTABLE or not LINUX_LAUNCHER.is_file():
+        raise RuntimeError('Install the .deb package before enabling login startup')
+    return LINUX_LAUNCHER
+
 
 
 def command():
@@ -60,10 +73,11 @@ def autostart_path():
 def _desktop_entry():
     def quote(value):
         return '"' + value.replace('\\', '\\\\').replace('"', '\\"').replace('`', '\\`').replace('$', '\\$').replace('%', '%%') + '"'
+    availability = ('TryExec=' + str(LINUX_EXECUTABLE) + '\n') if _frozen_linux() else ''
     return ('[Desktop Entry]\nType=Application\nName=Voice to Clipboard\n'
             'Comment=Dictate using global shortcuts\nTerminal=false\n'
             'Icon=audio-input-microphone\nCategories=Utility;Accessibility;\n'
-            'Exec=' + ' '.join(quote(part) for part in command()) + '\n')
+            'Exec=' + ' '.join(quote(part) for part in command()) + '\n' + availability)
 
 
 def _write(path, content, mode=0o600):
@@ -83,6 +97,8 @@ def install():
     if getattr(sys, "frozen", False):
         if sys.platform == "darwin":
             return _frozen_macos_app()
+        if _frozen_linux():
+            return _installed_linux_launcher()
         if sys.platform != "win32":
             raise RuntimeError("Frozen launcher installation is unsupported on this platform")
     path = launcher_path()
@@ -137,7 +153,7 @@ def enabled():
 
 
 def set_enabled(value):
-    if getattr(sys, "frozen", False) and sys.platform not in ("win32", "darwin"):
+    if getattr(sys, "frozen", False) and sys.platform not in ("win32", "darwin") and not _frozen_linux():
         raise RuntimeError("Frozen autostart is unsupported on this platform")
     if type(value) is not bool:
         raise ValueError('Autostart must be enabled or disabled')
@@ -163,11 +179,15 @@ def set_enabled(value):
             else:
                 _write(path, _desktop_entry())
         else:
-            if sys.platform != "darwin" or enabled():
+            if (sys.platform != "darwin" and not sys.platform.startswith("linux")) or enabled():
                 path.unlink(missing_ok=True)
 
 
 def uninstall():
+    if _frozen_linux():
+        # dpkg owns the system launcher/runtime. Only disable our per-user startup.
+        set_enabled(False)
+        return
     if sys.platform == 'darwin' and getattr(sys, 'frozen', False):
         # The running executable cannot safely delete its own loaded bundle.
         # Finder removes the app after Quit; only our matching agent is removed here.
@@ -181,5 +201,6 @@ def uninstall():
             raise RuntimeError('Refusing to remove an app with a different bundle identifier')
         shutil.rmtree(path)
     else:
-        path.unlink(missing_ok=True)
+        if not sys.platform.startswith('linux') or (path.exists() and path.read_text(encoding='utf-8') == _desktop_entry()):
+            path.unlink(missing_ok=True)
     # User settings, history, venv and models are intentionally preserved.
