@@ -70,6 +70,8 @@ Core code is in `src/voice_to_clipboard/`, tests in `tests/`, and developer help
 in `scripts/`. The root `dictate.py` is a compatibility wrapper for existing Linux
 launchers. See [development and verification](docs/development.md).
 
+Changes to `main` go through pull requests and must pass the required CI checks before merging.
+
 [Desktop experience roadmap](docs/plans/desktop-experience-roadmap.md) tracks
 remaining work and acceptance criteria.
 
