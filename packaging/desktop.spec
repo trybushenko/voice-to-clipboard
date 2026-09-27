@@ -1,9 +1,11 @@
 # Build on the target OS/architecture. No models, CUDA runtime or user data.
 import sys
+import tomllib
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 root = Path(SPECPATH).parent
+version = tomllib.loads((root / 'pyproject.toml').read_text())['project']['version']
 hidden = collect_submodules('voice_to_clipboard')
 data = [(str(root / 'packaging/probe.py'), '.')]
 binaries = []
@@ -27,5 +29,8 @@ coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name='VoiceToCl
 if sys.platform == 'darwin':
     app = BUNDLE(coll, name='VoiceToClipboard.app',
                  bundle_identifier='com.trybushenko.voicetoclipboard',
+                 version=version,
                  info_plist={'LSUIElement': True,
+                             'CFBundleShortVersionString': version,
+                             'LSMinimumSystemVersion': '14.0',
                              'NSMicrophoneUsageDescription': 'Record speech only when you start dictation.'})

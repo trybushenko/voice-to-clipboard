@@ -1,0 +1,27 @@
+name: macOS ARM64 DMG
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/macos-arm64-dmg]
+permissions:
+  contents: read
+jobs:
+  dmg:
+    runs-on: macos-14
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r packaging/requirements.txt '.[mac,whisper,hotkeys,desktop]'
+      - run: bash packaging/macos/build.sh
+      - run: python scripts/check_macos_dmg.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: macos-arm64-dmg
+          path: |
+            artifacts/
+            build/desktop/warn-desktop.txt
+          retention-days: 14
