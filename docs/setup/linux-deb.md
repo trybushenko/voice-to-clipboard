@@ -85,7 +85,7 @@ PATH="$PWD/.packaging-venv/bin:$PATH" bash packaging/linux/build.sh
 ```
 
 The workflow installs the result in clean Ubuntu 22.04/24.04 containers, with a
-disposable HOME, Xvfb and D-Bus: package lifecycle/data preservation, startup
+disposable HOME, Xvfb, D-Bus and a test notification daemon: package lifecycle/data preservation, startup
 ownership, frozen Qt/GTK/overlay/worker, native desktop lifecycle and CPU synthetic
 inference. These checks do not prove microphone capture, real speech accuracy,
 physical login, a compositor's tray or Wayland behavior. See the roadmap for
