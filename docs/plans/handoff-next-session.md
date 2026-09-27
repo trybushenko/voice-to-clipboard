@@ -3,14 +3,18 @@
 Оновлено: 2026-09-27. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
-## Остання прийнята поставка — E.4 Linux CPU .deb
+## Остання прийнята й змерджена поставка — E.4 Linux CPU .deb
 
 Гілка `codex/linux-deb-package` від актуального main `163f1b7`, окремий checkout.
 Реалізація: Ubuntu 22.04/24.04 + Pop!_OS 22.04 amd64 .deb, bundled CPU runtime,
 GTK/GI/Qt, launcher, ownership-aware один startup, frozen AT-SPI dispatcher.
 Source/CUDA settings і data/history/cache paths збережені. Bundle `08c9ad4`,
 останній code/test commit `09eeddd`. Користувач 2026-09-27 підтвердив перелічені
-сценарії та явно дозволив merge/push/delete remote-гілки. Merge-звіт нижче.
+сценарії та явно дозволив merge/push/delete remote-гілки.
+Merge `0ba5af1` у main запушено, `origin/codex/linux-deb-package` видалено.
+Прийнята гілка `52f7dab`; merge без конфліктів, tree збігається з гілкою.
+Pre-merge review блокувальних дефектів не виявило. Після `09eeddd` лише docs;
+тести/CI повторно не запускали. Це завершена E.4, не починати її з нуля.
 Локально 113 tests OK (4 skips), native Pop!_OS lifecycle, Ubuntu 22.04 package
 lifecycle і Ubuntu 24.04 frozen CPU/clipboard probe. Фінальні CI докази наведені
 в roadmap: [package CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856471)
