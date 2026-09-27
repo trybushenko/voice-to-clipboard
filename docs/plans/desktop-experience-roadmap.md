@@ -1,7 +1,7 @@
 # План: надійне диктування без термінала на Windows, macOS і Linux
 
 Для нового чату: [handoff і порядок до релізу](handoff-next-session.md)
-(ревізія 2026-09-26). Мовні профілі та індивідуальні modifiers прийняті й
+(ревізія 2026-09-27). Мовні профілі та індивідуальні modifiers прийняті й
 змерджені (`c27e602`, `a91291b`). Сумісність мови й моделі прийнята користувачем і змерджена (`50af7cd`).
 D.1 first-run прийнято користувачем і змерджено: `1a6e23c` (код `8f192b1`).
 D.2a реалізовано окремо в `codex/desktop-ux-prototype` від актуального main
@@ -14,7 +14,7 @@ D.2a реалізовано окремо в `codex/desktop-ux-prototype` від 
 E.2 Windows CPU installer прийнято користувачем 2026-09-26 та змерджено: `31ccd64`
 (перевірений код `3397697`). Main запушено, `origin/codex/windows-cpu-installer`
 видалено. E.3 реалізовано, автоматично перевірено й змерджено 2026-09-27 (`b853b3c`).
-Ручне Mac-тестування та рев’ю користувач відклав. E.4 Linux package реалізується
+Ручне Mac-тестування та рев’ю користувач відклав. E.4 Linux package реалізовано
 в `codex/linux-deb-package` від актуального main `163f1b7`; звіт унизу.
 
 Початковий план: 2026-09-14, база `072172a`. Ревізія A/B/C: 2026-09-15,
@@ -24,7 +24,7 @@ E.2 Windows CPU installer прийнято користувачем 2026-09-26 �
 після focus/overlay виправлень і дозволені до merge в main. Фізична macOS
 матриця залишається відкритою. D прийнято користувачем на Windows 2026-09-18 і дозволено до merge в main.
 Обмежені D.1-поставки прийняті та змерджені; D.2a дала технічний напрям, але
-не є acceptance нового продуктового функціоналу. D.2b прийнято й змерджено. E.1/E.2 прийнято й змерджено; E.3 змерджено з відкладеним ручним прийманням; далі E.4 Linux package та решта E/F.**
+не є acceptance нового продуктового функціоналу. D.2b прийнято й змерджено. E.1/E.2 прийнято й змерджено; E.3 змерджено з відкладеним ручним прийманням; E.4 реалізовано з відкритим ручним Linux-прийманням; решта E/F відкрита.**
 
 Позначення: `[x]` — конкретна реалізація або перевірка, для якої є доказ;
 `[ ]` — відсутня реалізація чи непроведена перевірка. Код і ручне приймання
@@ -424,15 +424,16 @@ D.2b прийнято користувачем 2026-09-25 та змерджен�
   автоматичні докази та ручне приймання наведені у звіті E.2.
 - [x] macOS ARM64: `.app` у DMG реалізовано й автоматично перевірено (E.3, `b853b3c`).
 - [ ] Ручне Mac/M4-приймання E.3 та рев’ю користувача відкладені; не вважати їх виконаними.
-- [ ] Linux: обрати та перевірити основний пакет для Ubuntu/Pop!_OS (наприклад `.deb`) з
-  desktop entry та системними залежностями. Інші дистрибутиви позначати окремо.
+- [x] E.4 Linux: `.deb` для Ubuntu 22.04/24.04 і Pop!_OS 22.04 amd64,
+  desktop entry та системні залежності. Автоматичні докази — у звіті E.4;
+  фізичне voice/login-приймання відкрите, інші дистрибутиви не заявлені.
 - [x] Порівняти збірку PyInstaller/інший bundler коротким spike: native dependencies,
   size, cold start, MLX, PortAudio, worker spawning у frozen executable.
   Обрано PyInstaller onedir; native CI/вимірювання E.1 наведено нижче.
   Альтернативу Qt/Nuitka оцінено документально, не бенчмарковано.
 - [x] Windows E.2 використовує той самий Settings first-run та мовні профілі, що D.2b.
 - [x] E.3 macOS зберігає той самий Settings first-run.
-- [ ] Зберегти той самий Settings first-run у майбутньому Linux package.
+- [x] E.4 Linux package зберігає той самий Settings first-run.
   Не додавати download wizard, doctor, нові audio/model controls або інший
   onboarding flow лише заради інсталятора.
 - [ ] Linux/Windows: без NVIDIA — CPU INT8 профіль. NVIDIA перевіряти реальною пробою
@@ -896,7 +897,7 @@ Uninstall: disable startup → Quit → Trash app; дані та моделі з
   користувач виконає пізніше. Signing/notarization і повна F matrix лишаються відкритими.
 
 
-### Наступна конкретна поставка — E.4 Linux package для Ubuntu/Pop!_OS
+### Межі реалізованої поставки — E.4 Linux package для Ubuntu/Pop!_OS
 
 Почати окрему гілку від актуального main. Обрати один основний формат пакета
 (кандидат `.deb`) і зафіксувати підтримувані версії Ubuntu/Pop!_OS та архітектуру.
@@ -927,7 +928,26 @@ startup. Нова UI/schema/workflows, NVIDIA, інші дистрибутиви
 - [x] Unit regressions та clean Ubuntu container lifecycle workflow: install,
   вища Debian revision, remove/reinstall/purge, data bytes, startup ownership,
   desktop/Qt/worker/overlay/clipboard і synthetic CPU inference.
-- [ ] Записати фактичні результати збірки, container tests та CI після виконання.
+- [x] Локальна source suite: 113 tests OK, 4 platform skips; bash syntax і
+  diff check OK. IPC tests поза sandbox, усі дані ізольовані.
+- [x] Bundle `08c9ad4`: native Pop!_OS 22.04 tray/controller/Settings, pause/resume,
+  singleton, persistence та 5 Quit/restart. Без мікрофона/особистих налаштувань.
+- [x] Локальний disposable Ubuntu 22.04 lifecycle із фінальним test harness:
+  install → upgrade `0.1.1-1+ci1` → remove/reinstall/purge; startup ownership,
+  побайтове збереження settings/profiles/history/cache, Qt/GTK/AT-SPI/worker,
+  tiny.en CPU synthetic inference та Unicode clipboard round-trip.
+- [x] Локальний Ubuntu 24.04 frozen probe: Qt/GTK/AT-SPI/worker/CPU/clipboard OK.
+  Повний clean lifecycle після доповнення test desktop підтверджено в CI нижче.
+- [x] Фінальний код/test harness `09eeddd`:
+  [Linux package CI 36339856471](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856471)
+  — build і clean Ubuntu 22.04/24.04 lifecycle успішні, включно з усіма перевірками
+  вище. Artifact `linux-amd64-deb`, окремі JSON reports `linux-lifecycle-22.04/24.04`.
+- [x] [Regression CI 36339856403](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856403)
+  — всі 6 Linux/Windows/macOS × Python 3.11/3.12 jobs успішні.
+- [x] Сфокусоване self-review: schema/paths не змінені; source/CUDA behavior
+  збережено; package не пише homes; startup removal перевіряє власника;
+  bundled dependencies перевірені clean-image тестами. Блокувальних дефектів
+  у межах автоматично перевіреної поставки не залишилось.
 - [ ] Фізичні Ubuntu/Pop!_OS: microphone/voice, login enable/disable, tray,
   X11 guarded paste та Wayland desktop binding/manual paste.
 - [ ] Рев’ю/ручне приймання користувачем і merge; повна F matrix не закрита.
@@ -938,3 +958,13 @@ startup. Нова UI/schema/workflows, NVIDIA, інші дистрибутиви
 startup лишається inert до reinstall. Пізніший source startup зберігається.
 Моделі завантажуються окремо; немає updater/running-update blocker, signing чи
 Wayland portal/automatic paste. Реалізація та фізичне приймання — різні статуси.
+
+
+Під час clean-image перевірок усунено відсутні XCB/Cairo/GSettings/DBus/Atspi
+компоненти bundle. Atspi потребує явного `GiModuleInfo.collect_typelib_data`,
+бо одного hidden import недостатньо. Окремий тестовий D-Bus notification daemon
+усуває відсутність desktop-служби у Xvfb контейнері; product UI не змінено.
+PyInstaller symlinks збережені; .deb близько 191 MiB без моделей. Локально build
+`08c9ad4`, останній code/test commit `09eeddd`; після нього тільки звіт/docs.
+Наступна дія: user review і ручний Linux протокол, merge лише за окремим дозволом;
+далі окрема E-поставка NVIDIA/runtime/CPU fallback та решта F gates.

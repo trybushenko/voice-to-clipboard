@@ -3,20 +3,26 @@
 Оновлено: 2026-09-27. Це знімок для нового чату, а не заміна актуального git/CI.
 Єдиний план вимог і виконання: [desktop-experience-roadmap.md](desktop-experience-roadmap.md).
 
-## Поточна поставка — E.4 Linux CPU .deb
+## Остання реалізована поставка — E.4 Linux CPU .deb
 
 Гілка `codex/linux-deb-package` від актуального main `163f1b7`, окремий checkout.
 Реалізація: Ubuntu 22.04/24.04 + Pop!_OS 22.04 amd64 .deb, bundled CPU runtime,
 GTK/GI/Qt, launcher, ownership-aware один startup, frozen AT-SPI dispatcher.
-Source/CUDA settings і data/history/cache paths збережені.
+Source/CUDA settings і data/history/cache paths збережені. Bundle `08c9ad4`,
+останній code/test commit `09eeddd`; гілка запушена, merge не виконувався.
+Локально 113 tests OK (4 skips), native Pop!_OS lifecycle, Ubuntu 22.04 package
+lifecycle і Ubuntu 24.04 frozen CPU/clipboard probe. Фінальні CI докази наведені
+в roadmap: [package CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856471)
+і [6-job regression CI](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856403)
+успішні. Фізичні voice/login/Wayland перевірки користувачем відкриті.
 [Команди, межі, ручний тест](../setup/linux-deb.md); фактичні перевірки — у звіті E.4
 в [roadmap](desktop-experience-roadmap.md). CI/ручне приймання/merge позначаються окремо.
 
 Перед remove: disable startup → Quit → frozen `--uninstall` → APT remove.
 APT не змінює homes; пропущений startup стає inert через TryExec, оживає на reinstall.
 Unsigned preview, моделі окремо, без CUDA/updater/running-update blocker.
-Наступна дія: завершити автоматичну перевірку E.4, user review/physical Linux
-acceptance; потім решта E/F. Відкладені Mac/M4 gates не закриті.
+Наступна дія: user review/physical Linux acceptance, merge за окремим дозволом;
+потім окрема E-поставка NVIDIA/runtime/CPU fallback та решта F. Відкладені Mac/M4 gates не закриті.
 
 ## Попередня реалізована поставка — E.3 macOS ARM64 app/DMG
 
@@ -45,7 +51,7 @@ Pre-merge review без блокувальних дефектів; merge tree з
 Uninstall: disable startup → Quit → Trash app, дані залишаються. Physical
 permissions/мікрофон/MLX Metal/login/update/reinstall і повна F matrix відкриті.
 
-### Наступна конкретна поставка — E.4 Linux package для Ubuntu/Pop!_OS
+### Межі E.4 Linux package для Ubuntu/Pop!_OS (реалізовано, звіт вище)
 
 Почати окрему гілку від актуального main. Обрати один основний формат пакета
 (кандидат `.deb`) і зафіксувати підтримувані версії Ubuntu/Pop!_OS та архітектуру.

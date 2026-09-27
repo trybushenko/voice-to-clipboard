@@ -3,17 +3,31 @@
 Target: Ubuntu 22.04/24.04 and Pop!_OS 22.04, **amd64**, glibc 2.35 or newer.
 The package bundles Python, GTK/GI, Qt and faster-whisper; Git, Python development
 tools and CUDA are not installation prerequisites. APT supplies desktop/audio
-libraries and clipboard tools. Models download on first use. `auto` uses CPU;
-explicit CUDA settings are preserved and produce an actionable error. Existing
-source installs keep their CUDA behavior and existing configuration paths.
+libraries and clipboard tools. Models download on first use. `auto` uses CPU.
+The local preview is about 191 MiB (roughly 560 MiB installed, before system
+dependencies and models). Explicit CUDA settings are preserved and produce an
+actionable error. Existing source installs keep their CUDA behavior and existing configuration paths.
 
 ## Install or update
 
 Download and extract artifact `linux-amd64-deb` from the **Linux CPU deb** workflow
 for `codex/linux-deb-package`. It contains an unsigned `.deb`, SHA256, dependency
 list and build metadata. Separate `linux-lifecycle-22.04` and
-`linux-lifecycle-24.04` artifacts contain test reports. Artifacts expire after 14 days; rebuild
-with workflow_dispatch if needed. This is a preview, not a signed APT repository.
+`linux-lifecycle-24.04` artifacts contain test reports. Artifacts expire after 14 days; rerun the workflow or use the build
+commands below if needed. This is a preview, not a signed APT repository.
+
+Verified code/test harness: `09eeddd`. The [package lifecycle run](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856471)
+passed on clean Ubuntu 22.04 and 24.04; the [regression matrix](https://github.com/trybushenko/voice-to-clipboard/actions/runs/36339856403)
+passed all six jobs. Local Pop!_OS 22.04 frozen desktop lifecycle also passed.
+Voice/microphone, real login and Wayland acceptance remain open.
+
+With GitHub CLI, download the verified artifact without changing a checkout:
+
+```sh
+vtc_e4_package_dir="$(mktemp -d)"
+gh run download 36339856471 --repo trybushenko/voice-to-clipboard --name linux-amd64-deb --dir "$vtc_e4_package_dir"
+cd "$vtc_e4_package_dir"
+```
 
 Finish dictation and **Quit** the entire old app before updating. Close Settings
 alone does not stop it. There is no running-update blocker or automatic updater.
