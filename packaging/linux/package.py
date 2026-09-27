@@ -21,7 +21,7 @@ def main():
     package = artifacts / f'voice-to-clipboard_{version}_amd64.deb'
     with tempfile.TemporaryDirectory(prefix='vtc-deb-') as temporary:
         stage = Path(temporary)
-        shutil.copytree(ROOT / 'dist/VoiceToClipboard', stage / 'opt/voice-to-clipboard')
+        shutil.copytree(ROOT / 'dist/VoiceToClipboard', stage / 'opt/voice-to-clipboard', symlinks=True)
         launcher = stage / 'usr/share/applications/voice-to-clipboard.desktop'
         launcher.parent.mkdir(parents=True)
         launcher.write_text('[Desktop Entry]\nType=Application\nName=Voice to Clipboard\n'
@@ -34,7 +34,7 @@ def main():
         shutil.copyfile(ROOT / 'docs/setup/linux-deb.md', doc / 'README.md')
         control = stage / 'DEBIAN'
         control.mkdir()
-        size = sum(p.stat().st_size for p in stage.rglob('*') if p.is_file()) // 1024
+        size = sum(p.lstat().st_size for p in stage.rglob('*') if p.is_file()) // 1024
         (control / 'control').write_text(f'''Package: voice-to-clipboard
 Version: {version}
 Section: utils
@@ -49,7 +49,7 @@ Description: Local voice dictation with desktop controls (CPU preview)
  Bundled runtime for Ubuntu 22.04/24.04 and Pop!_OS 22.04 on amd64.
  Models download separately. User settings and history survive removal.
 ''')
-        subprocess.run(['dpkg-deb', '--root-owner-group', '--build', str(stage), str(package)], check=True)
+        subprocess.run(['dpkg-deb', '-Zgzip', '-z6', '--root-owner-group', '--build', str(stage), str(package)], check=True)
     (artifacts / (package.name + '.sha256')).write_text(
         hashlib.sha256(package.read_bytes()).hexdigest() + '  ' + package.name + '\n')
     (artifacts / 'build.json').write_text(json.dumps(dict(version=version,

@@ -11,7 +11,8 @@ source installs keep their CUDA behavior and existing configuration paths.
 
 Download and extract artifact `linux-amd64-deb` from the **Linux CPU deb** workflow
 for `codex/linux-deb-package`. It contains an unsigned `.deb`, SHA256, dependency
-list, build metadata and test reports. Artifacts expire after 14 days; rebuild
+list and build metadata. Separate `linux-lifecycle-22.04` and
+`linux-lifecycle-24.04` artifacts contain test reports. Artifacts expire after 14 days; rebuild
 with workflow_dispatch if needed. This is a preview, not a signed APT repository.
 
 Finish dictation and **Quit** the entire old app before updating. Close Settings

@@ -53,7 +53,7 @@ def main():
     upgraded = original + '+ci1'
     control.write_text(control.read_text().replace('Version: ' + original + '\n', 'Version: ' + upgraded + '\n'))
     upgrade_package = Path('/tmp/vtc-upgrade.deb')
-    run('dpkg-deb', '--root-owner-group', '--build', stage, upgrade_package)
+    run('dpkg-deb', '-Zgzip', '-z1', '--root-owner-group', '--build', stage, upgrade_package)
     run('apt-get', 'install', '-y', upgrade_package)
     assert subprocess.check_output(['dpkg-query', '-W', '-f=${Version}', 'voice-to-clipboard'], text=True) == upgraded
     assert startup.read_bytes() == entry
