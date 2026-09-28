@@ -27,7 +27,7 @@ jobs:
           id=$(docker create vtc-deb-builder)
           docker cp "$id:/build/artifacts" artifacts
           docker rm "$id"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: linux-amd64-deb
           path: artifacts/
@@ -52,7 +52,7 @@ jobs:
           docker run --rm -e VTC_DISPOSABLE_CONTAINER=1 \
             -v "$PWD:/work:ro" -v "$PWD/reports:/reports" \
             ubuntu:${{ matrix.ubuntu }} bash /work/packaging/linux/check-container.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: linux-lifecycle-${{ matrix.ubuntu }}
