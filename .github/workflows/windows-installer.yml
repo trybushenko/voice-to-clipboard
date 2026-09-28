@@ -33,7 +33,7 @@ jobs:
         run: ./packaging/windows/build.ps1
       - name: Installer lifecycle and installed runtime
         run: python scripts/check_windows_installer.py (Get-Item dist/installer/*-setup.exe).FullName
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: windows-x64-cpu-installer
